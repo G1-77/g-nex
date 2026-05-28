@@ -176,7 +176,7 @@ export default function HomePage() {
           </main>
 
           {/* RIGHT SIDEBAR */}
-          <aside className="col-span-1 hidden flex-col gap-6 md:flex">
+          <aside className="col-span-1 hidden flex-col gap-6 md:flex sticky top-24 h-fit">
             
             {/* TOP TRADERS */}
             <div className="rounded-2xl border border-slate-800/40 bg-slate-900/20 p-4 backdrop-blur-md">
@@ -194,10 +194,10 @@ export default function HomePage() {
                       <Image
                         src={trader.image}
                         alt={trader.username}
-                        width={32}
-                        height={32}
-                        style={{ width: "auto", height: "auto" }}
-                        className="rounded-full object-cover ring-1 ring-slate-800"
+                        width={40}
+                        height={40}
+                        style={{ width: "40px", height: "40px" }}
+                        className="rounded-full object-cover shrink-0 ring-1 ring-slate-800"
                       />
 
                       <div className="flex flex-col">
@@ -216,7 +216,7 @@ export default function HomePage() {
                         {trader.roi}
                       </span>
 
-                      <button className="rounded-full border border-slate-800 bg-slate-900 px-2.5 py-1 text-[10px] font-bold text-slate-300 transition-all hover:border-transparent hover:bg-yellow-600 hover:text-slate-950">
+                      <button className="rounded-full border border-slate-800 bg-slate-900 px-2.5 py-1 text-[10px] font-bold text-slate-300 transition-all hover:border-transparent hover:bg-yellow-600 hover:text-slate-950 cursor-pointer">
                         Copy
                       </button>
                     </div>

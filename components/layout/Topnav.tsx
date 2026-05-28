@@ -8,7 +8,7 @@ import {
   Search,
   Wallet
 } from 'lucide-react'
-import Image from 'next/image'
+import AvatarDropdown from './AvatarDropdown'
 
 const navItems = [
   {
@@ -75,7 +75,7 @@ export default function Topnav() {
                 {item.label}
 
                 {active && (
-                  <span className="absolute bottom-0 left-0 h-[2px] w-full bg-yellow-600 shadow-[0_-2px_10px_rgba(202,138,4,0.4)]" />
+                  <span className="absolute bottom-0 left-0 h-0.5 w-full bg-yellow-600 shadow-[0_-2px_10px_rgba(202,138,4,0.4)]" />
                 )}
               </Link>
             )
@@ -117,16 +117,8 @@ export default function Topnav() {
             <Bell className="h-3.5 w-3.5 text-slate-400" />
           </button>
 
-          {/* USER AVATAR */}
-          <button className="ml-1 h-8 w-8 cursor-pointer overflow-hidden rounded-full ring-1 ring-yellow-600/40 transition-all hover:ring-yellow-600">
-            <Image
-              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"
-              alt="User Profile Avatar"
-              width={40}
-              height={40}
-              className="h-full w-full object-cover"
-            />
-          </button>
+          {/* User Avatar */}
+          <AvatarDropdown />
         </div>
       </div>
     </header>

@@ -18,10 +18,10 @@ export default function CreatePostCard() {
         <Image
           src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop"
           alt="User avatar"
-          width={36}
-          height={36}
-          style={{ width: 'auto', height: 'auto' }}
-          className="rounded-full object-cover ring-1 ring-slate-800"
+          width={40}
+          height={40}
+          style={{ width: '40px', height: '40px' }}
+          className="rounded-full object-cover ring-1 ring-slate-800/80 shrink-0"
         />
 
         {/* Input Placeholder Field */}
