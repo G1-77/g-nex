@@ -18,7 +18,7 @@ export default async function ProfilePage({
       <div className="mx-auto max-w-5xl px-4 py-4">
 
         {/* COVER BANNER */}
-        <div className="relative h-44 overflow-hidden rounded-2xl border border-slate-900 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 shadow-inner sm:h-52">
+        <div className="relative h-44 overflow-hidden rounded-2xl border border-slate-900 bg-linear-to-br from-slate-900 via-slate-900 to-slate-950 shadow-inner sm:h-52">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(202,138,4,0.08),transparent_40%)]" />
         </div>
 
@@ -40,7 +40,7 @@ export default async function ProfilePage({
             <button className="relative cursor-pointer pb-3 text-xs font-bold uppercase tracking-wider text-yellow-600">
               Posts
 
-              <span className="absolute bottom-0 left-0 h-[2px] w-full bg-yellow-600" />
+              <span className="absolute bottom-0 left-0 h-0.5 w-full bg-yellow-600" />
             </button>
 
             <button className="cursor-pointer pb-3 text-xs font-bold uppercase tracking-wider text-slate-500 transition-colors hover:text-slate-300">

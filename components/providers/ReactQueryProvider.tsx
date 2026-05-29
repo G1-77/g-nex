@@ -8,7 +8,7 @@ export default function ReactQueryProvider({
 }: {
   children: ReactNode
 }) {
-  const [queyClient] = useState(
+  const [queryClient] = useState(
     () => 
       new QueryClient({
         defaultOptions: {
@@ -21,7 +21,7 @@ export default function ReactQueryProvider({
   )
   
   return (
-    <QueryClientProvider client={queyClient}>
+    <QueryClientProvider client={queryClient}>
       {children}
     </QueryClientProvider>
   )

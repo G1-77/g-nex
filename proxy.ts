@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 
-const PUBLIC_AUTH_ROUTES = ['/login']
-const PUBLIC_STATIC_PREFIXES = ['/_next']
+const PUBLIC_AUTH_ROUTES = ["/login", "/register"]
+const PUBLIC_STATIC_PREFIXES = ['/_next', "/static", "/favicon.ico"]
 const PUBLIC_FILE_REGEX = /\.[^/]+$/
 
 export async function proxy(req: Request) {
@@ -32,21 +32,21 @@ export async function proxy(req: Request) {
   const isAuthPage = PUBLIC_AUTH_ROUTES.includes(pathname)
 
   
-  // 2. BLOCK AUTH PAGES FOR LOGGED-IN USERS
+  // 2. Auth pages for logged in users
   
   if (isAuthenticated && isAuthPage) {
     return NextResponse.redirect(new URL('/', req.url))
   }
 
   
-  // 3. ALLOW PUBLIC AUTH PAGES
+  // 3. Allow discovery of auth pages
   
   if (isAuthPage) {
     return NextResponse.next()
   }
 
   
-  // 4. GLOBAL PROTECTED ROUTES
+  // 4. Protect inner dashboard sections
   
   if (!isAuthenticated) {
     return NextResponse.redirect(new URL('/login', req.url))
