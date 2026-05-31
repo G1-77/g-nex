@@ -21,6 +21,12 @@ export async function proxy(req: Request) {
     return NextResponse.next()
   }
 
+
+  //  prevents the proxy from blocking the Google callback code exchange route
+  if (pathname.startsWith('/auth')) {
+    return NextResponse.next()
+  }
+
   const supabase = await createServerClient()
 
   const {
@@ -54,7 +60,7 @@ export async function proxy(req: Request) {
 
   
   // 5. EXISTING ADMIN ROLE GUARD
-  
+ 
   if (pathname.startsWith('/admin')) {
     const { data: role } = await supabase
       .from('admin_roles')
