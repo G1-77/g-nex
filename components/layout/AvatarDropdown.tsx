@@ -20,6 +20,8 @@ import {
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '../providers/AuthProvider'
 
+// For Mobile
+
 function MobileSheet({
   open,
   onClose,
@@ -55,13 +57,13 @@ function MobileSheet({
         <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-slate-800/60" />
 
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-slate-900/60 border border-slate-900/80">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden cursor-pointer rounded-full bg-slate-900/60 border border-slate-900/80">
             {profile?.avatar_url ? (
               <Image
                 src={profile.avatar_url}
                 alt="profile"
-                width={56}
-                height={56}
+                width={48}
+                height={48}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -227,7 +229,7 @@ export default function AvatarDropdown() {
       {/* Trigger */}
       <button
         onClick={() => setOpen((p) => !p)}
-        className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-900/60 border border-slate-900/80 active:scale-95"
+        className="h-8 w-8 flex items-center justify-center rounded-full cursor-pointer bg-slate-900/60 border border-slate-900/80 active:scale-95"
       >
         {profile?.avatar_url ? (
           <Image
@@ -235,7 +237,7 @@ export default function AvatarDropdown() {
             alt="avatar"
             width={40}
             height={40}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-full"
           />
         ) : (
           <span className="text-[10px] font-black text-slate-200">
@@ -267,9 +269,9 @@ export default function AvatarDropdown() {
               View Profile
             </Link>
 
-            <button className="flex items-center gap-3 px-3 py-2 text-xs font-semibold text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all">
+            <button className="flex items-center gap-3 px-3 py-2 text-xs font-semibold cursor-pointer text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all">
               <Wallet className="h-4 w-4 text-slate-500" />
-              Wallet Matrix
+              View Wallet
             </button>
 
             {isStaff && (
@@ -285,7 +287,7 @@ export default function AvatarDropdown() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2 text-xs font-bold text-rose-400 rounded-xl hover:bg-rose-500/10 active:scale-95 transition-all"
+              className="flex items-center cursor-pointer gap-3 px-3 py-2 text-xs font-bold text-rose-400 rounded-xl hover:bg-rose-500/10 active:scale-95 transition-all"
             >
               <LogOut className="h-4 w-4" />
               Logout Session
