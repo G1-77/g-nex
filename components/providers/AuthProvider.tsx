@@ -27,6 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function syncIdentity(activeUser: User) {
     setUser(activeUser)
+    setProfile(null)
+    setRole(null)
+
     try {
       const { data: profileData } = await supabase
         .from('profiles')

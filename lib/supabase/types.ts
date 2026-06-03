@@ -1,7 +1,7 @@
 
 /**Asset symbols */
-
-export const ASSET_SYMBOLS = ['BTC', 'SOL', 'XAU'] as const
+ 
+export const ASSET_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"] as const
 
 export type AssetSymbol = (typeof ASSET_SYMBOLS)[number]
 
@@ -12,7 +12,7 @@ export const SIGNAL_TYPES = [
   'Bearish',
   'Accumulation',
   'Scalp',
-  'Long-Term',
+  'Long-Term'
 ] as const
 
 export type SignalType = (typeof SIGNAL_TYPES)[number]
@@ -46,8 +46,21 @@ export interface FeedPost {
   media_url: string | null
   assetSymbols: AssetSymbol[]
   signalType: SignalType | null
-  optimistic: boolean
+  optimistic?: boolean
   profiles: Profile | null
+
+  trade_tags: {
+    asset_symbol: AssetSymbol
+    signal_type: SignalType
+    price?: string | number | null
+    change?: string | null
+    direction?: "bullish" | "bearish" | null
+  }| null
+
+  likes_count: number
+  comments_count: number
+  isLikedByCurrentUser?: boolean // to track current session
+  
 }
 
 /**create post payload */

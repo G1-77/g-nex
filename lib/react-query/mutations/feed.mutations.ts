@@ -13,7 +13,8 @@ import { feedKeys } from '../keys'
 
 import type {
   AssetSymbol,
-  FeedPost
+  FeedPost,
+  SignalType
 } from '@/lib/supabase/types'
 
 interface CurrentUserPayload {
@@ -31,41 +32,9 @@ export interface CreatePostPayload {
   assetSymbols?: AssetSymbol[]
   mediaFile?: File | null
   currentUser?: CurrentUserPayload
+  signalType?: SignalType | null
 }
 
-function getAssetBaselineData(
-  asset: AssetSymbol
-) {
-  switch (asset) {
-    case 'BTC':
-      return {
-        asset_name: 'Bitcoin',
-        entry_price: 64000,
-        price_change_24h: 3.4
-      }
-
-    case 'SOL':
-      return {
-        asset_name: 'Solana',
-        entry_price: 142,
-        price_change_24h: 5.1
-      }
-
-    case 'XAU':
-      return {
-        asset_name: 'Spot Gold',
-        entry_price: 2350,
-        price_change_24h: -0.3
-      }
-
-    default:
-      return {
-        asset_name: 'Unknown Asset',
-        entry_price: 0,
-        price_change_24h: 0
-      }
-  }
-}
 
 async function uploadMedia(
   file: File
@@ -102,9 +71,8 @@ async function createPost(
   }
   let mediaUrl: string | null = null
 
-  // =====================================================
+  
   // OPTIONAL MEDIA UPLOAD
-  // =====================================================
 
   if (payload.mediaFile) {
     mediaUrl = await uploadMedia(
@@ -112,10 +80,8 @@ async function createPost(
     )
   }
 
-  // =====================================================
   // CREATE POST
-  // =====================================================
-
+  
   const { data: postData, error: postError } =
     await supabase
       .from('posts')
@@ -131,29 +97,22 @@ async function createPost(
     throw new Error(postError.message)
   }
 
-  // =====================================================
   // OPTIONAL TRADE TAG INSERTS
-  // =====================================================
-
+  
   if (
     payload.assetSymbols &&
     payload.assetSymbols.length > 0
   ) {
     const tradeTagPayload =
-      payload.assetSymbols.map((symbol) => {
-        const baseline =
-          getAssetBaselineData(symbol)
-        return {
+      payload.assetSymbols.map(
+        (symbol) => ({
           post_id: postData.id,
           asset_symbol: symbol,
-          asset_name:
-            baseline.asset_name,
-          entry_price:
-            baseline.entry_price,
-          price_change_24h:
-            baseline.price_change_24h
-        }
-      })
+          signal_type: 
+            payload.signalType ?? 
+              "Bullish",
+        })
+      )
 
     const { error: tradeTagError } =
       await supabase
@@ -214,7 +173,7 @@ export function useCreatePostMutation() {
 
           avatar_url:
             payload.currentUser?.avatar_url ??
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop',
+            null,
           bio:
             payload.currentUser?.bio ??
             null,
@@ -224,7 +183,17 @@ export function useCreatePostMutation() {
           monthly_roi:
             payload.currentUser?.monthly_roi ??
             0,
-        }
+        },
+        trade_tags: payload.assetSymbols?.length
+          ? {
+            asset_symbol: 
+              payload.assetSymbols[0],
+
+            signal_type: payload.signalType ?? "Bullish",
+          }: null,
+
+        likes_count: 0,
+        comments_count: 0,
       }
 
       queryClient.setQueryData<FeedPost[]>(
@@ -258,5 +227,70 @@ export function useCreatePostMutation() {
         queryKey: feedKeys.all
       })
     }
+  })
+}
+
+interface ToggleLikePayload {
+  postId: string
+  userId: string
+  postAuthorId: string
+}
+
+async function toggleLike({
+  postId,
+  userId,
+}: ToggleLikePayload) {
+  const { data: existingLike } =
+    await supabase
+      .from('likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .maybeSingle()
+
+  if (existingLike) {
+    const { error } = await supabase
+      .from('likes')
+      .delete()
+      .eq('id', existingLike.id)
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return {
+      liked: false,
+      postId,
+    }
+  }
+
+  const { error } = await supabase
+    .from('likes')
+    .insert({
+      post_id: postId,
+      user_id: userId,
+    })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return {
+    liked: true,
+    postId,
+  }
+}
+
+export function useToggleLikeMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: toggleLike,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: feedKeys.all,
+      })
+    },
   })
 }

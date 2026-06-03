@@ -1,82 +1,79 @@
 'use client'
 
 import Image from 'next/image'
-import { ChangeEvent, useMemo, useRef, useState, useEffect } from 'react'
+import { ChangeEvent, useMemo, useRef, useState } from 'react'
 import { ImagePlus, Loader2, X, Paperclip } from 'lucide-react'
-import { AssetSymbol } from '@/lib/supabase/types'
+import { AssetSymbol, SignalType } from '@/lib/supabase/types'
 import { useCreatePostMutation } from '@/lib/react-query/mutations/feed.mutations'
-import { supabase } from '@/lib/supabase/client'
+
+import { useAuth } from '../providers/AuthProvider'
 
 interface CreatePostModalProps {
   open: boolean
   onClose: () => void
-}
+} 
 
-interface CurrentUserProfile {
-  id: string
-  username: string
-  full_name: string | null
-  avatar_url: string | null
-}
-
-const SIGNAL_OPTIONS: { label: string; value: 'BULLISH' | 'BEARISH' | 'ACCUMULATION' | 'SCALP' | 'LONG_TERM' }[] = [
-  { label: 'Bullish', value: 'BULLISH' },
-  { label: 'Bearish', value: 'BEARISH' },
-  { label: 'Accumulation', value: 'ACCUMULATION' },
-  { label: 'Scalp', value: 'SCALP' },
-  { label: 'Long-Term', value: 'LONG_TERM' }
-]
+const SIGNAL_OPTIONS = [
+  {label: "Bullish", value: "Bullish"},
+  {label: "Bearish", value: "Bearish"},
+  {label: "Accumulation", value: "Accumulation"},
+  {label: "Scalp", value: "Scalp"},
+  {label: "Long-Term", value: "Long-Term"},
+] satisfies {
+  label: string
+  value: SignalType
+}[]
 
 
-const ASSET_OPTIONS: AssetSymbol[] = ['BTC', 'SOL', 'XAU']
+const ASSET_OPTIONS: AssetSymbol[] = ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"]
 const MAX_CHARACTERS = 700
 
 export default function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  const { profile, isLoading } = useAuth()
+
   const [content, setContent] = useState('')
-  const [selectedSignal, setSelectedSignal] = useState<'BULLISH' | 'BEARISH' | 'ACCUMULATION' | 'SCALP' | 'LONG_TERM' | null>(null)
+  const [selectedSignal, setSelectedSignal] = useState<SignalType | null>(null)
 
   const [selectedAssets, setSelectedAssets] = useState<AssetSymbol[]>([])
   const [assetInput, setAssetInput] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   
-  // Real database states for the authenticated session user
-  const [profile, setProfile] = useState<CurrentUserProfile | null>(null)
-  const [loadingProfile, setLoadingProfile] = useState(true)
+  // // Real database states for the authenticated session user
+  // const [profile, setProfile] = useState<CurrentUserProfile | null>(null)
+  // const [loadingProfile, setLoadingProfile] = useState(true)
 
   const createPostMutation = useCreatePostMutation()
   const isPublishing = createPostMutation.isPending
   const remainingCharacters = MAX_CHARACTERS - content.length
 
   // FETCH TRUE AUTHENTICATED USER DETAILS ON MOUNT
-  useEffect(() => {
-    async function loadUserProfile() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (user) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, avatar_url')
-            .eq('id', user.id)
-            .single()
+  const initials = useMemo(() => {
+    const fullName = profile?.full_name?.trim()
 
-          if (profileData) {
-            setProfile(profileData as CurrentUserProfile)
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching dynamic user session profile:', err)
-      } finally {
-        setLoadingProfile(false)
+    if (fullName) {
+      const parts = fullName.split(" ").filter(Boolean)
+
+      if (parts.length >= 2) {
+        return (
+          `${parts[0]?.[0] ?? ""}${parts[parts.length - 1]?.[0] ?? ""}`
+        ).toUpperCase()
       }
+
+      return parts[0]?.slice(0, 2)?.toUpperCase() ?? "GN"
     }
 
-    if (open) {
-      loadUserProfile()
+    const username = profile?.username?.trim()
+    if (username) {
+      return username.slice(0, 2).toUpperCase()
     }
-  }, [open])
+
+    return "GN"
+
+  }, [profile?.full_name, profile?.username])
+
+  // Multi-asset string filtering
 
   const filteredAssets = useMemo(() => {
     return ASSET_OPTIONS.filter(
@@ -108,13 +105,16 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
     try {
       await createPostMutation.mutateAsync({
         content,
+        signalType: selectedSignal,
         assetSymbols: selectedAssets,
         mediaFile,
         currentUser: {
           id: profile.id, // Pass real active profile entries
           username: profile.username,
-          full_name: profile.full_name || profile.username,
-          avatar_url: profile.avatar_url || 'https://unsplash.com',
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+          is_verified: profile.is_verified,
+          monthly_roi: profile.monthly_roi,
         },
       })
 
@@ -123,9 +123,10 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
       setSelectedSignal(null)
       setMediaFile(null)
       setAssetInput('')
+
       onClose()
     } catch (error) {
-      console.error('Mutation failure:', error)
+      console.error('Create post failed:', error)
     }
   }
 
@@ -136,27 +137,35 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-slate-900 px-5 py-4 shrink-0 bg-slate-950">
           <div className="flex items-center gap-3">
-            <Image
-              src={
-                  profile?.avatar_url && profile.avatar_url.startsWith('https://images.unsplash.com')
-                    ? profile.avatar_url
-                    : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop'
-                }
-                alt="User avatar"
-                width={42}
-                height={42}
-                style={{ width: '42px', height: '42px' }}
-                className="rounded-full object-cover ring-1 ring-slate-800"
-            />
-            <div>
-              <p className="text-sm font-bold text-white">
-                {loadingProfile ? 'Checking authorization...' : `@${profile?.username || 'anonymous'}`}
-              </p>
-              <p className="text-[11px] text-slate-500">Publishing to GNEX Feed</p>
-            </div>
+            {/*  3. Defensive parent Frame With Reusable Ibitials Overlay No Unconfigured Strings */}
+              <div className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-900/80 bg-slate-900">
+                {profile?.avatar_url ? (
+                  <Image
+                    src={profile.avatar_url}
+                    alt={profile.full_name ?? profile.username ?? 'Profile'}
+                    fill
+                    sizes="42px"
+                    className="rounded-full object-cover"
+                    priority
+                  />
+                ) : (
+                  <span className="text-xs font-black text-slate-200 font-mono select-none">
+                    {initials}
+                  </span>
+                )}
+              </div>
+
+             {/*  1. HYDRATED AUTHOR LABELS CONTEXT ASSETS */}
+              <div>
+                <p className="text-sm font-bold text-white">
+                  {isLoading ? 'Synchronizing matrix...' : `@${profile?.username ?? 'anonymous'}`}
+                </p>
+                <p className="text-[11px] text-slate-500">Publishing your feed</p>
+              </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/50 text-slate-400 transition hover:border-slate-700 hover:text-slate-200 cursor-pointer"
           >
@@ -164,7 +173,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
           </button>
         </div>
 
-        {/* BODY CONTAINER */}
+        {/* Body Container */}
         <div className="space-y-6 p-5 overflow-y-auto no-scrollbar flex-1 bg-slate-950">
           
           {/* CONTENT TEXTAREA */}
@@ -173,7 +182,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
               maxLength={MAX_CHARACTERS}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Share a trade setup, analysis, or thought..."
+              placeholder="Share your market intelligence..."
               className="min-h-[140px] w-full resize-none rounded-2xl border border-slate-800/40 bg-slate-900/30 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-yellow-600/40 focus:ring-1 focus:ring-yellow-600/20"
             />
             <div className="flex justify-end">
@@ -196,9 +205,9 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
                     onClick={() => setSelectedSignal(signal.value)}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
                       active
-                        ? signal.value === 'BULLISH'
+                        ? signal.value === 'Bullish'
                           ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                          : signal.value === 'BEARISH'
+                          : signal.value === 'Bearish'
                           ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
                           : 'border-yellow-600/30 bg-yellow-600/10 text-yellow-600'
                         : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-slate-200'
@@ -303,7 +312,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
         <div className="flex items-center justify-end border-t border-slate-900 px-5 py-4 bg-slate-950 shrink-0">
           <button
             type="button"
-            disabled={isPublishing || !content.trim() || loadingProfile || !profile}
+            disabled={isPublishing || !content.trim() || isLoading || !profile}
             onClick={handlePublish}
             className="flex min-w-[140px] items-center justify-center gap-2 rounded-full bg-yellow-600 px-5 py-2 text-sm font-bold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >

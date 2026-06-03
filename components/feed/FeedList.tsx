@@ -1,14 +1,23 @@
 'use client'
 
+import { useAuth } from '../providers/AuthProvider'
+
 import { useFeedRealtime } from '@/lib/hooks/useFeedRealtime'
 import { useGetFeedQuery } from '@/lib/react-query/queries/feed.queries'
+
+import type { FeedPost  } from '@/lib/supabase/types'
 
 import CreatePostCard from './CreatePostCard'
 import FeedPostCard from './FeedPostCard'
 
 export default function FeedList() {
+  const { user } = useAuth()
+
   const { data, isLoading } =
-    useGetFeedQuery()
+    useGetFeedQuery() as {
+      data: FeedPost[] | undefined
+      isLoading: boolean
+    }
 
   useFeedRealtime()
 
@@ -17,7 +26,7 @@ export default function FeedList() {
       <section className="space-y-6">
         <CreatePostCard />
 
-        <div className="animate-pulse rounded-2xl border border-slate-800/40 bg-slate-900/30 p-10 text-center text-sm text-slate-500">
+        <div className="animate-pulse rounded-2xl border border-slate-900/80 bg-slate-950/95 p-10 text-center text-sm text-slate-500 backdrop-blur-xl">
           Loading your feed...
         </div>
       </section>
@@ -28,110 +37,28 @@ export default function FeedList() {
     <section className="space-y-6">
       <CreatePostCard />
 
-      {data?.map((post) => {
-        /*
-         * Prevent undefined crashes
-         * on empty asset arrays
-         */
-        const primaryAsset =
-          post.assetSymbols?.[0] ??
-          'BTC'
+      {data?.map((post: FeedPost) => (
+        <FeedPostCard
+          key={post.id}
+          post={post}
+        />
+      ))}
 
-        return (
-          <FeedPostCard
-            key={post.id}
-            post={{
-              id: post.id,
+      {!isLoading &&
+        (!data || data.length === 0) && (
+          <div className="rounded-2xl border border-slate-900/80 bg-slate-950/95 p-10 text-center backdrop-blur-xl">
+            <p className="text-sm text-slate-400">
+              No posts available yet.
+            </p>
 
-              author: {
-                /*
-                 * Fully defensive
-                 * fallback chain
-                 */
-                name:
-                  post.profiles
-                    ?.full_name ??
-                  post.profiles
-                    ?.username ??
-                  'Anonymous Trader',
-
-                username:
-                  post.profiles
-                    ?.username
-                    ? `@${post.profiles.username}`
-                    : '@anonymous',
-
-                avatar:
-                  post.profiles
-                    ?.avatar_url ??
-                  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop',
-
-                verified:
-                  post.profiles
-                    ?.is_verified ??
-                  false,
-
-                roi:
-                  post.profiles
-                    ?.monthly_roi
-                    ? `+${post.profiles.monthly_roi}% Monthly ROI`
-                    : '+12% ROI',
-              },
-
-              content:
-                post.content,
-
-              asset: {
-                symbol:
-                  primaryAsset,
-
-                name:
-                  primaryAsset ===
-                  'XAU'
-                    ? 'Spot Gold'
-                    : primaryAsset ===
-                        'SOL'
-                      ? 'Solana'
-                      : 'Bitcoin',
-
-                price:
-                  primaryAsset ===
-                  'XAU'
-                    ? '$2,345.50/oz'
-                    : primaryAsset ===
-                        'SOL'
-                      ? '$142.20'
-                      : '$64,250.00',
-
-                change:
-                  primaryAsset ===
-                  'XAU'
-                    ? '-0.3%'
-                    : primaryAsset ===
-                        'SOL'
-                      ? '+5.1%'
-                      : '+3.4%',
-
-                positive:
-                  primaryAsset !==
-                  'XAU',
-
-                type:
-                  primaryAsset ===
-                  'XAU'
-                    ? 'gold'
-                    : 'crypto',
-              },
-
-              likes: 0,
-
-              comments: 0,
-
-              shares: 0,
-            }}
-          />
-        )
-      })}
+            {user && (
+              <p className="mt-2 text-xs text-slate-600">
+                Be the first to share market
+                intelligence.
+              </p>
+            )}
+          </div>
+        )}
     </section>
   )
 }

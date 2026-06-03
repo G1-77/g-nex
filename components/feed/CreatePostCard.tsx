@@ -85,7 +85,7 @@ export default function CreatePostCard() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group flex w-full items-center gap-3 rounded-2xl border border-slate-900/80 bg-slate-950/95 p-4 backdrop-blur-xl transition-all duration-200 hover:bg-slate-900/40"
+        className="group flex w-full items-center gap-3 rounded-2xl cursor-pointer border border-slate-900/80 bg-slate-950/95 p-4 backdrop-blur-xl transition-all duration-200 hover:bg-slate-900/40"
       >
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-900/80 bg-slate-900">
           {profile?.avatar_url ? (
