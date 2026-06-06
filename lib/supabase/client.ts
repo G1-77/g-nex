@@ -1,8 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr"
 
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -14,7 +12,7 @@ export const supabase = createBrowserClient(
   supabaseAnonKey,
   {
     auth: {
-      flowType: "pkce",
+      flowType: 'pkce',
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true
@@ -26,3 +24,4 @@ export const supabase = createBrowserClient(
     }
   }
 )
+//  CLEANSED: 'onAuthStateChange' has been stripped from here to prevent boot runtime loop crashes

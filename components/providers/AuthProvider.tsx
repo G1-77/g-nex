@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 import { AdminRoleType, Profile } from '@/lib/supabase/types'
+import { syncSessionAction } from '@/app/auth/action'
 
 interface AuthContextType {
   user: User | null
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false)
     }
   }
+
   useEffect(() => {
     async function initializeSession() {
       try {
@@ -68,7 +70,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeSession()
 
+    //  MOUNT-GUARDED SESSION SYNC AND REFRESHEER LIFE-CYCLE HOOK
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Handle Next.js Server-Side HTTP-Only Cookie Synchronizations
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session) {
+          try {
+            await syncSessionAction({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            })
+          } catch (err) {
+            console.error('Background server cookie synchronization failed:', err)
+          }
+        }
+      }
+
+      if (event === 'SIGNED_OUT') {
+        try {
+          await syncSessionAction(null)
+        } catch (err) {
+          console.error('Sign-out server action session wipe failed:', err)
+        }
+      }
+
+      // Handle local state component context updates
       if (session?.user) {
         await syncIdentity(session.user)
       } else {
@@ -83,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe()
     }
   }, [])
-
 
   const value: AuthContextType = {
     user,

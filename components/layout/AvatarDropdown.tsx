@@ -19,6 +19,7 @@ import {
 
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '../providers/AuthProvider'
+import { syncSessionAction } from '@/app/auth/action'
 
 // For Mobile
 
@@ -199,8 +200,14 @@ export default function AvatarDropdown() {
   }, [open])
 
   async function handleLogout() {
-    await supabase.auth.signOut()
-    window.location.href = '/login'
+    try {
+      await supabase.auth.signOut()
+      await syncSessionAction(null)
+    } catch (err) {
+      console.error("Logout sync exception:", err)
+    } finally {
+      window.location.href = "/login"
+    }
   }
 
   // FIXED INITIALS (FULL NAME PRIORITY → "HA")

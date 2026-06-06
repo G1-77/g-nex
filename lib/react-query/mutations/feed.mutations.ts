@@ -1,21 +1,9 @@
-// lib/react-query/mutations/feed.mutations.ts
-
 'use client'
 
-import {
-  useMutation,
-  useQueryClient
-} from '@tanstack/react-query'
-
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-
 import { feedKeys } from '../keys'
-
-import type {
-  AssetSymbol,
-  FeedPost,
-  SignalType
-} from '@/lib/supabase/types'
+import type { AssetSymbol, FeedPost, SignalType } from '@/lib/supabase/types'
 
 interface CurrentUserPayload {
   id: string
@@ -35,14 +23,19 @@ export interface CreatePostPayload {
   signalType?: SignalType | null
 }
 
+export interface ToggleLikePayload {
+  postId: string
+  userId: string
+  postAuthorId: string
+}
 
-async function uploadMedia(
-  file: File
-): Promise<string> {
-  const fileExtension =
-    file.name.split('.').pop()
+// 🗄️ MULTIMEDIA SCREENSHOT/CHART UPLOAD ENGINE
+
+async function uploadMedia(file: File): Promise<string> {
+  const fileExtension = file.name.split('.').pop()
   const fileName = `${crypto.randomUUID()}.${fileExtension}`
   const filePath = `posts/${fileName}`
+  
   const { error } = await supabase.storage
     .from('post-media')
     .upload(filePath, file)
@@ -51,82 +44,49 @@ async function uploadMedia(
     throw new Error(error.message)
   }
 
-  const {
-    data: { publicUrl }
-  } = supabase.storage
+  const { data: { publicUrl } } = supabase.storage
     .from('post-media')
     .getPublicUrl(filePath)
 
   return publicUrl
 }
 
-async function createPost(
-  payload: CreatePostPayload
-) {
-  const {
-    data: { user }
-  } = await supabase.auth.getUser()
+// MUTATION 1: ATOMIC POST ENGINE (INVOKES SECURE DATABASE RPC)
+
+async function createPost(payload: CreatePostPayload) {
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    throw new Error('Unauthorized')
+    throw new Error('Unauthorized account session state')
   }
+
   let mediaUrl: string | null = null
 
-  
-  // OPTIONAL MEDIA UPLOAD
-
+  // Optional trade chart file attachment processing
   if (payload.mediaFile) {
-    mediaUrl = await uploadMedia(
-      payload.mediaFile
-    )
+    mediaUrl = await uploadMedia(payload.mediaFile)
   }
 
-  // CREATE POST
-  
-  const { data: postData, error: postError } =
-    await supabase
-      .from('posts')
-      .insert({
-        user_id: user.id,
-        content: payload.content,
-        media_url: mediaUrl
-      })
-      .select()
-      .single()
+  const primaryAsset = payload.assetSymbols && payload.assetSymbols.length > 0 
+    ? payload.assetSymbols 
+    : null
 
-  if (postError) {
-    throw new Error(postError.message)
+  // Invokes our atomic database stored procedure to bypass browser RLS lag crashes
+  const { data: postUuid, error: rpcError } = await supabase.rpc('create_post_with_tags', {
+    p_content: payload.content,
+    p_asset_symbol: primaryAsset,
+    p_signal_type: payload.signalType || null
+  })
+
+  if (rpcError) {
+    throw new Error(rpcError.message)
   }
 
-  // OPTIONAL TRADE TAG INSERTS
-  
-  if (
-    payload.assetSymbols &&
-    payload.assetSymbols.length > 0
-  ) {
-    const tradeTagPayload =
-      payload.assetSymbols.map(
-        (symbol) => ({
-          post_id: postData.id,
-          asset_symbol: symbol,
-          signal_type: 
-            payload.signalType ?? 
-              "Bullish",
-        })
-      )
-
-    const { error: tradeTagError } =
-      await supabase
-        .from('trade_tags')
-        .insert(tradeTagPayload)
-
-    if (tradeTagError) {
-      throw new Error(
-        tradeTagError.message
-      )
-    }
+  return {
+    id: postUuid as string,
+    content: payload.content,
+    media_url: mediaUrl,
+    created_at: new Date().toISOString()
   }
-
-  return postData
 }
 
 export function useCreatePostMutation() {
@@ -135,120 +95,75 @@ export function useCreatePostMutation() {
   return useMutation({
     mutationFn: createPost,
 
+    // OPTIMISTIC RENDER STREAM FOR HIGH-SPEED INTERFACE UPDATES
     onMutate: async (payload) => {
-      await queryClient.cancelQueries({
-        queryKey: feedKeys.all
-      })
+      await queryClient.cancelQueries({ queryKey: feedKeys.all })
 
-      const previousFeed =
-        queryClient.getQueryData<FeedPost[]>(
-          feedKeys.all
-        )
+      const previousFeed = queryClient.getQueryData<FeedPost[]>(feedKeys.all)
 
       const optimisticPost: FeedPost = {
         id: crypto.randomUUID(),
         content: payload.content,
-        created_at:
-          new Date().toISOString(),
-        optimistic: true,
-        assetSymbols:
-          payload.assetSymbols ?? [],
-        signalType: null,
-        media_url: payload.mediaFile
-          ? URL.createObjectURL(
-              payload.mediaFile
-            )
-          : null,
-
+        created_at: new Date().toISOString(),
+        media_url: payload.mediaFile ? URL.createObjectURL(payload.mediaFile) : null,
+        assetSymbols: payload.assetSymbols ?? [],
+        signalType: payload.signalType ?? null,
         profiles: {
-          id:
-            payload.currentUser?.id ??
-            'optimistic-user',
-          username:
-            payload.currentUser?.username ??
-            'anonymous',
-          full_name:
-            payload.currentUser?.full_name ??
-            'Anonymous Trader',
-
-          avatar_url:
-            payload.currentUser?.avatar_url ??
-            null,
-          bio:
-            payload.currentUser?.bio ??
-            null,
-          is_verified:
-            payload.currentUser?.is_verified ??
-            false,
-          monthly_roi:
-            payload.currentUser?.monthly_roi ??
-            0,
+          id: payload.currentUser?.id ?? 'optimistic-user',
+          username: payload.currentUser?.username ?? 'anonymous',
+          full_name: payload.currentUser?.full_name ?? 'Anonymous Trader',
+          avatar_url: payload.currentUser?.avatar_url ?? null,
+          bio: payload.currentUser?.bio ?? null,
+          is_verified: payload.currentUser?.is_verified ?? false,
+          monthly_roi: payload.currentUser?.monthly_roi ?? 0,
         },
         trade_tags: payload.assetSymbols?.length
           ? {
-            asset_symbol: 
-              payload.assetSymbols[0],
-
-            signal_type: payload.signalType ?? "Bullish",
-          }: null,
-
+              asset_symbol: payload.assetSymbols[0],
+              signal_type: payload.signalType ?? 'Bullish',
+            }
+          : null,
         likes_count: 0,
         comments_count: 0,
       }
 
-      queryClient.setQueryData<FeedPost[]>(
-        feedKeys.all,
-        (old = []) => [
-          optimisticPost,
-          ...old
-        ]
-      )
+      queryClient.setQueryData<FeedPost[]>(feedKeys.all, (old = []) => [
+        optimisticPost,
+        ...old,
+      ])
 
-      return {
-        previousFeed
-      }
+      return { previousFeed }
     },
 
-    onError: (
-      _error,
-      _variables,
-      context
-    ) => {
+    onError: (_error, _variables, context) => {
       if (context?.previousFeed) {
-        queryClient.setQueryData(
-          feedKeys.all,
-          context.previousFeed
-        )
+        queryClient.setQueryData(feedKeys.all, context.previousFeed)
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: feedKeys.all
-      })
-    }
+      queryClient.invalidateQueries({ queryKey: feedKeys.all })
+    },
   })
 }
 
-interface ToggleLikePayload {
-  postId: string
-  userId: string
-  postAuthorId: string
-}
+//  MUTATION 2: TYPE-SAFE TOGGLE LIKE ENGINE (TARGETS REAL 'LIKES' TABLE)
 
-async function toggleLike({
-  postId,
-  userId,
-}: ToggleLikePayload) {
-  const { data: existingLike } =
-    await supabase
-      .from('likes')
-      .select('id')
-      .eq('post_id', postId)
-      .eq('user_id', userId)
-      .maybeSingle()
+async function toggleLike({ postId, userId, postAuthorId }: ToggleLikePayload) {
+  
+  const { data: existingLike, error: fetchError } = await supabase
+    .from('likes')
+    .select('id')
+    .eq('post_id', postId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (fetchError) {
+    throw new Error(fetchError.message)
+  }
 
   if (existingLike) {
+    // UNLIKE ROUTE: Row exists, wipe it from disk cleanly
     const { error } = await supabase
       .from('likes')
       .delete()
@@ -258,12 +173,10 @@ async function toggleLike({
       throw new Error(error.message)
     }
 
-    return {
-      liked: false,
-      postId,
-    }
+    return { liked: false, postId }
   }
 
+  // LIKE ROUTE: No row exists, insert fresh tracking identifiers
   const { error } = await supabase
     .from('likes')
     .insert({
@@ -275,10 +188,17 @@ async function toggleLike({
     throw new Error(error.message)
   }
 
-  return {
-    liked: true,
-    postId,
+  // AUTO-TRIGGER ACTIVITY ALERT NOTIFICATION ROW
+  if (userId !== postAuthorId && postAuthorId !== '') {
+    await supabase.from('notifications').insert({
+      recipient_id: postAuthorId,
+      notifier_id: userId,
+      notification_type: 'like',
+      metadata_json: { post_id: postId }
+    })
   }
+
+  return { liked: true, postId }
 }
 
 export function useToggleLikeMutation() {
@@ -287,10 +207,41 @@ export function useToggleLikeMutation() {
   return useMutation({
     mutationFn: toggleLike,
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: feedKeys.all,
+    //  OPTIMISTIC CACHE TOGGLE ENGINE FOR LATENCY-FREE TAP RESPONSES
+    onMutate: async ({ postId }) => {
+      await queryClient.cancelQueries({ queryKey: feedKeys.all })
+
+      const previousFeed = queryClient.getQueryData<FeedPost[]>(feedKeys.all)
+
+      queryClient.setQueryData<FeedPost[]>(feedKeys.all, (oldData) => {
+        if (!oldData) return []
+        return oldData.map((post) => {
+          if (post.id === postId) {
+            const currentlyLiked = post.isLikedByCurrentUser ?? false
+            return {
+              ...post,
+              isLikedByCurrentUser: !currentlyLiked,
+              likes_count: currentlyLiked 
+                ? Math.max(0, post.likes_count - 1) 
+                : post.likes_count + 1
+            }
+          }
+          return post
+        })
       })
+
+      return { previousFeed }
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previousFeed) {
+        queryClient.setQueryData(feedKeys.all, context.previousFeed)
+      }
+      alert('Network transaction delayed. Retrying sync block.')
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: feedKeys.all })
     },
   })
 }

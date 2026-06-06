@@ -1,10 +1,5 @@
-// /lib/supabase/server.ts
-
+import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import {
-  createServerClient as createSupabaseServerClient,
-  type CookieOptions
-} from '@supabase/ssr'
 
 export async function createServerClient() {
   const cookieStore = await cookies()
@@ -15,18 +10,21 @@ export async function createServerClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll().map((cookie) => ({
-            name: cookie.name,
-            value: cookie.value
-          }))
+          return cookieStore.getAll()
         },
-
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set({ name, value, ...options })
-          })
-        }
-      }
+        setAll(cookiesToSet) {
+          try {
+            // CRUCIAL SERVER REFRESH FIX: 
+            // Next.js App Router allows setting cookies inside Middleware and Server Actions,
+            // but it requires a clean try/catch block because setting cookies inside plain Server Components throws.
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // This can be safely ignored when called from standard read-only page layouts
+          }
+        },
+      },
     }
   )
 }

@@ -131,14 +131,14 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
       <div className="w-full max-w-2xl rounded-3xl border border-slate-800/60 bg-slate-950 shadow-2xl shadow-black/40 overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-slate-900 px-5 py-4 shrink-0 bg-slate-950">
           <div className="flex items-center gap-3">
             {/*  3. Defensive parent Frame With Reusable Ibitials Overlay No Unconfigured Strings */}
-              <div className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-900/80 bg-slate-900">
+              <div className="relative flex h-10.5 w-10.5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-900/80 bg-slate-900">
                 {profile?.avatar_url ? (
                   <Image
                     src={profile.avatar_url}
@@ -183,7 +183,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Share your market intelligence..."
-              className="min-h-[140px] w-full resize-none rounded-2xl border border-slate-800/40 bg-slate-900/30 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-yellow-600/40 focus:ring-1 focus:ring-yellow-600/20"
+              className="min-h-35 w-full resize-none rounded-2xl border border-slate-800/40 bg-slate-900/30 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-yellow-600/40 focus:ring-1 focus:ring-yellow-600/20"
             />
             <div className="flex justify-end">
               <span className={`text-[11px] font-mono ${remainingCharacters <= 50 ? 'text-yellow-600' : 'text-slate-500'}`}>
@@ -297,7 +297,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex min-h-[110px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 hover:border-yellow-600/20 bg-slate-900/10 hover:bg-slate-900/20 p-4 text-center transition-all duration-200 group cursor-pointer"
+                className="w-full flex min-h-27.5 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 hover:border-yellow-600/20 bg-slate-900/10 hover:bg-slate-900/20 p-4 text-center transition-all duration-200 group cursor-pointer"
               >
                 <ImagePlus className="h-5 w-5 text-slate-500 group-hover:text-yellow-600 transition-colors mb-2" />
                 <p className="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Click to attach charts or transaction screenshots</p>
@@ -314,7 +314,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
             type="button"
             disabled={isPublishing || !content.trim() || isLoading || !profile}
             onClick={handlePublish}
-            className="flex min-w-[140px] items-center justify-center gap-2 rounded-full bg-yellow-600 px-5 py-2 text-sm font-bold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            className="flex min-w-35 items-center justify-center gap-2 rounded-full bg-yellow-600 px-5 py-2 text-sm font-bold text-slate-950 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             {isPublishing ? (
               <>

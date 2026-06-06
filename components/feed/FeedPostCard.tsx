@@ -329,14 +329,18 @@ export default function FeedPostCard({
           <ThumbsUp
             className={`h-4 w-4 ${
               post.isLikedByCurrentUser
-                ? 'fill-yellow-600'
+                ? 'fill-yellow-600 stroke-none'
                 : ''
             }`}
           />
-          <span>
-            Like (
-            {post.likes_count})
-          </span>
+          <span>Like</span>
+            {Boolean(post.likes_count && (
+              <span className="ml-1 rounded-md bg-slate-900 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-400 border border-slate-800/40">
+                {post.likes_count}
+              </span>
+            ))
+          }
+          
         </button>
 
         <button
@@ -347,10 +351,13 @@ export default function FeedPostCard({
           className="flex flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-900/40 hover:text-slate-300"
         >
           <MessagesSquare className="h-4 w-4" />
-          <span>
-            Comment (
-            {post.comments_count})
-          </span>
+          <span>Comment</span>
+          {Boolean(post.comments_count && (
+            <span className="ml-1 rounded-md bg-slate-900 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-400 border border-slate-800/40">
+              {post.comments_count}
+            </span>
+          ))} 
+          
         </button>
 
         <button
