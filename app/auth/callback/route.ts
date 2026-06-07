@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -8,16 +9,42 @@ export async function GET(request: Request) {
 
   if (code) {
     try {
-      const supabase = await createServerClient()
+      const cookieStore = await cookies()
       
-      // 🟢 Attempt the server-side authorization code swap transaction
+      // 1. Initialize the explicit outgoing redirect response instance first
+      const response = NextResponse.redirect(`${origin}${next}`)
+
+      // 2. Instantiate a contextual client tied directly to this response instance
+      const supabase = createSupabaseServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll()
+            },
+            setAll(cookiesToSet) {
+              
+              // Forcefully writes the fresh login cookies into both the server store 
+             
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set(name, value, options)
+                response.cookies.set(name, value, options)
+              })
+            },
+          },
+        }
+      )
+
+      // 3. Execute the code exchange securely
       const { error } = await supabase.auth.exchangeCodeForSession(code)
       
       if (!error) {
-        return NextResponse.redirect(`${origin}${next}`)
+        // Return the exact response instance carrying your live session cookies!
+        return response
       }
       
-      console.error('Supabase code exchange execution error:', error)
+      console.error('Supabase code exchange execution error:', error.message)
       return NextResponse.redirect(`${origin}/login?error=pkce_exchange_failed`)
     } catch (catchErr) {
       console.error('Unexpected callback exception:', catchErr)
@@ -25,6 +52,5 @@ export async function GET(request: Request) {
     }
   }
 
-  // 🟢 FALLBACK SECURITY GUARD: Always return an explicit response redirect object
   return NextResponse.redirect(`${origin}/login?error=missing_code`)
 }

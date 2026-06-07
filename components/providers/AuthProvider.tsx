@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 import { AdminRoleType, Profile } from '@/lib/supabase/types'
-import { syncSessionAction } from '@/app/auth/action'
 
 interface AuthContextType {
   user: User | null
@@ -54,50 +53,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    async function initializeSession() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          await syncIdentity(session.user)
-        } else {
-          setIsLoading(false)
-        }
-      } catch (err) {
-        console.error('Session initialization error:', err)
-        setIsLoading(false)
-      }
-    }
+    let isMounted = true
 
-    initializeSession()
-
-    //  MOUNT-GUARDED SESSION SYNC AND REFRESHEER LIFE-CYCLE HOOK
+    // 🟢 CLEAN SINGLE-RESPONSIBILITY COMPONENT HYDRATOR
+    // We completely stripped out 'syncSessionAction' calls from here.
+    // Our Server Middleware handles cookies; this listener handles ONLY front-end component state!
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Handle Next.js Server-Side HTTP-Only Cookie Synchronizations
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session) {
-          try {
-            await syncSessionAction({
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            })
-          } catch (err) {
-            console.error('Background server cookie synchronization failed:', err)
-          }
-        }
-      }
+      if (!isMounted) return
 
-      if (event === 'SIGNED_OUT') {
-        try {
-          await syncSessionAction(null)
-        } catch (err) {
-          console.error('Sign-out server action session wipe failed:', err)
-        }
-      }
-
-      // Handle local state component context updates
       if (session?.user) {
+        // Safely fetch database profile and roles records out of memory caches cleanly
         await syncIdentity(session.user)
       } else {
+        // Handle guest dropbacks when no token is present
         setUser(null)
         setProfile(null)
         setRole(null)
@@ -106,9 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, []) // Empty dependencies array ensures this listener mounts exactly once on page boot
+
+
+
 
   const value: AuthContextType = {
     user,

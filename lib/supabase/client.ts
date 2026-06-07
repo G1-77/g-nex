@@ -7,6 +7,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables")
 }
 
+// 🟢 RESTORED STANDARD CHANNELS:
+// Completely purges the custom regex storage adapter. Allowing the library 
+// to handle browser data natively instantly breaks the infinite rewrite loop.
 export const supabase = createBrowserClient(
   supabaseUrl,
   supabaseAnonKey,
@@ -16,12 +19,6 @@ export const supabase = createBrowserClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10
-      }
     }
   }
 )
-//  CLEANSED: 'onAuthStateChange' has been stripped from here to prevent boot runtime loop crashes

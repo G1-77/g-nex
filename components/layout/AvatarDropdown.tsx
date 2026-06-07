@@ -152,21 +152,21 @@ export default function AvatarDropdown() {
   const { profile, role, isStaff, isLoading } = useAuth()
 
   // STRICT SESSION HYDRATION GUARD (prevents stale/testuser overwrite)
-  useEffect(() => {
-    const syncSession = async () => {
-      const { data } = await supabase.auth.getUser()
-      const authUser = data?.user
+  // useEffect(() => {
+  //   const syncSession = async () => {
+  //     const { data } = await supabase.auth.getUser()
+  //     const authUser = data?.user
 
-      if (!authUser) return
+  //     if (!authUser) return
 
-      if (profile?.username && authUser.email !== 'ahelstakov@gmail.com') {
-        // prevent stale or test session mismatch
-        setOpen(false)
-      }
-    }
+  //     if (profile?.username && authUser.email !== 'ahelstakov@gmail.com') {
+  //       // prevent stale or test session mismatch
+  //       setOpen(false)
+  //     }
+  //   }
 
-    syncSession()
-  }, [profile])
+  //   syncSession()
+  // }, [profile])
 
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
@@ -241,9 +241,9 @@ export default function AvatarDropdown() {
         {profile?.avatar_url ? (
           <Image
             src={profile.avatar_url}
-            alt="avatar"
-            width={40}
-            height={40}
+            alt={profile.username}
+            fill
+            sizes="40px"
             className="w-full h-full object-cover rounded-full"
           />
         ) : (

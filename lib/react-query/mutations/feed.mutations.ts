@@ -54,9 +54,11 @@ async function uploadMedia(file: File): Promise<string> {
 // MUTATION 1: ATOMIC POST ENGINE (INVOKES SECURE DATABASE RPC)
 
 async function createPost(payload: CreatePostPayload) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized account session state')
+  // Extract our real active profile entry passed straight from useAuth() in the component layer
+  const activeUserId = payload.currentUser?.id
+
+  if (!activeUserId) {
+    throw new Error('Unauthorized session: Active user context missing from provider.')
   }
 
   let mediaUrl: string | null = null
@@ -74,7 +76,8 @@ async function createPost(payload: CreatePostPayload) {
   const { data: postUuid, error: rpcError } = await supabase.rpc('create_post_with_tags', {
     p_content: payload.content,
     p_asset_symbol: primaryAsset,
-    p_signal_type: payload.signalType || null
+    p_signal_type: payload.signalType || null,
+    p_media_url: mediaUrl 
   })
 
   if (rpcError) {
@@ -88,6 +91,7 @@ async function createPost(payload: CreatePostPayload) {
     created_at: new Date().toISOString()
   }
 }
+
 
 export function useCreatePostMutation() {
   const queryClient = useQueryClient()

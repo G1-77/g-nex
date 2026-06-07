@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 
 const PUBLIC_AUTH_ROUTES = ["/login", "/register"]
 const PUBLIC_STATIC_PREFIXES = ['/_next', "/static", "/favicon.ico"]
@@ -9,7 +9,7 @@ export async function proxy(req: NextRequest) {
   const url = new URL(req.url)
   const pathname = url.pathname
 
-  // 1. PUBLIC STATIC EXEMPTIONS
+  // 1. PUBLIC STATIC EXEMPTIONS (Bypass for bundle files)
   const isStatic =
     PUBLIC_STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || 
     PUBLIC_FILE_REGEX.test(pathname)
@@ -18,49 +18,59 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // 2. ALLOW OAUTH AND BACKGROUND HANDSHAKES TO SLIP PAST UNINTERRUPTED
-  if (pathname.startsWith('/auth')) {
+  
+  if (pathname.startsWith('/auth') || pathname === '/auth/callback') {
     return NextResponse.next()
   }
 
-  // Initialize an explicit outgoing Next.js response context wrapper
-  // This allows our server client's 'setAll' hook to write fresh cookies straight into the request pipeline
-  const response = NextResponse.next({
+  // 2. Dynamic response that can be modified with cookies
+  let response = NextResponse.next({
     request: {
       headers: req.headers,
     },
   })
 
-  const supabase = await createServerClient()
+  // Re-initialize the server client matching our current request/response chain
+  const supabase = createSupabaseServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
+          response = NextResponse.next({
+            request: {
+              headers: req.headers,
+            },
+          })
+        },
+      },
+    }
+  )
 
-  //SESSION STABILIZER:
-  // Calling getUser() inside the middleware forces @supabase/ssr to check token lifespan.
-  // If the 60-minute token is expired, the server automatically refreshes it right here
-  // and injects the brand new cookie into our 'response' variable object stream.
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser()
+  // Force user verification token check checks
+  const { data: { user }, error } = await supabase.auth.getUser()
 
   const isAuthenticated = !!user && !error
   const isAuthPage = PUBLIC_AUTH_ROUTES.includes(pathname)
 
-  // 3. Prevent logged-in users from viewing auth screens
   if (isAuthenticated && isAuthPage) {
     return NextResponse.redirect(new URL('/', req.url))
   }
 
-  // 4. Discover public auth pages safely
   if (isAuthPage) {
     return response
   }
 
-  // 5. Global protected dashboard gateways
   if (!isAuthenticated) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  // 6. EXISTING ADMIN ROLE GUARD
+  // Admin security roles routing filter block
   if (pathname.startsWith('/admin')) {
     const { data: role } = await supabase
       .from('admin_roles')
@@ -73,6 +83,5 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // Always return the response object that carries your updated cookies!
   return response
 }

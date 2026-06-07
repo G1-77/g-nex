@@ -39,6 +39,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
   const [selectedAssets, setSelectedAssets] = useState<AssetSymbol[]>([])
   const [assetInput, setAssetInput] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   
   // // Real database states for the authenticated session user
   // const [profile, setProfile] = useState<CurrentUserProfile | null>(null)
@@ -94,41 +95,74 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
     setSelectedAssets((prev) => prev.filter((item) => item !== asset))
   }
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null
-    setMediaFile(file)
+const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0] ?? null
+  setMediaFile(file)
+  
+  if (file) {
+    const previewUrl = URL.createObjectURL(file)
+    setImagePreviewUrl(previewUrl)
   }
+}
 
-  const handlePublish = async () => {
-    if (!content.trim() || !profile) return
+const handleRemoveMedia = () => {
+  setMediaFile(null)
+  if (imagePreviewUrl) {
+    // Forcefully revokes the object URL to free up browser memory layers
+    URL.revokeObjectURL(imagePreviewUrl)
+    setImagePreviewUrl(null)
+  }
+  // Reset the file input value so selecting the same chart again triggers onChange
+  if (fileInputRef.current) {
+    fileInputRef.current.value = ''
+  }
+}
 
-    try {
-      await createPostMutation.mutateAsync({
-        content,
-        signalType: selectedSignal,
-        assetSymbols: selectedAssets,
-        mediaFile,
-        currentUser: {
-          id: profile.id, // Pass real active profile entries
-          username: profile.username,
-          full_name: profile.full_name,
-          avatar_url: profile.avatar_url,
-          is_verified: profile.is_verified,
-          monthly_roi: profile.monthly_roi,
-        },
-      })
 
-      setContent('')
-      setSelectedAssets([])
-      setSelectedSignal(null)
-      setMediaFile(null)
-      setAssetInput('')
+  //  Handle Publish
+const handlePublish = async () => {
+  // Guard clause against empty submissions or missing profile sessions
+  if (!content.trim() || !profile) return
 
-      onClose()
-    } catch (error) {
-      console.error('Create post failed:', error)
+  const verifiedAssetPayload: AssetSymbol[] = 
+    selectedAssets.length > 0 ? [selectedAssets[0]] : []
+
+  // Fire the mutation via synchronous handlers so we can leverage hook callbacks safely
+  createPostMutation.mutate(
+    {
+      content,
+      signalType: selectedSignal,
+      assetSymbols: verifiedAssetPayload,
+      mediaFile,
+      currentUser: {
+        id: profile.id,
+        username: profile.username,
+        full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
+        is_verified: profile.is_verified,
+        monthly_roi: profile.monthly_roi,
+      },
+    },
+    {
+      // Force execution only when the server returns a 200 success signature
+      onSuccess: () => {
+        setContent('')
+        setSelectedAssets([])
+        setSelectedSignal(null)
+        setMediaFile(null)
+        setAssetInput('')
+        
+        // Collapse the drawer smoothly
+        onClose()
+      },
+      onError: (error: Error) => {
+        console.error('Handshake publication exception encountered:', error.message)
+        // You can drop your free inline error banner hook trigger right here!
+      }
     }
-  }
+  )
+}
+
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
@@ -268,43 +302,70 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
           </div>
 
           {/* ATTACH MEDIA DROPZONE */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Attach Media</p>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              className="hidden"
-            />
+         
+        <div className="space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            Attach Technical Analysis Charts
+          </p>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
-            {mediaFile ? (
-              <div className="flex items-center justify-between p-3 rounded-xl border border-slate-800 bg-slate-900/40">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Paperclip className="h-4 w-4 text-yellow-600 shrink-0" />
-                  <span className="text-xs font-medium text-slate-300 truncate">{mediaFile.name}</span>
-                  <span className="text-[10px] font-mono text-slate-600 shrink-0">({(mediaFile.size / 1024 / 1024).toFixed(2)} MB)</span>
-                </div>
+          {mediaFile && imagePreviewUrl ? (
+            <div className="space-y-2 animate-scaleIn">
+              {/* GLOWING HIGH-FIDELITY LIVE PREVIEW CONTAINER */}
+              <div className="relative w-full aspect-video rounded-2xl border border-slate-900 overflow-hidden bg-slate-950 shadow-inner group">
+                <Image
+                  src={imagePreviewUrl}
+                  alt="Attached technical analysis chart overview preview"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 600px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                />
+                
+                {/* Floating Quick-Discard Dismiss Capsule Trigger */}
                 <button
                   type="button"
-                  onClick={() => setMediaFile(null)}
-                  className="p-1 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                  onClick={handleRemoveMedia}
+                  className="absolute top-3 right-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-rose-500/20 bg-slate-950/80 text-rose-400 backdrop-blur-md transition-all duration-150 hover:bg-rose-500 hover:text-white active:scale-90 shadow-lg"
+                  aria-label="Remove attached chart screenshot"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex min-h-27.5 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 hover:border-yellow-600/20 bg-slate-900/10 hover:bg-slate-900/20 p-4 text-center transition-all duration-200 group cursor-pointer"
-              >
-                <ImagePlus className="h-5 w-5 text-slate-500 group-hover:text-yellow-600 transition-colors mb-2" />
-                <p className="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Click to attach charts or transaction screenshots</p>
-                <p className="text-[10px] text-slate-600 mt-0.5">Supports PNG, JPG up to 10MB</p>
-              </button>
-            )}
-          </div>
+
+              {/* METADATA META CAPSULE INFO STRIP */}
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-slate-900/60 bg-slate-900/20 text-[10px] font-mono font-bold text-slate-500">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Paperclip className="h-3.5 w-3.5 text-yellow-600 shrink-0" />
+                  <span className="truncate text-slate-300 max-w-55">{mediaFile.name}</span>
+                </div>
+                <span className="shrink-0 text-slate-600">
+                  ({(mediaFile.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              </div>
+            </div>
+          ) : (
+            /* EMPTY UPLOAD ZONE BUTTON TRIGGER CAP */
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="group flex min-h-27.5 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-900 bg-slate-900/10 p-4 text-center transition-all duration-200 hover:border-yellow-600/20 hover:bg-slate-900/20"
+            >
+              <ImagePlus className="mb-2 h-5 w-5 text-slate-500 transition-colors group-hover:text-yellow-600" />
+              <p className="text-xs font-medium text-slate-400 transition-colors group-hover:text-slate-300">
+                Click to attach market view chart sheets or execution screenshots
+              </p>
+              <p className="mt-0.5 text-[10px] text-slate-600">Supports pristine PNG, JPG up to 3MB</p>
+            </button>
+          )}
+        </div>
+
 
         </div>
 

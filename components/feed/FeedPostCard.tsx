@@ -15,58 +15,29 @@ import type { FeedPost } from '@/lib/supabase/types'
 
 // import CommentDrawer from './CommentDrawer'
 import { useAuth } from '../providers/AuthProvider'
+import CommentDrawer from './CommentDrawer'
 
 interface FeedPostCardProps {
   post: FeedPost
 }
 
 function getAssetMeta(symbol?: string | null) {
-  switch (symbol) {
-    case 'BTC':
-      return {
-        symbol: 'BTC',
-        name: 'Bitcoin',
-        type: 'crypto' as const,
-      }
-
-    case 'ETH':
-      return {
-        symbol: 'ETH',
-        name: 'Ethereum',
-        type: 'crypto' as const,
-      }
-
-    case 'SOL':
-      return {
-        symbol: 'SOL',
-        name: 'Solana',
-        type: 'crypto' as const,
-      }
-
-    case 'XRP':
-      return {
-        symbol: 'XRP',
-        name: 'Ripple',
-        type: 'crypto' as const,
-      }
-
-    case 'USDT':
-      return {
-        symbol: 'USDT',
-        name: 'Tether',
-        type: 'crypto' as const,
-      }
-
-    case 'XAU':
-      return {
-        symbol: 'XAU',
-        name: 'Spot Gold',
-        type: 'gold' as const,
-      }
-
-    default:
-      return null
-  }
+    switch (symbol) {
+      case 'BTC':
+        return { symbol: 'BTC', name: 'Bitcoin', type: 'crypto' as const }
+      case 'ETH':
+        return { symbol: 'ETH', name: 'Ethereum', type: 'crypto' as const }
+      case 'SOL':
+        return { symbol: 'SOL', name: 'Solana', type: 'crypto' as const }
+      case 'XRP':
+        return { symbol: 'XRP', name: 'Ripple', type: 'crypto' as const }
+      case 'USDT':
+        return { symbol: 'USDT', name: 'Tether', type: 'crypto' as const }
+      case 'XAU':
+        return { symbol: 'XAU', name: 'Spot Gold', type: 'gold' as const }
+      default:
+        return null
+    }
 }
 
 export default function FeedPostCard({
@@ -80,36 +51,19 @@ export default function FeedPostCard({
   const toggleLikeMutation =
     useToggleLikeMutation()
 
-  const cleanUsername =
-    post.profiles?.username?.replace(
-      '@',
-      ''
-    ) || 'anonymous'
+  const cleanUsername = post.profiles?.username?.replace('@', '') || 'anonymous'
 
   const initials = useMemo(() => {
-    const fullName =
-      post.profiles?.full_name?.trim()
+    const fullName = post.profiles?.full_name?.trim()
 
     if (fullName) {
-      const parts = fullName
-        .split(' ')
-        .filter(Boolean)
+      const parts = fullName.split(' ').filter(Boolean)
 
-      if (parts.length >= 2) {
-        return (
-          `${parts[0]?.[0] ?? ''}${
-            parts[
-              parts.length - 1
-            ]?.[0] ?? ''
-          }`
-        ).toUpperCase()
+       if (parts.length >= 2) {
+        return (`${parts[0]?.[0] ?? ''}${parts[parts.length - 1]?.[0] ?? ''}`).toUpperCase()
       }
 
-      return (
-        parts[0]
-          ?.slice(0, 2)
-          .toUpperCase() ?? 'GN'
-      )
+      return parts[0]?.slice(0, 2).toUpperCase() ?? 'GN'
     }
 
     const username =
@@ -123,10 +77,7 @@ export default function FeedPostCard({
     }
 
     return 'GN'
-  }, [
-    post.profiles?.full_name,
-    post.profiles?.username,
-  ])
+  }, [post.profiles?.full_name,post.profiles?.username,])
 
   const hasAvatar = Boolean(
     post.profiles?.avatar_url?.trim()
@@ -134,9 +85,7 @@ export default function FeedPostCard({
 
   const handleLikeClick = () => {
     if (!user) {
-      alert(
-        'Please sign in to like posts.'
-      )
+      alert('Please sign in to like posts.' )
       return
     }
 
@@ -170,8 +119,8 @@ export default function FeedPostCard({
       'bullish') === 'bullish'
 
   return (
-    <article className="rounded-2xl border border-slate-900 bg-slate-900/30 p-5 backdrop-blur-md transition-all hover:border-slate-800/80">
-      <div className="flex items-start justify-between">
+    <article className="rounded-2xl border border-slate-900 bg-slate-900/30 p-5 backdrop-blur-md transition-all duration-200 hover:border-slate-800/60 shadow-xl shadow-black/5">
+      <div className="flex items-start justify-between pb-3">
         <div className="flex items-center gap-3">
           <Link
             href={`/user/${cleanUsername}`}
@@ -184,17 +133,13 @@ export default function FeedPostCard({
                     post.profiles
                       ?.avatar_url as string
                   }
-                  alt={
-                    post.profiles
-                      ?.username ??
-                    'Profile'
-                  }
+                  alt={ post.profiles?.username ?? 'Profile'}
                   fill
                   sizes="40px"
                   className="rounded-full object-cover"
                 />
               ) : (
-                <span className="text-xs font-black text-slate-200">
+                <span className="text-xs font-black text-slate-400 font-mono">
                   {initials}
                 </span>
               )}
@@ -205,12 +150,9 @@ export default function FeedPostCard({
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href={`/user/${cleanUsername}`}
-                className="text-sm font-bold text-slate-100 hover:text-white hover:underline"
+                className="text-sm font-bold text-slate-100 hover:text-white hover:underline transition-colors truncate max-w-27.5"
               >
-                @
-                {post.profiles
-                  ?.username ??
-                  'anonymous'}
+                @{post.profiles?.username ?? 'anonymous'}
               </Link>
 
               {post.profiles
@@ -224,11 +166,8 @@ export default function FeedPostCard({
                 Active Trader
               </span>
 
-              <span className="text-xs font-mono font-bold text-emerald-400">
-                +
-                {post.profiles
-                  ?.monthly_roi ?? 0}
-                %
+              <span className="text-[10px] font-mono font-black text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-1.5 py-0.5 rounded">
+                + {post.profiles?.monthly_roi ?? 0}%
               </span>
             </div>
           </div>
@@ -247,6 +186,19 @@ export default function FeedPostCard({
           {post.content}
         </p>
       </div>
+
+      {post.media_url && (
+        <div className="mt-4 w-full overflow-hidden rounded-2xl border border-slate-900 bg-slate-950 shadow-inner group">
+          <Image
+            src={post.media_url}
+            alt="Trading intelligence chart layout attachment"
+            width={450}
+            height={450}
+            className="w-full h-auto max-h-[450px] object-cover rounded-2xl transition-transform duration-500 group-hover:scale-[1.01]"
+            loading="lazy"
+          />
+        </div>
+      )}
 
       {assetMeta && (
         <div className="mt-5 rounded-2xl border border-slate-900 bg-slate-950/40 p-4 shadow-inner">
@@ -314,34 +266,32 @@ export default function FeedPostCard({
       )}
 
       <div className="mt-5 flex items-center justify-between border-t border-slate-900/60 pt-3">
-        <button
+       <button
           type="button"
           onClick={handleLikeClick}
-          disabled={
-            toggleLikeMutation.isPending
-          }
+          disabled={toggleLikeMutation.isPending}
           className={`flex flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2 text-xs font-semibold transition-all ${
             post.isLikedByCurrentUser
-              ? 'bg-yellow-600/5 text-yellow-600'
+              ? 'bg-yellow-600/5 text-yellow-600 font-bold'
               : 'text-slate-500 hover:bg-slate-900/40 hover:text-slate-300'
           }`}
         >
           <ThumbsUp
-            className={`h-4 w-4 ${
+            className={`h-4 w-4 transition-transform ${
               post.isLikedByCurrentUser
-                ? 'fill-yellow-600 stroke-none'
+                ? 'fill-yellow-600 stroke-none text-yellow-600'
                 : ''
             }`}
           />
           <span>Like</span>
-            {Boolean(post.likes_count && (
-              <span className="ml-1 rounded-md bg-slate-900 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-400 border border-slate-800/40">
-                {post.likes_count}
-              </span>
-            ))
-          }
           
+          {post.likes_count > 0 && (
+            <span className="ml-1 rounded-md bg-slate-900 px-1.5 py-0.5 font-mono text-[10px] font-bold text-emerald-400 border border-slate-800/40 animate-fadeIn">
+              {post.likes_count}
+            </span>
+          )}
         </button>
+
 
         <button
           type="button"
@@ -369,13 +319,13 @@ export default function FeedPostCard({
         </button>
       </div>
 
-      {/* <CommentDrawer
+       <CommentDrawer
         postId={post.id}
         isOpen={commentOpen}
         onClose={() =>
           setCommentOpen(false)
         }
-      /> */}
+      />
     </article>
   )
 }

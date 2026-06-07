@@ -3,18 +3,18 @@
 import { useAuth } from '../providers/AuthProvider'
 
 import { useFeedRealtime } from '@/lib/hooks/useFeedRealtime'
-import { useGetFeedQuery } from '@/lib/react-query/queries/feed.queries'
 
 import type { FeedPost  } from '@/lib/supabase/types'
 
 import CreatePostCard from './CreatePostCard'
 import FeedPostCard from './FeedPostCard'
+import { useGetFeedQuery } from '@/lib/react-query/queries/feed.queries'
 
 export default function FeedList() {
   const { user } = useAuth()
 
   const { data, isLoading } =
-    useGetFeedQuery() as {
+    useGetFeedQuery(user?.id  ?? null) as {
       data: FeedPost[] | undefined
       isLoading: boolean
     }
