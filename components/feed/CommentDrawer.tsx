@@ -1,6 +1,6 @@
 'use client'
 
-import { SyntheticEvent, useEffect, useMemo, useState, } from 'react'
+import { useEffect, useMemo, useState, } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { X, Send, BadgeCheck, MessageSquare } from 'lucide-react'
@@ -10,6 +10,8 @@ import {
   useCreateCommentMutation,
   type Comment,
 } from '@/lib/react-query/queries/comments.queries'
+import { useQueryClient } from '@tanstack/react-query'
+import { feedKeys } from '@/lib/react-query/keys'
 
 interface CommentDrawerProps {
   postId: string
@@ -66,12 +68,14 @@ function CommentAvatar({ comment }: { comment: Comment }) {
 }
 
 export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawerProps) {
-  const { user, profile } = useAuth()
+  const { user, } = useAuth()
   const [commentText, setCommentText] = useState('')
 
   // 1. DATA HYDRATION HOOK STREAMS
   const { data: comments, isLoading } = useGetCommentsQuery(postId)
   const createCommentMutation = useCreateCommentMutation()
+  const queryClient = useQueryClient()
+
 
   // 2. STRUCTURAL UX CONSTRAINT: PREVENT BACKGROUND VIEWPORT BODY SCROLLING LOCKS
   useEffect(() => {
@@ -85,25 +89,34 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
     }
   }, [isOpen])
 
-  // Form submission execution routine channel controller
-  const handleSubmit = (e: SyntheticEvent) => {
-    e.preventDefault()
-    if (!commentText.trim() || !user || !profile) return
-
-    createCommentMutation.mutate(
-      {
-        postId,
-        userId: user.id,
-        content: commentText,
-      },
-      {
-        onSuccess: () => {
-          // Synchronously purge state string value strictly upon 200 success resolution signatures
-          setCommentText('')
-        },
-      }
-    )
+  const handleCloseWithRefresh = () => {
+    queryClient.invalidateQueries({
+       queryKey: feedKeys.all,
+       exact: false,
+       refetchType: "all"
+       })
+    onClose()
   }
+
+  // Form submission execution routine channel controller
+  // const handleSubmit = (e: SyntheticEvent) => {
+  //   e.preventDefault()
+  //   if (!commentText.trim() || !user || !profile) return
+
+  //   createCommentMutation.mutate(
+  //     {
+  //       postId,
+  //       userId: user.id,
+  //       content: commentText,
+  //     },
+  //     {
+  //       onSuccess: () => {
+  //         // Synchronously purge state string value strictly upon 200 success resolution signatures
+  //         setCommentText('')
+  //       },
+  //     }
+  //   )
+  // }
 
   if (!isOpen) return null
 
@@ -111,7 +124,7 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm transition-opacity duration-300">
       
       {/* Absolute overlay background mask clickable dismiss anchor zone */}
-      <div className="absolute inset-0 -z-10 cursor-pointer" onClick={onClose} />
+      <div className="absolute inset-0 -z-10 cursor-pointer" onClick={handleCloseWithRefresh} />
 
       {/* GLASSMORPHIC BOTTOM SHEET CONTROLLER SHELL */}
       <div className="relative flex max-h-[85vh] min-h-[50vh] w-full flex-col rounded-t-3xl border-t border-slate-900 bg-slate-950/95 pb-safe backdrop-blur-xl shadow-2xl shadow-black animate-slideUp">
@@ -131,7 +144,7 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCloseWithRefresh}
             className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-slate-900 bg-slate-900/50 text-slate-400 transition-colors hover:border-slate-800 hover:text-white"
           >
             <X className="h-4 w-4" />
@@ -162,7 +175,7 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 No comments yet
               </p>
-              <p className="mt-1 text-[11px] text-slate-600 max-w-[200px]">
+              <p className="mt-1 text-[11px] text-slate-600 max-w-50">
                 Be the first to comment.
               </p>
             </div>
@@ -178,7 +191,7 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
                 <div className="flex flex-col min-w-0 flex-1 rounded-2xl bg-slate-900/20 border border-slate-900/40 px-3.5 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-xs font-black text-slate-200 truncate max-w-[120px]">
+                      <span className="text-xs font-black text-slate-200 truncate max-w-30">
                         {comment.profiles?.full_name || 'Anonymous User'}
                       </span>
                       <span className="text-[10px] text-slate-500 font-bold font-mono">
@@ -206,26 +219,54 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
         </div>
 
         {/* STICKY STABILIZED COMPOSER BAR NODE FOOTER BOX */}
+                
         <div className="border-t border-slate-900 bg-slate-950 px-4 py-3">
           {user ? (
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => {
+                  // Allow mobile traders to hit 'Enter' on their phone keyboards to submit instantly
+                  if (e.key === 'Enter' && commentText.trim() && !createCommentMutation.isPending) {
+                    e.preventDefault();
+                    
+                    // Directly fire the mutation parameters
+                    createCommentMutation.mutate({
+                      postId,
+                      userId: user.id,
+                      content: commentText
+                    }, {
+                      onSuccess: () => setCommentText('')
+                    });
+                  }
+                }}
                 placeholder="Contribute market intel or setup critique..."
                 maxLength={500}
                 disabled={createCommentMutation.isPending}
                 className="flex-1 rounded-xl border border-slate-900 bg-slate-900/40 px-4 py-2.5 text-xs font-medium text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-yellow-600/30 focus:bg-slate-900/80"
               />
               <button
-                type="submit"
+                type="button"
+                onClick={() => {
+                  if (!commentText.trim() || createCommentMutation.isPending) return;
+                  
+                  // Direct explicit click dispatch
+                  createCommentMutation.mutate({
+                    postId,
+                    userId: user.id,
+                    content: commentText
+                  }, {
+                    onSuccess: () => setCommentText('')
+                  });
+                }}
                 disabled={!commentText.trim() || createCommentMutation.isPending}
                 className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-yellow-600 text-slate-950 transition-all hover:bg-yellow-500 active:scale-95 disabled:pointer-events-none disabled:bg-slate-900 disabled:text-slate-600"
               >
                 <Send className="h-4 w-4" />
               </button>
-            </form>
+            </div>
           ) : (
             <div className="rounded-xl border border-dashed border-slate-900 bg-slate-900/10 py-2.5 text-center">
               <p className="text-[11px] font-bold text-slate-500 tracking-wide">
@@ -234,6 +275,7 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
             </div>
           )}
         </div>
+
 
       </div>
     </div>

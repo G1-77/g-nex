@@ -194,7 +194,7 @@ export default function FeedPostCard({
             alt="Trading intelligence chart layout attachment"
             width={450}
             height={450}
-            className="w-full h-auto max-h-[450px] object-cover rounded-2xl transition-transform duration-500 group-hover:scale-[1.01]"
+            className="w-full h-auto max-h-112.5 object-cover rounded-2xl transition-transform duration-500 group-hover:scale-[1.01]"
             loading="lazy"
           />
         </div>
@@ -302,11 +302,11 @@ export default function FeedPostCard({
         >
           <MessagesSquare className="h-4 w-4" />
           <span>Comment</span>
-          {Boolean(post.comments_count && (
-            <span className="ml-1 rounded-md bg-slate-900 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-400 border border-slate-800/40">
+          {(post.comments_count ?? 0) > 0 && (
+            <span className="ml-1 rounded-md bg-slate-900 border border-slate-800/60 px-1.5 py-0.5 font-mono text-[10px] font-black text-emerald-400 animate-fadeIn">
               {post.comments_count}
             </span>
-          ))} 
+          )}
           
         </button>
 

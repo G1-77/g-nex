@@ -97,6 +97,7 @@ export default function CreatePostCard() {
                 'Profile'
               }
               fill
+              sizes="40px"
               className="object-cover"
             />
           ) : (

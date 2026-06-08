@@ -74,6 +74,9 @@ export function useGetCommentsQuery(postId: string) {
 //  2. MUTATION HOOK: ATOMIC DISCUSSION INSERTER & CACHE INVALIDATOR
 
 async function createComment({ postId, userId, content }: CreateCommentPayload): Promise<void> {
+  // 1. Insert the main raw comment row into the comments table cleanly.
+  // The database trigger will automatically catch this insert and create the correct 
+  // notification on the server side without any frontend code interferences.
   const { error } = await supabase
     .from('comments')
     .insert({
@@ -86,6 +89,8 @@ async function createComment({ postId, userId, content }: CreateCommentPayload):
     throw new Error(error.message)
   }
 }
+
+
 
 export function useCreateCommentMutation() {
   const queryClient = useQueryClient()
@@ -101,6 +106,8 @@ export function useCreateCommentMutation() {
       // Invalidate the primary timeline stream cache to tick up comments_count counters
       queryClient.invalidateQueries({
         queryKey: feedKeys.all,
+        exact: false,
+        refetchType: "all"
       })
     },
     onError: (error: Error) => {
