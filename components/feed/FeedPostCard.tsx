@@ -3,19 +3,14 @@
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import {
-  BadgeCheck,
-  MessagesSquare,
-  Share2,
-  ThumbsUp,
-} from 'lucide-react'
+import { BadgeCheck, MessagesSquare,Share2,ThumbsUp,} from 'lucide-react'
 
 import { useToggleLikeMutation } from '@/lib/react-query/mutations/feed.mutations'
 import type { FeedPost } from '@/lib/supabase/types'
 
-// import CommentDrawer from './CommentDrawer'
 import { useAuth } from '../providers/AuthProvider'
 import CommentDrawer from './CommentDrawer'
+import { useToggleFollowMutation } from '@/lib/react-query/mutations/follow.mutations'
 
 interface FeedPostCardProps {
   post: FeedPost
@@ -40,16 +35,36 @@ function getAssetMeta(symbol?: string | null) {
     }
 }
 
-export default function FeedPostCard({
-  post,
-}: FeedPostCardProps) {
+export default function FeedPostCard({ post,}:FeedPostCardProps) {
   const { user } = useAuth()
 
   const [commentOpen, setCommentOpen] =
     useState(false)
 
-  const toggleLikeMutation =
-    useToggleLikeMutation()
+  const toggleLikeMutation = useToggleLikeMutation()
+
+  const toggleFollowMutation = useToggleFollowMutation()
+
+  const handleFollowClick = () => {
+    if (!user) {
+      alert('Please sign in to track platform participant portfolios.')
+      return
+    }
+    
+    // Safety guard clause to block users from following their own profile rows
+    if (user.id === post.profiles?.id) {
+      alert('You cannot follow your own analytical tracking portfolio.')
+      return
+    }
+
+    if (toggleFollowMutation.isPending) return
+
+    toggleFollowMutation.mutate({
+      followerId: user.id,
+      followingId: post.profiles?.id || '',
+    })
+  }
+
 
   const cleanUsername = post.profiles?.username?.replace('@', '') || 'anonymous'
 
@@ -79,8 +94,7 @@ export default function FeedPostCard({
     return 'GN'
   }, [post.profiles?.full_name,post.profiles?.username,])
 
-  const hasAvatar = Boolean(
-    post.profiles?.avatar_url?.trim()
+  const hasAvatar = Boolean(post.profiles?.avatar_url?.trim()
   )
 
   const handleLikeClick = () => {
@@ -105,18 +119,14 @@ export default function FeedPostCard({
     post.trade_tags?.asset_symbol
   )
 
-  const assetPrice =
-    post.trade_tags?.price != null
-      ? String(post.trade_tags.price)
-      : 'Polling...'
+  const assetPrice = post.trade_tags?.price != null ? String(post.trade_tags.price) : 'Polling...'
 
-  const assetChange =
-    post.trade_tags?.change ??
-    '0.00%'
+  const assetChange = post.trade_tags?.change ??'0.00%'
 
   const assetPositive =
-    (post.trade_tags?.direction ??
-      'bullish') === 'bullish'
+    (post.trade_tags?.direction ?? 'bullish') === 'bullish'
+
+  const followersCount = (post.profiles as { followers_count?: number } | null)?.followers_count ?? 0
 
   return (
     <article className="rounded-2xl border border-slate-900 bg-slate-900/30 p-5 backdrop-blur-md transition-all duration-200 hover:border-slate-800/60 shadow-xl shadow-black/5">
@@ -124,19 +134,17 @@ export default function FeedPostCard({
         <div className="flex items-center gap-3">
           <Link
             href={`/user/${cleanUsername}`}
-            className="shrink-0"
+            className="shrink-0 block"
           >
             <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-900 bg-slate-900">
               {hasAvatar ? (
                 <Image
-                  src={
-                    post.profiles
-                      ?.avatar_url as string
-                  }
+                  src={ post.profiles ?.avatar_url as string }
                   alt={ post.profiles?.username ?? 'Profile'}
                   fill
                   sizes="40px"
                   className="rounded-full object-cover"
+                  priority
                 />
               ) : (
                 <span className="text-xs font-black text-slate-400 font-mono">
@@ -146,7 +154,7 @@ export default function FeedPostCard({
             </div>
           </Link>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href={`/user/${cleanUsername}`}
@@ -155,30 +163,40 @@ export default function FeedPostCard({
                 @{post.profiles?.username ?? 'anonymous'}
               </Link>
 
-              {post.profiles
-                ?.is_verified && (
+              {post.profiles ?.is_verified && (
                 <BadgeCheck className="h-4 w-4 shrink-0 fill-yellow-600 stroke-slate-950 text-slate-950" />
               )}
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500">
-                Active Trader
+                 {followersCount} {followersCount === 1 ? 'follower' : 'followers'}
               </span>
 
               <span className="text-[10px] font-mono font-black text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-1.5 py-0.5 rounded">
-                + {post.profiles?.monthly_roi ?? 0}%
+                + {post.profiles?.monthly_roi ?? 0}% ROI
               </span>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          className="rounded-full border border-slate-800 bg-slate-900/40 px-3 py-1 text-[11px] font-semibold cursor-pointer text-slate-300 transition-colors hover:border-yellow-600/30 hover:text-yellow-600"
-        >
-          Follow
-        </button>
+        {user && user.id !== post.profiles?.id && (
+          <button
+            type="button"
+            onClick={handleFollowClick}
+            disabled={toggleFollowMutation.isPending}
+            className={`rounded-full border px-3.5 py-1 text-[11px] font-black  tracking-wider transition-all duration-150 active:scale-95 cursor-pointer shadow-sm ${
+              // Note: Once Phase 3C hydrates a full following look-up hash map array inside getFeedPosts,
+              // we can swap this local condition for a persistent boolean state check cleanly!
+              toggleFollowMutation.isPending
+                ? 'border-slate-800 bg-slate-900/20 text-slate-600 pointer-events-none'
+                : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-yellow-600/40 hover:text-yellow-600'
+            }`}
+          >
+            {toggleFollowMutation.isPending ? 'Syncing...' : 'follow'}
+          </button>
+        )}
+
       </div>
 
       <div className="mt-4">
@@ -236,10 +254,7 @@ export default function FeedPostCard({
                 </span>
 
                 <span
-                  className={`text-sm font-bold ${
-                    assetPositive
-                      ? 'text-emerald-400'
-                      : 'text-rose-500'
+                  className={`text-sm font-bold ${  assetPositive ? 'text-emerald-400' : 'text-rose-500'
                   }`}
                 >
                   {assetChange}

@@ -1,12 +1,8 @@
-
-/**Asset symbols */
- 
+/** Asset symbols */
 export const ASSET_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"] as const
-
 export type AssetSymbol = (typeof ASSET_SYMBOLS)[number]
 
-/**signal types */
-
+/** signal types */
 export const SIGNAL_TYPES = [
   'Bullish',
   'Bearish',
@@ -14,19 +10,16 @@ export const SIGNAL_TYPES = [
   'Scalp',
   'Long-Term'
 ] as const
-
 export type SignalType = (typeof SIGNAL_TYPES)[number]
 
-/**admin role enum */
-
+/** admin role enum */
 export type AdminRoleType =
   | 'super_admin'
   | 'admin'
   | 'support'
   | 'editor'
 
-/**profile model */
-
+/** profile model */
 export interface Profile {
   id: string
   username: string
@@ -35,10 +28,10 @@ export interface Profile {
   bio: string | null
   is_verified: boolean
   monthly_roi: number
+  followers_count?: number // 🟢 Handles Facebook-style follower totals tracking safely
 }
 
-/**feed post model */
-
+/** feed post model */
 export interface FeedPost {
   id: string
   content: string
@@ -55,16 +48,15 @@ export interface FeedPost {
     price?: string | number | null
     change?: string | null
     direction?: "bullish" | "bearish" | null
-  }| null
+  } | null
 
   likes_count: number
   comments_count: number
-  isLikedByCurrentUser?: boolean // to track current session
-  
+  shares_count: number // 🟢 Root property contract declaration preserved intact
+  isLikedByCurrentUser?: boolean // tracks current active browser session engagements
 }
 
-/**create post payload */
-
+/** create post payload */
 export interface CreatePostPayload {
   content: string
   assetSymbols?: AssetSymbol[]
@@ -82,7 +74,6 @@ export interface CreatePostPayload {
 }
 
 /** Admin role table */
-
 export interface AdminRole {
   id: string
   user_id: string
@@ -90,3 +81,19 @@ export interface AdminRole {
   created_at: string
 }
 
+/** 
+ * Strict profile mapping extension that captures Supabase's unique PostgREST 
+ * count aggregation layout array syntax (follows!following_id (count)).
+ */
+export type SupabaseProfileJoin = Profile & {
+  follows: Array<{ count: number }> | null
+}
+
+/** 
+ * Fully mapped parent post response shape mimicking raw database rows.
+ * Using an intersection (&) forces the compiler to inherit every single 
+ * property from FeedPost flawlessly, killing the 'shares_count missing' compile blocker!
+ */
+export type SupabaseFeedPostRow = Omit<FeedPost, 'profiles'> & {
+  profiles: SupabaseProfileJoin | null
+}
