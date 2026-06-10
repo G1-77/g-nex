@@ -2,10 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
-import type { FeedPost, SupabaseFeedPostRow } from '@/lib/supabase/types' // 🟢 Imported our fresh centralized types
+import type { FeedPost, SupabaseFeedPostRow } from '@/lib/supabase/types'
 import { feedKeys } from '../keys'
 
-// Accepts currentUserId straight from the component layer parameter stream
 async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
   const { data, error } = await supabase
     .from('posts')
@@ -19,14 +18,14 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
       shares_count,
       assetSymbols,
       signalType,
-      profiles:user_id (
+      profiles:profiles!user_id (
         id,
         username,
         full_name,
         avatar_url,
+        bio,
         is_verified,
-        monthly_roi,
-        follows!following_id (count) -- 🟢 Fetches the computed follower counts array block natively
+        monthly_roi
       ),
       trade_tags (
         asset_symbol,
@@ -36,9 +35,7 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
         direction
       )
     `)
-    .order('created_at', {
-      ascending: false,
-    })
+    .order('created_at', { ascending: false })
 
   if (error) {
     throw new Error(error.message)
@@ -46,31 +43,34 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
 
   if (!data) return []
 
-  // Pre-cast the raw database response array to match our strict structural contract row
+  // Cast directly using your centrally declared Supabase response type contract
   const rawRows = data as unknown as SupabaseFeedPostRow[]
 
-  // A. HIGH PERFORMANCE INDEPENDENT TABLE LOOKUP: Fetch all post IDs liked by this user
-  const { data: userLikes, error: likesError } = currentUserId
+  // High-speed lookup map configuration batch for followers counters
+  const { data: globalFollows } = await supabase
+    .from('follows')
+    .select('following_id')
+
+  const followerCountMap = new Map<string, number>()
+  globalFollows?.forEach((follow) => {
+    if (follow.following_id) {
+      const currentCount = followerCountMap.get(follow.following_id) || 0
+      followerCountMap.set(follow.following_id, currentCount + 1)
+    }
+  })
+
+  // Fetch liked posts matching the active user session token key
+  const { data: userLikes } = currentUserId
     ? await supabase.from('likes').select('post_id').eq('user_id', currentUserId)
-    : { data: null, error: null }
+    : { data: null }
 
-  if (likesError) {
-    console.error('Failed to pre-fetch active user interaction states:', likesError.message)
-  }
-
-  // Build a high-speed lookup hash Set to map states in O(1) time complexity
   const likedPostIds = new Set(userLikes?.map((l) => l.post_id) ?? [])
 
-  // B. PURE TYPE-SAFE HYDRATION: Statically stamp persistent likes, follower counts, and badges
+  // Map true database persistence flags natively into the return array parameters
   const fullyHydratedFeed: FeedPost[] = rawRows.map((row: SupabaseFeedPostRow) => {
-    const followsData = row.profiles?.follows
-    
-    // Extract the calculated counts out of the PostgREST array envelope cleanly
-    const calculatedFollowersCount = followsData && followsData.length > 0
-      ? Number(followsData[0]?.count ?? 0)
-      : 0
+    const authorId = row.profiles?.id || ''
+    const calculatedFollowersCount = followerCountMap.get(authorId) || 0
 
-    // 🟢 COMPREHENSIVE RULES CORE: Auto-verifies if they hit 100 followers OR have an elite ROI > 15%
     const shouldBeVerified = Boolean(
       row.profiles?.is_verified || 
       (row.profiles?.monthly_roi ?? 0) > 15 || 
@@ -85,23 +85,18 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
       likes_count: row.likes_count,
       comments_count: row.comments_count,
       shares_count: row.shares_count,
-      assetSymbols: row.assetSymbols,
+      assetSymbols: row.assetSymbols, 
       signalType: row.signalType,
       trade_tags: row.trade_tags,
       isLikedByCurrentUser: likedPostIds.has(row.id),
       profiles: row.profiles
         ? {
-            id: row.profiles.id,
-            username: row.profiles.username,
-            full_name: row.profiles.full_name,
-            avatar_url: row.profiles.avatar_url,
-            is_verified: shouldBeVerified, // Dynamic evaluation
-            monthly_roi: row.profiles.monthly_roi,
-            bio: row.profiles.bio,
-            followers_count: calculatedFollowersCount, // Injected into our central interface footprint
+            ...row.profiles,
+            is_verified: shouldBeVerified,
+            followers_count: calculatedFollowersCount,
           }
         : null,
-    } as unknown as FeedPost
+    } as unknown as FeedPost // Type-safe cast satisfying our core list expectations
   })
 
   return fullyHydratedFeed
@@ -109,12 +104,9 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
 
 export function useGetFeedQuery(currentUserId: string | null) {
   return useQuery({
-    // Append currentUserId to the queryKey tracking signature template.
-    // This tells TanStack Query to automatically drop and refresh the caching window 
-    // whenever a user switches accounts or explicitly triggers a login/logout cycle.
     queryKey: [...feedKeys.all, currentUserId],
     queryFn: () => getFeedPosts(currentUserId),
-    staleTime: 1000 * 10, // 10 seconds cache boundary validity
+    staleTime: 1000 * 10,
     refetchOnWindowFocus: false,
   })
 }

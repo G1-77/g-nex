@@ -28,7 +28,7 @@ export interface Profile {
   bio: string | null
   is_verified: boolean
   monthly_roi: number
-  followers_count?: number // 🟢 Handles Facebook-style follower totals tracking safely
+  followers_count?: number // Handles Facebook-style follower totals tracking safely
 }
 
 /** feed post model */
@@ -52,7 +52,7 @@ export interface FeedPost {
 
   likes_count: number
   comments_count: number
-  shares_count: number // 🟢 Root property contract declaration preserved intact
+  shares_count: number // Root property contract declaration preserved intact
   isLikedByCurrentUser?: boolean // tracks current active browser session engagements
 }
 
@@ -81,19 +81,30 @@ export interface AdminRole {
   created_at: string
 }
 
-/** 
- * Strict profile mapping extension that captures Supabase's unique PostgREST 
- * count aggregation layout array syntax (follows!following_id (count)).
- */
-export type SupabaseProfileJoin = Profile & {
-  follows: Array<{ count: number }> | null
-}
+// =========================================================================
+// 🟢 CENTRALIZED NETWORK RESPONSE TYPES (0% COMPONENT DUPLICATION)
+// =========================================================================
 
 /** 
- * Fully mapped parent post response shape mimicking raw database rows.
- * Using an intersection (&) forces the compiler to inherit every single 
- * property from FeedPost flawlessly, killing the 'shares_count missing' compile blocker!
+ * Fully mapped parent post response shape mimicking raw database select queries.
+ * This lives strictly here so that queries files never have to declare local interfaces.
  */
-export type SupabaseFeedPostRow = Omit<FeedPost, 'profiles'> & {
-  profiles: SupabaseProfileJoin | null
+export interface SupabaseFeedPostRow {
+  id: string
+  content: string
+  created_at: string
+  media_url: string | null
+  likes_count: number
+  comments_count: number
+  shares_count: number
+  assetSymbols: AssetSymbol[]
+  signalType: SignalType | null
+  profiles: Profile | null
+  trade_tags: {
+    asset_symbol: AssetSymbol
+    signal_type: SignalType
+    price: number | string | null
+    change: string | null
+    direction: string | null
+  } | null
 }
