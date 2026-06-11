@@ -1,11 +1,21 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { FeedPost, SupabaseFeedPostRow } from '@/lib/supabase/types'
 import { feedKeys } from '../keys'
 
-async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
+const PAGE_SIZE = 10
+
+// 🟢 FIXED: Converted to a paginated offset cursor function targeting explicit range arrays
+async function getFeedPage(
+  currentUserId: string | null,
+  pageParam: number
+): Promise<{ posts: FeedPost[]; nextPage: number | null }> {
+  const startOffset = pageParam * PAGE_SIZE
+  const endOffset = startOffset + PAGE_SIZE - 1
+
+  // 1. Fetch exact row segments matching our paginated cursor parameters
   const { data, error } = await supabase
     .from('posts')
     .select(`
@@ -36,17 +46,19 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
       )
     `)
     .order('created_at', { ascending: false })
+    .range(startOffset, endOffset)
 
   if (error) {
     throw new Error(error.message)
   }
 
-  if (!data) return []
+  if (!data || data.length === 0) {
+    return { posts: [], nextPage: null }
+  }
 
-  // Cast directly using your centrally declared Supabase response type contract
   const rawRows = data as unknown as SupabaseFeedPostRow[]
 
-  // High-speed lookup map configuration batch for followers counters
+  // 2. High-speed lookup map configuration batch for followers counters
   const { data: globalFollows } = await supabase
     .from('follows')
     .select('following_id')
@@ -59,15 +71,15 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
     }
   })
 
-  // Fetch liked posts matching the active user session token key
+  // 3. Fetch liked posts matching the active user session token key
   const { data: userLikes } = currentUserId
     ? await supabase.from('likes').select('post_id').eq('user_id', currentUserId)
     : { data: null }
 
   const likedPostIds = new Set(userLikes?.map((l) => l.post_id) ?? [])
 
-  // Map true database persistence flags natively into the return array parameters
-  const fullyHydratedFeed: FeedPost[] = rawRows.map((row: SupabaseFeedPostRow) => {
+  // 4. Map true database persistence flags natively into the page payload records
+  const hydratedPosts: FeedPost[] = rawRows.map((row: SupabaseFeedPostRow) => {
     const authorId = row.profiles?.id || ''
     const calculatedFollowersCount = followerCountMap.get(authorId) || 0
 
@@ -96,16 +108,26 @@ async function getFeedPosts(currentUserId: string | null): Promise<FeedPost[]> {
             followers_count: calculatedFollowersCount,
           }
         : null,
-    } as unknown as FeedPost // Type-safe cast satisfying our core list expectations
+    } as unknown as FeedPost
   })
 
-  return fullyHydratedFeed
+  // Determine if more records exist further down the table matrix array to trigger next page param offsets
+  const hasNextPage = data.length === PAGE_SIZE
+  const nextPageParam = hasNextPage ? pageParam + 1 : null
+
+  return {
+    posts: hydratedPosts,
+    nextPage: nextPageParam,
+  }
 }
 
-export function useGetFeedQuery(currentUserId: string | null) {
-  return useQuery({
-    queryKey: [...feedKeys.all, currentUserId],
-    queryFn: () => getFeedPosts(currentUserId),
+export function useGetInfiniteFeedQuery(currentUserId: string | null) {
+  return useInfiniteQuery({
+    // Include user session identifiers within key list to handle accounts toggling safely
+    queryKey: [...feedKeys.all, 'infinite', currentUserId],
+    queryFn: ({ pageParam = 0 }) => getFeedPage(currentUserId, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: 1000 * 10,
     refetchOnWindowFocus: false,
   })
