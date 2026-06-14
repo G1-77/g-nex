@@ -1,31 +1,59 @@
-import type { AssetSymbol, } from './types'
+import type { AssetSymbol } from './types'
 
-/** Design system style tokens matching our visual rules guidelines */
-export interface MarketDesignTokens {
-  bg: string
-  card: string
-  primary: string
-  bullish: string
-  bearish: string
-}
-
-/** Active filter chip selection options string array template */
+export type AssetType = 'crypto' | 'gold' | 'stable'
 export type MarketFilterType = 'All' | 'Crypto' | 'Gold' | 'Watchlist'
 
-/** 
- * THE FACEBOOK-STYLE STORIES DATA CONTRACT MODEL
- * Strictly handles prices in USD while structuring social parameters for our top marquee
- */
-export interface AssetStoryNode {
+// =========================================================================
+// 🟢 TASK 3 OVERHAUL: STRICT PHASE-ALIGNED CONTRACT MODELS
+// =========================================================================
+
+/** Centralized asset definition signature contract (Task 4) */
+export interface MarketAsset {
   symbol: AssetSymbol
   name: string
-  priceUsd: number             // Managed strictly in USD to prevent investor sticker shock
-  change24h: number            // 24h percentage delta (e.g. +4.5%)
-  bullishPercent: number       // Sentiment weight calculated from Phase 3 engines
-  isWatching: boolean          // Tracks current user's personalized watchlist state
+  logo: string
+  assetType: AssetType
 }
 
-/** User wallet accounting metrics data structure */
+/** High-density snapshot contract feeding our Facebook-style stories carousel (Task 2) */
+export interface MarketTicker {
+  symbol: AssetSymbol
+  priceUsd: number
+  change24h: number
+  bullishPercent: number
+  isWatching: boolean
+}
+
+/** Phase 3 social intelligence community sentiment metrics contract */
+export interface MarketSentiment {
+  symbol: AssetSymbol
+  bullishPercent: number
+  bearishPercent: number
+  totalVotes: number
+}
+
+/** Phase 5 momentum gainer / loser discovery tracking matrix */
+export interface MarketMover {
+  symbol: AssetSymbol
+  priceUsd: number
+  change24h: number
+  volume24h: number
+  type: 'gainer' | 'loser'
+}
+
+/** Real-time user watchlist tracking entry ledger row */
+export interface WatchlistAsset {
+  id: string
+  userId: string
+  symbol: AssetSymbol
+  createdAt: string
+}
+
+// =========================================================================
+// 💼 WALLET ACCOUNTING INTEGRITY CONTRACT LAYERS (KES VALUES SECURED)
+// =========================================================================
+
+/** User wallet accounting parameters (Tracks local KES wealth realization psychology) */
 export interface UserWalletState {
   id: string
   userId: string
@@ -34,25 +62,21 @@ export interface UserWalletState {
   updatedAt: string
 }
 
-/** Live open trading position tracking ledger data row contract */
+/** Live open trading position tracking leverage contract model */
 export interface ActivePositionNode {
   id: string
   userId: string
   assetSymbol: AssetSymbol
   direction: 'Long' | 'Short'
-  entryPriceUsd: number
+  entryPriceUsd: number        // Handled strictly in USD to match institutional charts
   units: number
-  marginKes: number
+  marginKes: number            // Margin backed securely out of local KES wallet allocations
   status: 'OPEN' | 'CLOSED'
   createdAt: string
 }
 
-export interface AssetStoryCarouselProps {
-  stories: AssetStoryNode[]
-  onToggleWatchlist: (symbol: string) => void
-}
-
-export interface MarketFilterChipsProps {
-  activeFilter: MarketFilterType
-  onFilterChange: (filter: MarketFilterType) => void
+/** Unified data contract for the carousel component properties wrapper */
+export interface StoriesCarouselProps {
+  tickers: MarketTicker[]
+  onToggleWatchlist: (symbol: AssetSymbol) => void
 }
