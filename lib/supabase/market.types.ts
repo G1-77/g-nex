@@ -1,13 +1,8 @@
-import type { AssetSymbol } from './types'
+import type { AssetSymbol } from '@/lib/supabase/types'
 
 export type AssetType = 'crypto' | 'gold' | 'stable'
 export type MarketFilterType = 'All' | 'Crypto' | 'Gold' | 'Watchlist'
 
-// =========================================================================
-// 🟢 TASK 3 OVERHAUL: STRICT PHASE-ALIGNED CONTRACT MODELS
-// =========================================================================
-
-/** Centralized asset definition signature contract (Task 4) */
 export interface MarketAsset {
   symbol: AssetSymbol
   name: string
@@ -15,16 +10,17 @@ export interface MarketAsset {
   assetType: AssetType
 }
 
-/** High-density snapshot contract feeding our Facebook-style stories carousel (Task 2) */
 export interface MarketTicker {
   symbol: AssetSymbol
+  name: string
   priceUsd: number
   change24h: number
   bullishPercent: number
+  watcherCount: number
   isWatching: boolean
+  sparkline: number[]
 }
 
-/** Phase 3 social intelligence community sentiment metrics contract */
 export interface MarketSentiment {
   symbol: AssetSymbol
   bullishPercent: number
@@ -32,7 +28,6 @@ export interface MarketSentiment {
   totalVotes: number
 }
 
-/** Phase 5 momentum gainer / loser discovery tracking matrix */
 export interface MarketMover {
   symbol: AssetSymbol
   priceUsd: number
@@ -41,42 +36,17 @@ export interface MarketMover {
   type: 'gainer' | 'loser'
 }
 
-/** Real-time user watchlist tracking entry ledger row */
-export interface WatchlistAsset {
+export interface VerifiedTraderAllocation {
   id: string
-  userId: string
-  symbol: AssetSymbol
-  createdAt: string
+  username: string
+  avatarUrl: string
+  monthlyRoi: number
+  primaryAsset: AssetSymbol
+  allocationPercent: number
 }
 
-// =========================================================================
-// 💼 WALLET ACCOUNTING INTEGRITY CONTRACT LAYERS (KES VALUES SECURED)
-// =========================================================================
-
-/** User wallet accounting parameters (Tracks local KES wealth realization psychology) */
-export interface UserWalletState {
-  id: string
-  userId: string
-  balanceKes: number           // Managed strictly in KES to drive local financial motivation
-  escrowKes: number            // Escrow margin safety pool balance
-  updatedAt: string
-}
-
-/** Live open trading position tracking leverage contract model */
-export interface ActivePositionNode {
-  id: string
-  userId: string
-  assetSymbol: AssetSymbol
-  direction: 'Long' | 'Short'
-  entryPriceUsd: number        // Handled strictly in USD to match institutional charts
-  units: number
-  marginKes: number            // Margin backed securely out of local KES wallet allocations
-  status: 'OPEN' | 'CLOSED'
-  createdAt: string
-}
-
-/** Unified data contract for the carousel component properties wrapper */
 export interface StoriesCarouselProps {
   tickers: MarketTicker[]
   onToggleWatchlist: (symbol: AssetSymbol) => void
+  onActionClick: (symbol: AssetSymbol, viewMode: 'BUY' | 'SELL') => void
 }
