@@ -1,7 +1,7 @@
 'use client'
 
 import { VerifiedTraderAllocation } from '@/lib/supabase/market.types'
-import { Award, Activity, ShieldAlert, Wallet } from 'lucide-react'
+import { Award, Activity, ShieldAlert } from 'lucide-react'
 
 interface MarketInsightsRailProps {
   traders: VerifiedTraderAllocation[]
@@ -9,23 +9,16 @@ interface MarketInsightsRailProps {
 
 export default function MarketInsightsRail({ traders }: MarketInsightsRailProps) {
   return (
-    <div className="col-span-1 space-y-4 flex flex-col w-full">
-      {/* CARD 1 — WALLET CASH BALANCE */}
-      <div className="rounded-2xl border border-emerald-500/10 bg-emerald-500/5 p-4 shadow-xl relative overflow-hidden group select-none">
-        <div className="flex items-center gap-2 text-emerald-400">
-          <Wallet className="h-4 w-4" />
-          <span className="text-[10px] font-black tracking-[0.1em] uppercase">Sandbox Balance</span>
-        </div>
-        <div className="text-lg font-black font-mono mt-2 text-slate-100 tracking-tight">KES 74,500.00</div>
-      </div>
-
-      {/* CARD 2 — VERIFIED SOCIAL PROOF */}
-      <div className="rounded-2xl border border-slate-900/80 bg-slate-900/30 p-4 shadow-xl space-y-3">
-        <div className="flex items-center justify-between text-[10px] font-black tracking-[0.1em] text-slate-400 select-none">
+    <div className="hidden lg:flex flex-col w-72 shrink-0 space-y-4 sticky top-16 h-fit max-h-[calc(100vh-5rem)] overflow-y-auto select-none pr-1 scrollbar-none z-20">
+      
+      {/* SECTION 6 — VERIFIED SOCIAL PROOF LAYER CONTAINER */}
+      <div className="rounded-2xl border border-slate-900/80 bg-slate-900/30 p-4 shadow-xl space-y-3 backdrop-blur-xl">
+        <div className="flex items-center justify-between text-[10px] font-black tracking-widest text-slate-400">
           <div className="flex items-center gap-1.5">
             <Award className="h-4 w-4 text-amber-500" />
             <span>Top Traders (30D ROI)</span>
           </div>
+          <span className="text-[9px] text-slate-500 hover:text-slate-300 cursor-pointer transition-colors">View All</span>
         </div>
         <div className="space-y-2">
           {traders.map((trader) => (
@@ -42,9 +35,9 @@ export default function MarketInsightsRail({ traders }: MarketInsightsRailProps)
         </div>
       </div>
 
-      {/* CARD 3 — COMPACT MARKET MOVERS */}
-      <div className="rounded-2xl border border-slate-900/80 bg-slate-900/30 p-4 shadow-xl space-y-2.5 select-none">
-        <div className="flex items-center gap-1.5 text-[10px] font-black tracking-[0.1em] text-slate-400">
+      {/* SECTION 5 — COMPACT MARKET MOVERS INDEX */}
+      <div className="rounded-2xl border border-slate-900/80 bg-slate-900/30 p-4 shadow-xl space-y-2.5 backdrop-blur-xl">
+        <div className="flex items-center gap-1.5 text-[10px] font-black tracking-widest text-slate-400">
           <Activity className="h-4 w-4 text-amber-500" />
           <span>Market Movers</span>
         </div>
@@ -60,14 +53,15 @@ export default function MarketInsightsRail({ traders }: MarketInsightsRailProps)
         </div>
       </div>
 
-      {/* CARD 4 — ECONOMIC CALENDAR RISK STATUS */}
-      <div className="rounded-2xl border border-slate-900/80 bg-slate-950/80 p-3.5 shadow-xl flex items-start gap-2.5 select-none">
-        <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+      {/* COMPACT MACRO CALENDAR RISK STATUS BOX */}
+      <div className="rounded-2xl border border-slate-900/80 bg-slate-950/80 p-3.5 shadow-xl flex items-start gap-2.5">
+        <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
         <div className="flex flex-col min-w-0">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Macro Alert</span>
           <span className="text-slate-200 font-bold mt-0.5 text-xs truncate">US CPI Print in 01h 42m</span>
         </div>
       </div>
+
     </div>
   )
 }

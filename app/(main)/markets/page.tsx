@@ -2,14 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Coins, Activity, Plus } from 'lucide-react'
+import { Coins, Plus } from 'lucide-react'
 
+import MarketSidebar from '@/components/market/MarketSidebar'
 import StoriesCarousel from '@/components/market/StoriesCarousel'
 import MarketSentimentStrip from '@/components/market/MarketSentimentStrip'
 import MarketDataGrid from '@/components/market/MarketDataGrid'
 import type { AssetSymbol } from '@/lib/supabase/types'
 import { MarketFilterType, MarketTicker, VerifiedTraderAllocation } from '@/lib/supabase/market.types'
 import MarketInsightsRail from '@/components/market/MarketInsightRail'
+
 
 const SEED_TICKERS: MarketTicker[] = [
   { symbol: 'BTC' as AssetSymbol, name: 'Bitcoin', priceUsd: 68572.00, change24h: 2.41, bullishPercent: 76, watcherCount: 1420, isWatching: true, sparkline: [67100, 67500, 68200, 67900, 68400, 68572] },
@@ -45,32 +47,22 @@ export default function MarketHomePage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 text-slate-100 font-sans antialiased overflow-x-hidden pb-24 lg:pb-6">
+    <div className="h-screen w-full bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden flex flex-col selection:bg-amber-500/30">
       
-      {/* SECTION 1 — TOP NAVBAR DISPLAY */}
-      <header className="sticky top-0 z-40 w-full border-b border-slate-900/80 bg-slate-950/80 p-3 backdrop-blur-xl select-none">
-        <div className="w-full flex items-center justify-between px-2 md:px-4">
-          <div className="text-base font-black tracking-tighter text-amber-500 font-mono cursor-pointer" onClick={() => router.push('/')}>GNEX</div>
-          <div className="w-48 md:w-72 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-500 text-xs font-medium flex items-center justify-between cursor-pointer">
-            <span>Search assets, traders...</span>
-            <span className="text-[9px] font-mono border border-slate-800 bg-slate-950 px-1 rounded">/</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="h-6 w-6 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-800 text-slate-400 cursor-pointer hover:text-slate-200">
-              <Activity className="h-3.5 w-3.5" />
-            </div>
-            <div className="h-7 w-7 rounded-full bg-slate-800 border border-slate-700 overflow-hidden cursor-pointer" />
-          </div>
-        </div>
-      </header>
-
-      {/* MAIN RESPONSIVE VIEWPORT MESH */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-4 gap-6 p-4 md:p-6 items-start max-w-[1600px] mx-auto">
+      {/* 
+        🟢 THE OVERHAUL MESH:
+        Dropped the redundant inline header to let the carousel snap directly beneath your shell topnav.
+        Removed harsh side border split lines entirely.
+      */}
+      <div className="flex-1 w-full flex overflow-hidden">
         
-        {/* CENTER CONVERSION CONTENT CANVAS CONTAINER (Spans 3 Columns) */}
-        <div className="col-span-1 lg:col-span-3 space-y-6 flex flex-col w-full">
+        {/* COLUMN 1: LEFT SIDEBAR NAVIGATION PANEL */}
+        <MarketSidebar />
+
+        {/* COLUMN 2: CENTER SCROLLING CANVAS CORE */}
+        <div className="flex-1 h-full overflow-y-auto px-4 md:px-6 py-6 space-y-6 flex flex-col w-full scrollbar-none pb-28 lg:pb-12">
           
-          {/* SECTION 2 — HERO STORIES CAROUSEL ROW */}
+          {/* SECTION 2 — HERO STORIES CAROUSEL */}
           <div className="space-y-2.5 w-full">
             <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-[0.15em] select-none">
               <Coins className="h-3.5 w-3.5 text-amber-500" />
@@ -83,10 +75,10 @@ export default function MarketHomePage() {
             />
           </div>
 
-          {/* SECTION 3 — COMPACT HORIZONTAL SENTIMENT STRIP */}
+          {/* SECTION 3 — VISUAL VERTICAL SENTIMENT BAR CHART CLUSTER */}
           <MarketSentimentStrip tickers={tickers} />
 
-          {/* SECTION 4 — HIGH PERFORMANCE SCROLLABLE MARKET MATRIX LIST */}
+          {/* SECTION 4 — WATCHLIST + MARKET SCROLLABLE DATA GRID */}
           <MarketDataGrid 
             tickers={tickers}
             activeFilter={activeFilter}
@@ -94,15 +86,16 @@ export default function MarketHomePage() {
             onToggleWatchlist={handleToggleWatchlist}
             onActionClick={(sym, mode) => handleActionClick(sym, mode)}
           />
+
         </div>
 
-        {/* SECTION 5 & 6 — SPLICED DECOUPLED INSIGHTS SIDEBAR CARDS RAIL */}
+        {/* COLUMN 3: RIGHT MINI RAIL INSIGHTS CARDS PANEL */}
         <MarketInsightsRail traders={SEED_TRADERS} />
 
       </div>
 
-      {/* SECTION 7 — STICKY MOBILE CONVERSION FLOATING FOOTER */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 border-t border-slate-900 backdrop-blur-xl p-3 flex items-center justify-between gap-3 shadow-2xl">
+      {/* SECTION 7 — STICKY MOBILE ACTIONS BUY/SELL FOOTER */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 border-t border-slate-900/60 backdrop-blur-xl p-3 flex items-center justify-between gap-3 shadow-2xl">
         <div className="flex flex-col select-none">
           <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Trading Focused</span>
           <span className="text-xs font-black font-mono text-slate-200 mt-0.5">BTC/USD Quick Capture</span>

@@ -109,13 +109,13 @@ export default function MarketDataGrid({
                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => onActionClick(ticker.symbol, 'BUY')}
-                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-wider rounded-lg active:scale-95 transition-all shadow-sm"
+                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black uppercase cursor-pointer tracking-wider rounded-lg active:scale-95 transition-all shadow-sm"
                   >
                     Buy
                   </button>
                   <button
                     onClick={() => onActionClick(ticker.symbol, 'SELL')}
-                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-[10px] font-black uppercase tracking-wider rounded-lg active:scale-95 transition-all"
+                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-[10px] font-black uppercase cursor-pointer tracking-wider rounded-lg active:scale-95 transition-all"
                   >
                     Sell
                   </button>
