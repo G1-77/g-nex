@@ -45,8 +45,8 @@ export default function StoriesCarousel({ tickers = [], onToggleWatchlist, onAct
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 whileHover={{ y: -4 }}
-                onClick={() => router.push(`/market/${ticker.symbol.toLowerCase()}`)}
-                className="relative flex min-h-[220px] w-full flex-col justify-between rounded-3xl border border-slate-900/60 bg-slate-950/40 p-4 backdrop-blur-xl transition-shadow duration-300 cursor-pointer group"
+                onClick={() => router.push(`/markets/${ticker.symbol.toLowerCase()}`)}
+                className="relative flex min-h-55 w-full flex-col justify-between rounded-3xl border border-slate-900/60 bg-slate-950/40 p-4 backdrop-blur-xl transition-shadow duration-300 cursor-pointer group"
                 style={{ boxShadow: `0 10px 30px -10px rgba(0,0,0,0.7), inset 0 0 20px ${glowColor}` }}
               >
                 <div className="flex items-center justify-between w-full">

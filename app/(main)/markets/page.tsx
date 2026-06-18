@@ -50,7 +50,7 @@ export default function MarketHomePage() {
     <div className="h-screen w-full bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden flex flex-col selection:bg-amber-500/30">
       
       {/* 
-        🟢 THE OVERHAUL MESH:
+        THE OVERHAUL MESH:
         Dropped the redundant inline header to let the carousel snap directly beneath your shell topnav.
         Removed harsh side border split lines entirely.
       */}
