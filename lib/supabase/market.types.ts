@@ -2,7 +2,6 @@ import type { AssetSymbol } from '@/lib/supabase/types'
 
 export type AssetType = 'crypto' | 'gold' | 'stable'
 export type MarketFilterType = 'All' | 'Crypto' | 'Gold' | 'Watchlist'
-export type ChartTimeframe = '1H' | '4H' | '1D' | '1W' | '1M'
 
 /** Base catalog taxonomy definition model for global assets */
 export interface MarketAsset {
@@ -114,14 +113,15 @@ export interface MarketGridProps {
   onActionClick: (symbol: AssetSymbol, viewMode: 'BUY' | 'SELL') => void
 }
 
+export interface MarketFilterChipsProps {
+  activeFilter: MarketFilterType
+  onFilterChange: (filter: MarketFilterType) => void
+}
+
 export interface StickyTradeFooterProps {
   selectedSymbol: AssetSymbol
   priceUsd: number
   onActionClick: (symbol: AssetSymbol, viewMode: 'BUY' | 'SELL' | 'DEPOSIT') => void
-}
-
-export interface TradingViewChartProps {
-  symbol: AssetSymbol
 }
 
 export interface SentimentMeterProps {

@@ -1,83 +1,253 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useParams, notFound } from 'next/navigation'
+import { useState, use } from 'react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, Star } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchCryptoPrices } from '@/lib/market/coingecko'
 import { MARKET_ASSETS } from '@/lib/constants/market-assets'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useGetUserWatchlistQuery, useToggleWatchlistMutation } from '@/lib/react-query/market/queries.market'
+import { useGetUserWalletQuery } from '@/lib/react-query/market/queries.market'
+import TradingViewChart from '@/components/market/TradingViewChart'
+import TimeframeSelector from '@/components/market/TimeframeSelector'
+import ChartTypeToggle from '@/components/market/ChartTypeToggle'
+import MetricsGrid from '@/components/market/MetricsGrid'
+import SentimentBar from '@/components/market/SentimentBar'
+import InsufficientBalanceModal from '@/components/market/InsufficientBalanceModal'
 import type { AssetSymbol } from '@/lib/supabase/types'
-import type { VerifiedTraderAllocation } from '@/lib/supabase/market.types'
+import type { Timeframe } from '@/lib/market/ohlc'
 
-import MarketSidebar from '@/components/market/MarketSidebar'
-import AssetHero from '@/components/market/asset/AssetHero'
-import TradingViewChart from '@/components/market/asset/TradingViewChart'
-import SocialSignalsGrid from '@/components/market/asset/SocialSignalsGrid'
-import ExecutionPanel from '@/components/market/asset/ExecutionPanel'
-
-const DETAIL_FALLBACKS: Record<AssetSymbol, { priceUsd: number; change24h: number; bullishPercent: number; volume24h: number; marketCapUsd: number; watcherCount: number }> = {
-  BTC: { priceUsd: 72450.22, change24h: 4.82, bullishPercent: 82, volume24h: 28350000000, marketCapUsd: 1420000000000, watcherCount: 12452 },
-  ETH: { priceUsd: 3870.21, change24h: 6.25, bullishPercent: 68, volume24h: 14200000000, marketCapUsd: 410000000000, watcherCount: 945 },
-  SOL: { priceUsd: 165.34, change24h: 8.62, bullishPercent: 84, volume24h: 3800000000, marketCapUsd: 72000000000, watcherCount: 1102 },
-  XRP: { priceUsd: 0.58, change24h: 4.20, bullishPercent: 51, volume24h: 980000000, marketCapUsd: 32000000000, watcherCount: 412 },
-  USDT: { priceUsd: 1.00, change24h: 0.00, bullishPercent: 50, volume24h: 45000000000, marketCapUsd: 112000000000, watcherCount: 184 },
-  XAU: { priceUsd: 2342.10, change24h: -0.35, bullishPercent: 43, volume24h: 21000000000, marketCapUsd: 14000000000000, watcherCount: 684 },
+interface PageProps {
+  params: Promise<{ symbol: string }>
 }
 
-const SEED_TRADERS: VerifiedTraderAllocation[] = [
-  { id: '1', username: 'ahelstakov', avatarUrl: '', monthlyRoi: 32.41, primaryAsset: 'BTC' as AssetSymbol, allocationPercent: 72 },
-  { id: '2', username: 'kenyan_wolf', avatarUrl: '', monthlyRoi: 21.78, primaryAsset: 'XAU' as AssetSymbol, allocationPercent: 54 }
-]
+const COINGECKO_ID_MAP: Record<string, string> = {
+  BTC: 'bitcoin',
+  ETH: 'ethereum',
+  SOL: 'solana',
+  XRP: 'ripple',
+  USDT: 'tether'
+}
 
-export default function AssetDetailPage() {
-  const routerParams = useParams()
-  const rawSymbol = typeof routerParams?.symbol === 'string' ? routerParams.symbol : ''
-  const dynamicSymbol = rawSymbol.toUpperCase()
+const KES_TO_USD_RATE = 130
 
-  const assetMetadata = MARKET_ASSETS[dynamicSymbol as AssetSymbol]
-  if (!rawSymbol || !assetMetadata) {
-    notFound()
+export default function AssetDetailPage({ params }: PageProps) {
+  const resolvedParams = use(params)
+  const symbol = resolvedParams.symbol.toUpperCase() as AssetSymbol
+  const router = useRouter()
+  const { user } = useAuth()
+  
+  const [timeframe, setTimeframe] = useState<Timeframe>('1D')
+  const [chartType, setChartType] = useState<'line' | 'candlestick'>('candlestick')
+  const [showInsufficientModal, setShowInsufficientModal] = useState(false)
+  const [tradeAmount, setTradeAmount] = useState<number>(0)
+
+  const asset = MARKET_ASSETS[symbol]
+  const toggleWatchlistMutation = useToggleWatchlistMutation()
+  
+  const { data: watchlistSymbols = [] } = useGetUserWatchlistQuery(user?.id || null)
+  const { data: wallet } = useGetUserWalletQuery(user?.id || null)
+  const isWatching = watchlistSymbols.includes(symbol)
+
+  // Fetch live price data
+  const { data: priceData, isLoading } = useQuery({
+    queryKey: ['asset-price', symbol],
+    queryFn: async () => {
+      const coinId = COINGECKO_ID_MAP[symbol]
+      if (!coinId) throw new Error('Unsupported asset')
+      
+      const data = await fetchCryptoPrices([coinId])
+      return data[0]
+    },
+    refetchInterval: 30000, // 30 seconds
+  })
+
+  const handleWatchlistToggle = () => {
+    if (!user) {
+      alert('Please sign in to manage your watchlist')
+      return
+    }
+    toggleWatchlistMutation.mutate({ userId: user.id, symbol })
   }
 
-  const assetPayload = useMemo(() => {
-    const fallback = DETAIL_FALLBACKS[dynamicSymbol as AssetSymbol]
-    return {
-      symbol: dynamicSymbol as AssetSymbol,
-      name: assetMetadata.name,
-      priceUsd: fallback.priceUsd,
-      change24h: fallback.change24h,
-      volume24h: fallback.volume24h,
-      marketCapUsd: fallback.marketCapUsd,
-      watcherCount: fallback.watcherCount,
-      isWatching: dynamicSymbol === 'BTC',
-      bullishPercent: fallback.bullishPercent,
+  const handleBuy = () => {
+    if (!user) {
+      router.push('/login')
+      return
     }
-  }, [dynamicSymbol, assetMetadata])
+
+    // Example: User wants to buy $100 worth
+    const requiredKes = 100 * KES_TO_USD_RATE
+    const availableBalance = wallet?.balanceKes || 0
+
+    if (availableBalance < requiredKes) {
+      setTradeAmount(requiredKes)
+      setShowInsufficientModal(true)
+      return
+    }
+
+    // Proceed with trade
+    router.push(`/markets/${symbol.toLowerCase()}/trade?side=buy`)
+  }
+
+  const handleSell = () => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    router.push(`/markets/${symbol.toLowerCase()}/trade?side=sell`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full bg-slate-950 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="h-12 w-12 border-4 border-slate-800 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-slate-500 font-mono">Loading {symbol} data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!priceData || !asset) {
+    return (
+      <div className="h-screen w-full bg-slate-950 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <p className="text-lg font-bold text-slate-300">Asset not found</p>
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-emerald-500 hover:text-emerald-400"
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const currentPrice = priceData.current_price
+  const change24h = priceData.price_change_percentage_24h
+  const isPositive = change24h >= 0
+  const priceKes = currentPrice * KES_TO_USD_RATE
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 text-slate-100 font-sans antialiased overflow-y-auto selection:bg-amber-500/30">
-      <div className="w-full flex max-w-412.5 mx-auto items-start relative">
-        
-        {/* COLUMN 1: LEFT NAVIGATION SIDEBAR */}
-        <MarketSidebar />
+    <div className="min-h-screen w-full bg-slate-950 text-slate-100 pb-24 lg:pb-8">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.back()}
+              className="text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-black text-slate-100">{asset.name}</h1>
+                <span className="text-xs font-mono text-slate-500 uppercase">
+                  {symbol} / {asset.assetType}
+                </span>
+              </div>
+            </div>
+          </div>
 
-        {/* COLUMN 2: CENTER CANVAS WORKSPACE CORE */}
-        <div className="flex-1 min-w-0 p-4 md:p-6 space-y-6 flex flex-col w-full pb-32 lg:pb-12">
-          <AssetHero 
-            asset={assetPayload} 
-            onToggleWatchlist={(sym) => alert(`Watchlist sync toggled for: ${sym}`)} 
-          />
-          <TradingViewChart 
-            symbol={assetPayload.symbol} 
-          />
-          <SocialSignalsGrid 
-            symbol={assetPayload.symbol}
-            bullishPercent={assetPayload.bullishPercent}
-            traders={SEED_TRADERS}
-          />
+          <button
+            onClick={handleWatchlistToggle}
+            disabled={toggleWatchlistMutation.isPending}
+            className={`flex items-center justify-center h-10 w-10 rounded-full border transition-all ${
+              isWatching
+                ? 'bg-amber-500 border-amber-600 text-slate-950'
+                : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Star className={`h-4 w-4 ${isWatching ? 'fill-current' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        {/* Price Display */}
+        <div className="space-y-2">
+          <div className="flex items-baseline gap-3">
+            <span className="text-4xl md:text-5xl font-black font-mono text-slate-100">
+              ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+            <span
+              className={`text-xl font-black font-mono ${
+                isPositive ? 'text-emerald-500' : 'text-rose-500'
+              }`}
+            >
+              {isPositive ? '+' : ''}{change24h.toFixed(2)}%
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 font-mono">
+            ≈ KES {priceKes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
         </div>
 
-        {/* COLUMN 3: RIGHT TRANSACTION SIDEBAR PANEL */}
-        <ExecutionPanel symbol={assetPayload.symbol} />
+        {/* Chart Controls */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <TimeframeSelector selected={timeframe} onChange={setTimeframe} />
+          <ChartTypeToggle chartType={chartType} onChange={setChartType} />
+        </div>
 
+        {/* Chart */}
+        <TradingViewChart
+          symbol={symbol}
+          timeframe={timeframe}
+          chartType={chartType}
+          currentPrice={currentPrice}
+        />
+
+        {/* Metrics Grid */}
+        <MetricsGrid
+          high24h={priceData.high_24h}
+          low24h={priceData.low_24h}
+          volume24h={priceData.total_volume}
+          marketCap={priceData.market_cap}
+        />
+
+        {/* Sentiment Bar */}
+        <SentimentBar symbol={symbol} />
       </div>
+
+      {/* Fixed Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-900 backdrop-blur-xl p-4">
+        <div className="max-w-7xl mx-auto flex gap-3">
+          <button
+            onClick={handleBuy}
+            className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl text-lg transition-all active:scale-95 shadow-lg"
+          >
+            Buy {symbol}
+          </button>
+          <button
+            onClick={handleSell}
+            className="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-100 font-black py-4 rounded-xl text-lg transition-all active:scale-95"
+          >
+            Sell {symbol}
+          </button>
+        </div>
+      </div>
+
+      {/* Insufficient Balance Modal */}
+      <InsufficientBalanceModal
+        isOpen={showInsufficientModal}
+        onClose={() => setShowInsufficientModal(false)}
+        symbol={symbol}
+        requiredAmount={tradeAmount}
+        availableBalance={wallet?.balanceKes || 0}
+        onDeposit={() => {
+          setShowInsufficientModal(false)
+          router.push('/wallet/deposit')
+        }}
+        onAdjustAmount={() => {
+          setShowInsufficientModal(false)
+          // Could open amount selector here
+        }}
+      />
     </div>
   )
 }
