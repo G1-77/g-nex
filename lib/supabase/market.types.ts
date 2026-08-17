@@ -15,6 +15,7 @@ export interface MarketAsset {
 export interface MarketTicker {
   symbol: AssetSymbol
   name: string
+  logo: string
   priceUsd: number
   change24h: number
   bullishPercent: number

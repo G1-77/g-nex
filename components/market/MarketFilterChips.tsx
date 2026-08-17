@@ -19,10 +19,10 @@ export default function MarketFilterChips({
               key={filter}
               type="button"
               onClick={() => onFilterChange(filter)}
-              className={`snap-center shrink-0 cursor-pointer rounded-full px-5 py-1.5 text-xs font-bold tracking-wide uppercase border transition-all duration-150 active:scale-95 ${
+              className={`snap-center shrink-0 cursor-pointer rounded-xl px-3 py-1 text-[10px] font-bold tracking-wide transition-all duration-150 active:scale-95 ${
                 isSelected
-                  ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm shadow-amber-500/10 font-black'
-                  : 'bg-slate-900/40 text-slate-400 border-slate-900 hover:border-slate-800 hover:text-slate-200'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/10'
+                  : 'bg-slate-900/40 text-slate-400 hover:bg-slate-900 hover:text-slate-200'
               }`}
             >
               {filter}

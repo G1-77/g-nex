@@ -88,7 +88,7 @@ export function generateMockIntradayData(
   return data
 }
 
-function getIntervalMs(timeframe: Timeframe): number {
+export function getIntervalMs(timeframe: Timeframe): number {
   const intervals: Record<Timeframe, number> = {
     '1m': 60000,
     '5m': 300000,

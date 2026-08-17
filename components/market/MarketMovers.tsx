@@ -54,8 +54,8 @@ export default function MarketMovers() {
   const { data, isLoading } = useQuery({
     queryKey: ['market-movers'],
     queryFn: fetchMarketMovers,
-    staleTime: 1000 * 60, // 60 seconds
-    refetchInterval: 1000 * 60, // Refresh every 60 seconds
+    staleTime: 1000 * 5, // 5 seconds
+    refetchInterval: 1000 * 5, // Refresh every 5 seconds
   })
 
   if (isLoading) {

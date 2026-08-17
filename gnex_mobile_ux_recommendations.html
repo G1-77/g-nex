@@ -1,0 +1,588 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.root{padding:1rem 0;display:flex;flex-direction:column;gap:32px}
+.section{display:flex;flex-direction:column;gap:10px}
+.label{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-tertiary)}
+.phones{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+.phone{flex-shrink:0;width:180px;border-radius:20px;border:1.5px solid var(--color-border-secondary);background:#0d1117;overflow:hidden;display:flex;flex-direction:column}
+.pbar{height:24px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#0d1117}
+.ptime{font-size:9px;font-weight:500;color:#e2e8f0}
+.pbatt{font-size:9px;color:#94a3b8}
+.pscreen{flex:1;display:flex;flex-direction:column;background:#0d1117;overflow:hidden}
+.phead{padding:8px 10px 6px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid rgba(255,255,255,0.06)}
+.phtitle{font-size:11px;font-weight:500;color:#f1f5f9}
+.phicons{display:flex;gap:8px;color:#64748b;font-size:14px}
+.pbody{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px;gap:6px}
+.pcard{background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px}
+.ptitle{font-size:9px;font-weight:500;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.pval{font-size:14px;font-weight:500;color:#f1f5f9;font-variant-numeric:tabular-nums}
+.pup{color:#8DFF45;font-size:10px;font-weight:500}
+.pdn{color:#FF5A5A;font-size:10px;font-weight:500}
+.pneutral{color:#64748b;font-size:10px}
+.prow{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)}
+.prow:last-child{border-bottom:none}
+.prasset{display:flex;align-items:center;gap:6px}
+.pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pasym{font-size:10px;font-weight:500;color:#f1f5f9}
+.papx{font-size:10px;color:#64748b}
+.paspark{display:flex;align-items:flex-end;gap:1px;height:16px}
+.paspark span{width:3px;border-radius:1px}
+.pnav{height:48px;border-top:0.5px solid rgba(255,255,255,0.06);background:#0a0d12;display:flex;align-items:stretch;flex-shrink:0}
+.pni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:8px;font-weight:500;color:#475569;cursor:pointer}
+.pni.active{color:#F6C453}
+.pni i{font-size:16px}
+.ptrade-bar{height:52px;background:rgba(10,13,18,0.95);border-top:0.5px solid rgba(255,255,255,0.08);display:flex;align-items:center;padding:0 8px;gap:6px;flex-shrink:0}
+.ptb-info{flex:1;min-width:0}
+.ptb-sym{font-size:10px;font-weight:500;color:#f1f5f9;display:flex;align-items:center;gap:4px}
+.ptb-px{font-size:9px;color:#8DFF45}
+.ptb-buy{background:rgba(141,255,69,0.12);color:#8DFF45;border:none;border-radius:6px;padding:5px 8px;font-size:9px;font-weight:500;cursor:pointer}
+.ptb-sell{background:rgba(255,90,90,0.12);color:#FF5A5A;border:none;border-radius:6px;padding:5px 8px;font-size:9px;font-weight:500;cursor:pointer}
+.ticker-strip{display:flex;gap:6px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
+.ticker-strip::-webkit-scrollbar{display:none}
+.tick{background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 6px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:44px}
+.tick-sym{font-size:8px;font-weight:500;color:#94a3b8}
+.tick-chg{font-size:8px;font-weight:500}
+.story-row{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.story-row::-webkit-scrollbar{display:none}
+.story{flex-shrink:0;width:64px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.06);padding:6px 5px;display:flex;flex-direction:column;gap:3px}
+.story-sym{font-size:9px;font-weight:500;color:#f1f5f9}
+.story-mini{display:flex;align-items:flex-end;gap:1px;height:14px;margin:1px 0}
+.story-mini span{border-radius:1px}
+.story-chg{font-size:8px;font-weight:500}
+.bull-story{background:rgba(141,255,69,0.04);border-color:rgba(141,255,69,0.12)}
+.bear-story{background:rgba(255,90,90,0.04);border-color:rgba(255,90,90,0.12)}
+.rec{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem}
+.rec-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.rec-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.rec-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px}
+.rec-sub{font-size:12px;color:var(--color-text-secondary);line-height:1.4}
+.rec-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6;padding-top:8px;border-top:0.5px solid var(--color-border-tertiary)}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.do-tag{background:var(--color-background-success);color:var(--color-text-success)}
+.warn-tag{background:var(--color-background-warning);color:var(--color-text-warning)}
+.dont-tag{background:var(--color-background-danger);color:var(--color-text-danger)}
+.nav-diagram{display:flex;flex-direction:column;gap:8px}
+.nd-row{display:flex;align-items:center;gap:8px}
+.nd-page{font-size:12px;font-weight:500;color:var(--color-text-primary);background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 10px;min-width:90px;text-align:center}
+.nd-arrow{color:var(--color-text-tertiary);font-size:12px;display:flex;align-items:center;gap:4px}
+.nd-nav{display:flex;gap:4px}
+.nd-item{font-size:10px;padding:3px 8px;border-radius:12px;background:var(--color-background-tertiary);color:var(--color-text-secondary);display:flex;align-items:center;gap:4px}
+.nd-item.active{background:var(--color-background-warning);color:var(--color-text-warning)}
+.nd-item i{font-size:12px}
+.flow{display:flex;flex-direction:column;gap:4px}
+.fstep{display:flex;align-items:center;gap:8px}
+.fline{width:2px;background:var(--color-border-secondary);margin-left:13px;height:12px;flex-shrink:0}
+.fnum{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.fbody{flex:1}
+.ftitle{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.fdesc{font-size:11px;color:var(--color-text-secondary)}
+.divider{height:0.5px;background:var(--color-border-tertiary)}
+</style>
+<h2 class="sr-only">GNex mobile UX recommendations — screen designs, navigation flow, and design decisions for the mobile-first market hub</h2>
+<div class="root">
+
+<div class="section">
+  <div class="label">Screen previews — 5 key states</div>
+  <div class="phones">
+
+    <!-- Screen 1: Home (Binance-style) -->
+    <div class="phone">
+      <div class="pbar"><span class="ptime">9:41</span><span class="pbatt">●●●</span></div>
+      <div class="pscreen">
+        <div class="phead">
+          <div class="phtitle" style="display:flex;align-items:center;gap:5px">
+            <span style="background:#F6C453;color:#0d1117;width:16px;height:16px;border-radius:4px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">G</span>
+            <span style="font-size:11px;font-weight:500;color:#f1f5f9">gnex</span>
+          </div>
+          <div class="phicons">
+            <i class="ti ti-bell" aria-hidden="true"></i>
+            <i class="ti ti-user-circle" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="pbody">
+          <!-- Balance banner -->
+          <div style="background:rgba(246,196,83,0.06);border:0.5px solid rgba(246,196,83,0.15);border-radius:10px;padding:8px">
+            <div style="font-size:8px;color:#94a3b8;margin-bottom:2px">Total balance</div>
+            <div style="font-size:16px;font-weight:500;color:#f1f5f9;font-variant-numeric:tabular-nums">KES 74,500<span style="font-size:10px;color:#94a3b8">.00</span></div>
+            <div style="display:flex;gap:4px;margin-top:5px">
+              <button style="flex:1;background:#F6C453;color:#0d1117;border:none;border-radius:5px;padding:3px;font-size:8px;font-weight:500">Deposit</button>
+              <button style="flex:1;background:rgba(255,255,255,0.06);color:#94a3b8;border:none;border-radius:5px;padding:3px;font-size:8px">Withdraw</button>
+            </div>
+          </div>
+          <!-- Ticker strip -->
+          <div class="ticker-strip">
+            <div class="tick"><span class="tick-sym">BTC</span><span class="tick-chg pup">+2.4%</span></div>
+            <div class="tick"><span class="tick-sym">ETH</span><span class="tick-chg pup">+1.8%</span></div>
+            <div class="tick"><span class="tick-sym">SOL</span><span class="tick-chg pdn">-0.9%</span></div>
+            <div class="tick"><span class="tick-sym">XRP</span><span class="tick-chg pup">+4.2%</span></div>
+            <div class="tick"><span class="tick-sym">XAU</span><span class="tick-chg pup">+0.6%</span></div>
+          </div>
+          <!-- Story cards -->
+          <div style="font-size:8px;color:#475569;margin-bottom:2px;letter-spacing:.06em;text-transform:uppercase">Market pulse</div>
+          <div class="story-row">
+            <div class="story bull-story">
+              <div class="story-sym">BTC</div>
+              <div class="story-mini">
+                <span style="width:3px;height:5px;background:#8DFF45;opacity:.4"></span>
+                <span style="width:3px;height:7px;background:#8DFF45;opacity:.5"></span>
+                <span style="width:3px;height:6px;background:#8DFF45;opacity:.6"></span>
+                <span style="width:3px;height:9px;background:#8DFF45;opacity:.7"></span>
+                <span style="width:3px;height:11px;background:#8DFF45;opacity:.9"></span>
+                <span style="width:3px;height:14px;background:#8DFF45"></span>
+              </div>
+              <div class="story-chg pup">+2.41%</div>
+            </div>
+            <div class="story bull-story">
+              <div class="story-sym">ETH</div>
+              <div class="story-mini">
+                <span style="width:3px;height:6px;background:#8DFF45;opacity:.5"></span>
+                <span style="width:3px;height:8px;background:#8DFF45;opacity:.6"></span>
+                <span style="width:3px;height:7px;background:#8DFF45;opacity:.7"></span>
+                <span style="width:3px;height:10px;background:#8DFF45;opacity:.8"></span>
+                <span style="width:3px;height:12px;background:#8DFF45;opacity:.9"></span>
+                <span style="width:3px;height:13px;background:#8DFF45"></span>
+              </div>
+              <div class="story-chg pup">+1.85%</div>
+            </div>
+            <div class="story bear-story">
+              <div class="story-sym">SOL</div>
+              <div class="story-mini">
+                <span style="width:3px;height:14px;background:#FF5A5A"></span>
+                <span style="width:3px;height:11px;background:#FF5A5A;opacity:.9"></span>
+                <span style="width:3px;height:9px;background:#FF5A5A;opacity:.8"></span>
+                <span style="width:3px;height:7px;background:#FF5A5A;opacity:.7"></span>
+                <span style="width:3px;height:5px;background:#FF5A5A;opacity:.6"></span>
+                <span style="width:3px;height:4px;background:#FF5A5A;opacity:.5"></span>
+              </div>
+              <div class="story-chg pdn">-0.92%</div>
+            </div>
+          </div>
+          <!-- Asset rows -->
+          <div class="pcard" style="padding:6px 8px">
+            <div class="prow">
+              <div class="prasset"><div class="pdot" style="background:#F7931A"></div><div><div class="pasym">BTC</div><div class="papx">$68,572</div></div></div>
+              <div class="paspark"><span style="height:5px;background:#8DFF45;opacity:.4"></span><span style="height:7px;background:#8DFF45;opacity:.6"></span><span style="height:10px;background:#8DFF45;opacity:.8"></span><span style="height:14px;background:#8DFF45"></span></div>
+              <div class="pup">+2.41%</div>
+            </div>
+            <div class="prow">
+              <div class="prasset"><div class="pdot" style="background:#627EEA"></div><div><div class="pasym">ETH</div><div class="papx">$3,420</div></div></div>
+              <div class="paspark"><span style="height:6px;background:#8DFF45;opacity:.4"></span><span style="height:8px;background:#8DFF45;opacity:.6"></span><span style="height:11px;background:#8DFF45;opacity:.8"></span><span style="height:13px;background:#8DFF45"></span></div>
+              <div class="pup">+1.85%</div>
+            </div>
+            <div class="prow">
+              <div class="prasset"><div class="pdot" style="background:#9945FF"></div><div><div class="pasym">SOL</div><div class="papx">$154</div></div></div>
+              <div class="paspark"><span style="height:14px;background:#FF5A5A"></span><span style="height:11px;background:#FF5A5A;opacity:.8"></span><span style="height:8px;background:#FF5A5A;opacity:.6"></span><span style="height:5px;background:#FF5A5A;opacity:.4"></span></div>
+              <div class="pdn">-0.92%</div>
+            </div>
+          </div>
+        </div>
+        <div class="pnav">
+          <div class="pni active"><i class="ti ti-home" aria-hidden="true"></i>Home</div>
+          <div class="pni"><i class="ti ti-chart-bar" aria-hidden="true"></i>Markets</div>
+          <div class="pni"><i class="ti ti-compass" aria-hidden="true"></i>Explore</div>
+          <div class="pni"><i class="ti ti-menu-2" aria-hidden="true"></i>Menu</div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:4px 0 6px;font-size:9px;color:#475569;background:#0a0d12">Home — binance-style</div>
+    </div>
+
+    <!-- Screen 2: Markets page + nav morphs -->
+    <div class="phone">
+      <div class="pbar"><span class="ptime">9:41</span><span class="pbatt">●●●</span></div>
+      <div class="pscreen">
+        <div class="phead">
+          <div class="phtitle">Markets</div>
+          <div class="phicons"><i class="ti ti-search" aria-hidden="true"></i><i class="ti ti-sliders" aria-hidden="true"></i></div>
+        </div>
+        <div class="pbody">
+          <!-- Tab strip -->
+          <div style="display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 0">
+            <div style="background:#F6C453;color:#0d1117;border-radius:12px;padding:3px 8px;font-size:9px;font-weight:500;flex-shrink:0">All</div>
+            <div style="background:rgba(255,255,255,0.04);color:#64748b;border-radius:12px;padding:3px 8px;font-size:9px;flex-shrink:0">Crypto</div>
+            <div style="background:rgba(255,255,255,0.04);color:#64748b;border-radius:12px;padding:3px 8px;font-size:9px;flex-shrink:0">Gold</div>
+            <div style="background:rgba(255,255,255,0.04);color:#64748b;border-radius:12px;padding:3px 8px;font-size:9px;flex-shrink:0">Watchlist</div>
+          </div>
+          <!-- Full asset table -->
+          <div class="pcard" style="padding:4px 6px;flex:1">
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:4px;padding:2px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)">
+              <div style="font-size:8px;color:#475569">Asset</div>
+              <div style="font-size:8px;color:#475569">Price</div>
+              <div style="font-size:8px;color:#475569">24h</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:4px;align-items:center;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)">
+              <div class="prasset"><div class="pdot" style="background:#F7931A"></div><div><div class="pasym">BTC</div><div class="papx">Bitcoin</div></div></div>
+              <div style="font-size:9px;color:#f1f5f9;font-variant-numeric:tabular-nums">$68,572</div>
+              <div class="pup">+2.41%</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:4px;align-items:center;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)">
+              <div class="prasset"><div class="pdot" style="background:#627EEA"></div><div><div class="pasym">ETH</div><div class="papx">Ethereum</div></div></div>
+              <div style="font-size:9px;color:#f1f5f9;font-variant-numeric:tabular-nums">$3,420</div>
+              <div class="pup">+1.85%</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:4px;align-items:center;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)">
+              <div class="prasset"><div class="pdot" style="background:#9945FF"></div><div><div class="pasym">SOL</div><div class="papx">Solana</div></div></div>
+              <div style="font-size:9px;color:#f1f5f9;font-variant-numeric:tabular-nums">$154</div>
+              <div class="pdn">-0.92%</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:4px;align-items:center;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)">
+              <div class="prasset"><div class="pdot" style="background:#00AAE4"></div><div><div class="pasym">XRP</div><div class="papx">Ripple</div></div></div>
+              <div style="font-size:9px;color:#f1f5f9;font-variant-numeric:tabular-nums">$0.58</div>
+              <div class="pup">+4.20%</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:4px;align-items:center;padding:5px 0">
+              <div class="prasset"><div class="pdot" style="background:#C9A84C"></div><div><div class="pasym">XAU</div><div class="papx">Gold</div></div></div>
+              <div style="font-size:9px;color:#f1f5f9;font-variant-numeric:tabular-nums">$2,310</div>
+              <div class="pup">+0.64%</div>
+            </div>
+          </div>
+        </div>
+        <!-- Nav morphed to trade bar -->
+        <div class="ptrade-bar">
+          <div style="width:28px;height:28px;border-radius:7px;background:rgba(246,196,83,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="font-size:12px;color:#F6C453">₿</span>
+          </div>
+          <div class="ptb-info">
+            <div class="ptb-sym">BTC <span style="color:#64748b;font-size:8px">Bitcoin</span></div>
+            <div class="ptb-px">$68,572 · +2.41%</div>
+          </div>
+          <button class="ptb-buy">Buy</button>
+          <button class="ptb-sell">Sell</button>
+          <i class="ti ti-star" aria-hidden="true" style="font-size:14px;color:#475569"></i>
+        </div>
+      </div>
+      <div style="text-align:center;padding:4px 0 6px;font-size:9px;color:#475569;background:#0a0d12">Markets + floating trade bar</div>
+    </div>
+
+    <!-- Screen 3: Asset Detail with chart -->
+    <div class="phone">
+      <div class="pbar"><span class="ptime">9:41</span><span class="pbatt">●●●</span></div>
+      <div class="pscreen">
+        <div class="phead" style="padding:6px 10px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <i class="ti ti-arrow-left" aria-hidden="true" style="font-size:13px;color:#64748b"></i>
+            <div class="pdot" style="background:#F7931A;width:8px;height:8px"></div>
+            <div class="phtitle">BTC/KES</div>
+          </div>
+          <div class="phicons"><i class="ti ti-bell" aria-hidden="true"></i><i class="ti ti-star" aria-hidden="true"></i></div>
+        </div>
+        <div class="pbody" style="padding:6px 8px">
+          <!-- Price header -->
+          <div style="padding:4px 0">
+            <div style="font-size:18px;font-weight:500;color:#f1f5f9;font-variant-numeric:tabular-nums">KES 8,742,000</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+              <span class="pup">+2.41% today</span>
+              <span style="font-size:9px;color:#475569">Vol $2.1B</span>
+            </div>
+          </div>
+          <!-- Timeframe -->
+          <div style="display:flex;gap:3px">
+            <div style="background:rgba(255,255,255,0.03);color:#475569;border-radius:5px;padding:2px 5px;font-size:8px">1H</div>
+            <div style="background:#F6C453;color:#0d1117;border-radius:5px;padding:2px 5px;font-size:8px;font-weight:500">4H</div>
+            <div style="background:rgba(255,255,255,0.03);color:#475569;border-radius:5px;padding:2px 5px;font-size:8px">1D</div>
+            <div style="background:rgba(255,255,255,0.03);color:#475569;border-radius:5px;padding:2px 5px;font-size:8px">1W</div>
+          </div>
+          <!-- Chart area placeholder -->
+          <div style="background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.05);border-radius:8px;height:80px;display:flex;align-items:flex-end;padding:6px;position:relative;overflow:hidden">
+            <svg width="100%" height="100%" viewBox="0 0 140 60" preserveAspectRatio="none" style="position:absolute;inset:0" aria-hidden="true">
+              <defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8DFF45" stop-opacity=".15"/><stop offset="100%" stop-color="#8DFF45" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,50 L20,44 L40,46 L60,32 L80,28 L100,24 L120,18 L140,10" fill="none" stroke="#8DFF45" stroke-width="1.5"/>
+              <path d="M0,50 L20,44 L40,46 L60,32 L80,28 L100,24 L120,18 L140,10 L140,60 L0,60Z" fill="url(#gc)"/>
+            </svg>
+            <div style="position:absolute;top:6px;right:6px;font-size:7px;color:#334155">TradingView chart</div>
+          </div>
+          <!-- Sentiment -->
+          <div style="background:rgba(255,255,255,0.02);border-radius:8px;padding:6px">
+            <div style="font-size:8px;color:#475569;margin-bottom:3px">Community · 847 traders</div>
+            <div style="display:flex;height:3px;border-radius:2px;overflow:hidden;gap:1px">
+              <div style="background:#8DFF45;flex:0.71"></div>
+              <div style="background:#FF5A5A;flex:0.29"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:8px;margin-top:2px">
+              <span class="pup">71% Bulls</span>
+              <span class="pdn">29% Bears</span>
+            </div>
+          </div>
+        </div>
+        <!-- Sticky buy/sell -->
+        <div style="padding:6px 8px;border-top:0.5px solid rgba(255,255,255,0.06);display:flex;gap:5px;background:#0a0d12;flex-shrink:0">
+          <button style="flex:1;background:#8DFF45;color:#0d1117;border:none;border-radius:8px;padding:8px;font-size:10px;font-weight:500">Buy BTC</button>
+          <button style="flex:1;background:rgba(255,90,90,0.12);color:#FF5A5A;border:0.5px solid rgba(255,90,90,0.2);border-radius:8px;padding:8px;font-size:10px;font-weight:500">Sell</button>
+        </div>
+      </div>
+      <div style="text-align:center;padding:4px 0 6px;font-size:9px;color:#475569;background:#0a0d12">Asset detail — chart view</div>
+    </div>
+
+    <!-- Screen 4: Explore (TradingView style) -->
+    <div class="phone">
+      <div class="pbar"><span class="ptime">9:41</span><span class="pbatt">●●●</span></div>
+      <div class="pscreen">
+        <div class="phead">
+          <div class="phtitle">Explore</div>
+          <i class="ti ti-adjustments-horizontal" aria-hidden="true" style="font-size:14px;color:#64748b"></i>
+        </div>
+        <div class="pbody" style="padding:6px 8px">
+          <!-- Search bar -->
+          <div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.06);border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:5px">
+            <i class="ti ti-search" aria-hidden="true" style="font-size:13px;color:#475569"></i>
+            <span style="font-size:10px;color:#334155">Search markets, traders...</span>
+          </div>
+          <!-- Category pills -->
+          <div style="display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 0">
+            <div style="background:#F6C453;color:#0d1117;border-radius:12px;padding:2px 7px;font-size:8px;font-weight:500;flex-shrink:0">Trending</div>
+            <div style="background:rgba(255,255,255,0.04);color:#64748b;border-radius:12px;padding:2px 7px;font-size:8px;flex-shrink:0">Gainers</div>
+            <div style="background:rgba(255,255,255,0.04);color:#64748b;border-radius:12px;padding:2px 7px;font-size:8px;flex-shrink:0">Losers</div>
+            <div style="background:rgba(255,255,255,0.04);color:#64748b;border-radius:12px;padding:2px 7px;font-size:8px;flex-shrink:0">Squads</div>
+            <div style="background:rgba(255,255,255,0.04);color:#64748b;border-radius:12px;padding:2px 7px;font-size:8px;flex-shrink:0">Intel</div>
+          </div>
+          <!-- TradingView-style asset cards -->
+          <div style="font-size:8px;color:#475569;letter-spacing:.06em;text-transform:uppercase">Trending now</div>
+          <div class="pcard" style="padding:7px 8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <div class="prasset"><div class="pdot" style="background:#F7931A"></div><div><div class="pasym">BTC</div><div class="papx">Bitcoin</div></div></div>
+              <div class="pup">+2.41%</div>
+            </div>
+            <svg width="100%" height="28" viewBox="0 0 140 28" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0,22 L23,18 L46,20 L70,12 L93,8 L116,5 L140,2" fill="none" stroke="#8DFF45" stroke-width="1.5"/>
+            </svg>
+            <div style="display:flex;justify-content:space-between;font-size:8px;margin-top:3px">
+              <span style="color:#475569">847 watching</span>
+              <span style="color:#475569">71% bullish</span>
+            </div>
+          </div>
+          <!-- Leaderboard snippet -->
+          <div style="font-size:8px;color:#475569;letter-spacing:.06em;text-transform:uppercase">Top traders</div>
+          <div class="pcard" style="padding:5px 8px">
+            <div class="prow">
+              <div class="prasset">
+                <div style="width:18px;height:18px;border-radius:50%;background:rgba(246,196,83,0.1);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:500;color:#F6C453;flex-shrink:0">AW</div>
+                <div><div class="pasym">@alpha_wolf</div></div>
+              </div>
+              <div class="pup">+42.1%</div>
+            </div>
+            <div class="prow" style="border-bottom:none">
+              <div class="prasset">
+                <div style="width:18px;height:18px;border-radius:50%;background:rgba(141,255,69,0.1);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:500;color:#8DFF45;flex-shrink:0">KT</div>
+                <div><div class="pasym">@kenyan_trader</div></div>
+              </div>
+              <div class="pup">+34.8%</div>
+            </div>
+          </div>
+        </div>
+        <div class="pnav">
+          <div class="pni"><i class="ti ti-home" aria-hidden="true"></i>Home</div>
+          <div class="pni"><i class="ti ti-chart-bar" aria-hidden="true"></i>Markets</div>
+          <div class="pni active"><i class="ti ti-compass" aria-hidden="true"></i>Explore</div>
+          <div class="pni"><i class="ti ti-menu-2" aria-hidden="true"></i>Menu</div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:4px 0 6px;font-size:9px;color:#475569;background:#0a0d12">Explore — TradingView style</div>
+    </div>
+
+    <!-- Screen 5: Wallet -->
+    <div class="phone">
+      <div class="pbar"><span class="ptime">9:41</span><span class="pbatt">●●●</span></div>
+      <div class="pscreen">
+        <div class="phead">
+          <div class="phtitle">Wallet</div>
+          <div class="phicons"><i class="ti ti-clock-hour-3" aria-hidden="true"></i></div>
+        </div>
+        <div class="pbody">
+          <!-- Portfolio value -->
+          <div style="background:rgba(246,196,83,0.05);border:0.5px solid rgba(246,196,83,0.12);border-radius:10px;padding:8px;text-align:center">
+            <div style="font-size:8px;color:#475569;margin-bottom:2px">Total portfolio</div>
+            <div style="font-size:17px;font-weight:500;color:#f1f5f9">KES 74,500.00</div>
+            <div class="pup" style="font-size:9px">+KES 1,240 this week</div>
+            <!-- Donut placeholder -->
+            <div style="display:flex;justify-content:center;margin-top:5px">
+              <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+                <circle cx="22" cy="22" r="16" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6"/>
+                <circle cx="22" cy="22" r="16" fill="none" stroke="#F7931A" stroke-width="6" stroke-dasharray="60 41" stroke-dashoffset="-10" stroke-linecap="round"/>
+                <circle cx="22" cy="22" r="16" fill="none" stroke="#627EEA" stroke-width="6" stroke-dasharray="25 76" stroke-dashoffset="-70" stroke-linecap="round"/>
+                <circle cx="22" cy="22" r="16" fill="none" stroke="#C9A84C" stroke-width="6" stroke-dasharray="16 85" stroke-dashoffset="-95" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Holdings -->
+          <div class="pcard" style="padding:5px 8px">
+            <div class="prow">
+              <div class="prasset"><div class="pdot" style="background:#F7931A"></div><div><div class="pasym">BTC</div><div class="papx">0.0021 BTC</div></div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:#f1f5f9">KES 43,200</div><div class="pup">+2.41%</div></div>
+            </div>
+            <div class="prow">
+              <div class="prasset"><div class="pdot" style="background:#627EEA"></div><div><div class="pasym">ETH</div><div class="papx">0.041 ETH</div></div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:#f1f5f9">KES 18,900</div><div class="pup">+1.85%</div></div>
+            </div>
+            <div class="prow" style="border-bottom:none">
+              <div class="prasset"><div class="pdot" style="background:#C9A84C"></div><div><div class="pasym">XAU</div><div class="papx">0.5g Gold</div></div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:#f1f5f9">KES 12,400</div><div class="pup">+0.64%</div></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:5px">
+            <button style="flex:1;background:#F6C453;color:#0d1117;border:none;border-radius:8px;padding:6px;font-size:9px;font-weight:500">Deposit</button>
+            <button style="flex:1;background:rgba(255,255,255,0.05);color:#94a3b8;border:0.5px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px;font-size:9px">Withdraw</button>
+          </div>
+        </div>
+        <div class="pnav">
+          <div class="pni"><i class="ti ti-home" aria-hidden="true"></i>Home</div>
+          <div class="pni"><i class="ti ti-chart-bar" aria-hidden="true"></i>Markets</div>
+          <div class="pni"><i class="ti ti-compass" aria-hidden="true"></i>Explore</div>
+          <div class="pni active"><i class="ti ti-menu-2" aria-hidden="true"></i>Menu</div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:4px 0 6px;font-size:9px;color:#475569;background:#0a0d12">Wallet — stack overview</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="label">Nav morphing rule — the core mechanic</div>
+  <div class="nav-diagram">
+    <div class="nd-row">
+      <div class="nd-page">Home</div>
+      <div class="nd-arrow"><i class="ti ti-arrow-right" aria-hidden="true" style="font-size:12px"></i> standard nav</div>
+      <div class="nd-nav">
+        <div class="nd-item active"><i class="ti ti-home" aria-hidden="true"></i>Home</div>
+        <div class="nd-item"><i class="ti ti-chart-bar" aria-hidden="true"></i>Markets</div>
+        <div class="nd-item"><i class="ti ti-compass" aria-hidden="true"></i>Explore</div>
+        <div class="nd-item"><i class="ti ti-menu-2" aria-hidden="true"></i>Menu</div>
+      </div>
+    </div>
+    <div class="nd-row">
+      <div class="nd-page">Markets</div>
+      <div class="nd-arrow"><i class="ti ti-arrow-right" aria-hidden="true" style="font-size:12px"></i> nav → trade bar</div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 10px;display:flex;align-items:center;gap:8px;font-size:11px">
+        <span style="font-size:13px;color:var(--color-text-warning)">₿</span>
+        <span style="color:var(--color-text-primary)">BTC</span>
+        <span style="color:var(--color-text-success);font-size:11px">+2.41%</span>
+        <span style="background:var(--color-background-success);color:var(--color-text-success);border-radius:5px;padding:2px 8px;font-size:10px;margin-left:auto">Buy</span>
+        <span style="background:var(--color-background-danger);color:var(--color-text-danger);border-radius:5px;padding:2px 8px;font-size:10px">Sell</span>
+      </div>
+    </div>
+    <div class="nd-row">
+      <div class="nd-page">Asset detail</div>
+      <div class="nd-arrow"><i class="ti ti-arrow-right" aria-hidden="true" style="font-size:12px"></i> full action bar</div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:5px 10px;display:flex;gap:6px;font-size:10px">
+        <span style="background:var(--color-background-success);color:var(--color-text-success);border-radius:6px;padding:4px 14px;font-weight:500">Buy BTC</span>
+        <span style="background:var(--color-background-danger);color:var(--color-text-danger);border-radius:6px;padding:4px 14px;border:0.5px solid var(--color-border-danger)">Sell</span>
+        <span style="margin-left:auto;color:var(--color-text-tertiary);display:flex;align-items:center"><i class="ti ti-bell" aria-hidden="true" style="font-size:14px"></i></span>
+      </div>
+    </div>
+    <div class="nd-row">
+      <div class="nd-page">Explore</div>
+      <div class="nd-arrow"><i class="ti ti-arrow-right" aria-hidden="true" style="font-size:12px"></i> back to standard</div>
+      <div class="nd-nav">
+        <div class="nd-item"><i class="ti ti-home" aria-hidden="true"></i>Home</div>
+        <div class="nd-item"><i class="ti ti-chart-bar" aria-hidden="true"></i>Markets</div>
+        <div class="nd-item active"><i class="ti ti-compass" aria-hidden="true"></i>Explore</div>
+        <div class="nd-item"><i class="ti ti-menu-2" aria-hidden="true"></i>Menu</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="label">User flow — home to first trade</div>
+  <div class="flow">
+    <div class="fstep">
+      <div class="fnum" style="background:var(--color-background-warning);color:var(--color-text-warning)">1</div>
+      <div class="fbody"><div class="ftitle">Lands on Home</div><div class="fdesc">Balance banner + story cards + ticker strip. Familiar — feels exactly like Binance home. Trust established immediately.</div></div>
+    </div>
+    <div class="fline"></div>
+    <div class="fstep">
+      <div class="fnum" style="background:var(--color-background-secondary)">2</div>
+      <div class="fbody"><div class="ftitle">Taps Markets tab</div><div class="fdesc">Nav morphs from 4 icons into the floating trade bar anchored to BTC. All 5 assets visible in a clean table. No overwhelm.</div></div>
+    </div>
+    <div class="fline"></div>
+    <div class="fstep">
+      <div class="fnum" style="background:var(--color-background-secondary)">3</div>
+      <div class="fbody"><div class="ftitle">Taps BTC row</div><div class="fdesc">Opens Asset Detail: full TradingView chart, sentiment bar, community posts. Trade bar switches to full Buy/Sell buttons for BTC.</div></div>
+    </div>
+    <div class="fline"></div>
+    <div class="fstep">
+      <div class="fnum" style="background:var(--color-background-success);color:var(--color-text-success)">4</div>
+      <div class="fbody"><div class="ftitle">Taps Buy — converts</div><div class="fdesc">KES amount input, M-Pesa reference, confirm. One smooth flow. No page jumps. Portfolio updates in Wallet instantly.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="label">Design recommendations</div>
+
+  <div class="rec">
+    <div class="rec-head">
+      <div class="rec-icon" style="background:var(--color-background-warning)"><i class="ti ti-layout-bottombar" aria-hidden="true" style="color:var(--color-text-warning)"></i></div>
+      <div><div class="rec-title">Nav morphing — do it with CSS, not unmounting</div><div class="rec-sub">Animate the bar height and content, never destroy and remount it</div></div>
+    </div>
+    <div class="rec-body">Use a single persistent bottom bar component with a CSS class swap driven by the current route. The standard 4-icon nav slides down (translateY) as the trade bar slides up — 250ms ease-out. This keeps the bar in the DOM so transition feels continuous, not jarring. On Markets route: class="trade-mode". On all others: class="nav-mode". One component, two visual states.</div>
+    <div class="tag-row">
+      <span class="tag do-tag">CSS class swap</span>
+      <span class="tag do-tag">Single DOM node</span>
+      <span class="tag warn-tag">No unmount/remount</span>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head">
+      <div class="rec-icon" style="background:var(--color-background-success)"><i class="ti ti-home" aria-hidden="true" style="color:var(--color-text-success)"></i></div>
+      <div><div class="rec-title">Home page — copy Binance's information hierarchy exactly</div><div class="rec-sub">Balance → ticker → stories → asset table. This order is proven.</div></div>
+    </div>
+    <div class="rec-body">The Binance home works because it answers three questions in order: how much do I have, what is moving right now, where can I act. Replicate this hierarchy: (1) KES balance card with Deposit CTA, (2) horizontal ticker strip of 5 assets, (3) story cards for the day's 3 top movers, (4) full asset table below. The social layer (feed, posts, squad activity) lives on a dedicated tab — not on the home page. Keep home purely financial.</div>
+    <div class="tag-row">
+      <span class="tag do-tag">Balance first</span>
+      <span class="tag do-tag">Ticker second</span>
+      <span class="tag warn-tag">Social on separate tab</span>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head">
+      <div class="rec-icon" style="background:var(--color-background-info)"><i class="ti ti-compass" aria-hidden="true" style="color:var(--color-text-info)"></i></div>
+      <div><div class="rec-title">Explore — TradingView's pattern, adapted for 5 assets</div><div class="rec-sub">Discovery, not just a second market list</div></div>
+    </div>
+    <div class="rec-body">TradingView's Explore is not a duplicate of the market table — it is discovery-first. For GNex: top section = category pills (Trending, Gainers, Losers, Squads, Intel). Below that = rich asset cards with 7-day sparklines and community sentiment bar built in. Below that = Top Traders leaderboard strip. Below that = Active Squad Pools. The key distinction: Explore shows context and story around each asset. Markets shows raw price data. They serve different user intents — one is browsing, one is acting.</div>
+    <div class="tag-row">
+      <span class="tag do-tag">Sparklines in cards</span>
+      <span class="tag do-tag">Sentiment bar visible</span>
+      <span class="tag dont-tag">Not a duplicate markets list</span>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head">
+      <div class="rec-icon" style="background:var(--color-background-danger)"><i class="ti ti-circle-half-2" aria-hidden="true" style="color:var(--color-text-danger)"></i></div>
+      <div><div class="rec-title">The floating trade bar — which asset does it show?</div><div class="rec-sub">Context-aware: follows the last asset the user touched</div></div>
+    </div>
+    <div class="rec-body">When the user first lands on Markets, the trade bar defaults to BTC (highest trust asset, most familiar). When the user taps an asset row, the trade bar updates to that asset — BTC becomes ETH, or SOL. This means the buy/sell action is always one tap away from whatever the user just showed interest in. Store the "focused asset" in a Zustand atom. The trade bar subscribes to it. This is the single most important interaction pattern on the platform.</div>
+    <div class="tag-row">
+      <span class="tag do-tag">Default: BTC</span>
+      <span class="tag do-tag">Updates on row tap</span>
+      <span class="tag warn-tag">Zustand atom for focus state</span>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head">
+      <div class="rec-icon" style="background:var(--color-background-secondary)"><i class="ti ti-device-mobile" aria-hidden="true" style="color:var(--color-text-secondary)"></i></div>
+      <div><div class="rec-title">Thumb zone — every primary action within reach</div><div class="rec-sub">The bottom 40% of the screen is where thumbs live</div></div>
+    </div>
+    <div class="rec-body">Design every conversion action (Buy, Deposit, Set Alert, Follow Trader) to live below the visual midpoint of the screen. The floating trade bar already achieves this. For asset detail: the chart takes the top 50% of the screen, sentiment + community takes the middle 25%, and the Buy/Sell sticky bar lives at the very bottom. This matches how users naturally hold a phone — they scroll up to read, they tap down to act.</div>
+    <div class="tag-row">
+      <span class="tag do-tag">Actions at bottom 40%</span>
+      <span class="tag do-tag">Min tap target 44px</span>
+      <span class="tag dont-tag">No CTAs above fold midpoint</span>
+    </div>
+  </div>
+
+</div>
+
+</div>

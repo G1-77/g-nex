@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Star } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchCryptoPrices } from '@/lib/market/coingecko'
+import { useBinanceRealtime } from '@/lib/market/binance-realtime'
 import { MARKET_ASSETS } from '@/lib/constants/market-assets'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useGetUserWatchlistQuery, useToggleWatchlistMutation } from '@/lib/react-query/market/queries.market'
@@ -43,6 +44,9 @@ export default function AssetDetailPage({ params }: PageProps) {
   const [showInsufficientModal, setShowInsufficientModal] = useState(false)
   const [tradeAmount, setTradeAmount] = useState<number>(0)
 
+  const liveTickers = useBinanceRealtime()
+  const liveTicker = liveTickers.get(symbol)
+
   const asset = MARKET_ASSETS[symbol]
   const toggleWatchlistMutation = useToggleWatchlistMutation()
   
@@ -60,7 +64,7 @@ export default function AssetDetailPage({ params }: PageProps) {
       const data = await fetchCryptoPrices([coinId])
       return data[0]
     },
-    refetchInterval: 30000, // 30 seconds
+    refetchInterval: 30000, // fallback baseline; Binance WS drives live updates
   })
 
   const handleWatchlistToggle = () => {
@@ -126,16 +130,16 @@ export default function AssetDetailPage({ params }: PageProps) {
     )
   }
 
-  const currentPrice = priceData.current_price
-  const change24h = priceData.price_change_percentage_24h
+  const currentPrice = liveTicker?.priceUsd ?? priceData.current_price
+  const change24h = liveTicker?.change24h ?? priceData.price_change_percentage_24h
   const isPositive = change24h >= 0
   const priceKes = currentPrice * KES_TO_USD_RATE
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 text-slate-100 pb-24 lg:pb-8">
+    <div className="min-h-screen w-full bg-slate-950 text-slate-100">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-900">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="sticky top-0 z-40 -mx-4 md:-mx-6 px-4 md:px-6 bg-slate-950/90 backdrop-blur-xl border-b border-slate-900">
+        <div className="py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
@@ -168,7 +172,7 @@ export default function AssetDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <div className="py-6 space-y-6 pb-16 md:pb-20">
         {/* Price Display */}
         <div className="space-y-2">
           <div className="flex items-baseline gap-3">
@@ -204,8 +208,8 @@ export default function AssetDetailPage({ params }: PageProps) {
 
         {/* Metrics Grid */}
         <MetricsGrid
-          high24h={priceData.high_24h}
-          low24h={priceData.low_24h}
+          high24h={liveTicker?.high24h ?? priceData.high_24h}
+          low24h={liveTicker?.low24h ?? priceData.low_24h}
           volume24h={priceData.total_volume}
           marketCap={priceData.market_cap}
         />
@@ -215,7 +219,7 @@ export default function AssetDetailPage({ params }: PageProps) {
       </div>
 
       {/* Fixed Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-900 backdrop-blur-xl p-4">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-900 backdrop-blur-xl p-4">
         <div className="max-w-7xl mx-auto flex gap-3">
           <button
             onClick={handleBuy}
@@ -225,7 +229,7 @@ export default function AssetDetailPage({ params }: PageProps) {
           </button>
           <button
             onClick={handleSell}
-            className="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-100 font-black py-4 rounded-xl text-lg transition-all active:scale-95"
+            className="flex-1 bg-slate-900 hover:bg-[#f43f5e] hover:border-[#f43f5e] border border-slate-800 text-slate-100 hover:text-slate-950 font-black py-4 rounded-xl text-lg transition-all duration-300 active:scale-95"
           >
             Sell {symbol}
           </button>

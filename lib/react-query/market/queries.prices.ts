@@ -1,13 +1,16 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getMarketPrices } from '@/lib/market/price-service'
+import { useBinanceRealtime } from '@/lib/market/binance-realtime'
 import { MARKET_ASSETS } from '@/lib/constants/market-assets'
 import type { MarketTicker } from '@/lib/supabase/market.types'
+import type { MarketPrice } from '@/types/market'
 import type { AssetSymbol } from '@/lib/supabase/types'
 
 // Convert API price data to MarketTicker format
-function convertToMarketTickers(priceData: any[], watchlist: AssetSymbol[] = []): MarketTicker[] {
+function convertToMarketTickers(priceData: MarketPrice[], watchlist: AssetSymbol[] = []): MarketTicker[] {
   return priceData.map((price) => {
     const asset = MARKET_ASSETS[price.symbol as AssetSymbol]
     
@@ -30,6 +33,7 @@ function convertToMarketTickers(priceData: any[], watchlist: AssetSymbol[] = [])
     return {
       symbol: price.symbol as AssetSymbol,
       name: asset?.name || price.symbol,
+      logo: asset?.logo || '',
       priceUsd: price.price_usd,
       change24h: price.change_24h,
       bullishPercent: Math.round(bullishPercent),
@@ -41,7 +45,9 @@ function convertToMarketTickers(priceData: any[], watchlist: AssetSymbol[] = [])
 }
 
 export function useMarketPrices(watchlist: AssetSymbol[] = []) {
-  return useQuery({
+  const liveTickers = useBinanceRealtime()
+
+  const { data, ...queryResult } = useQuery({
     queryKey: ['market-prices', watchlist],
     queryFn: async () => {
       const assets = Object.values(MARKET_ASSETS).map(asset => ({
@@ -60,7 +66,26 @@ export function useMarketPrices(watchlist: AssetSymbol[] = []) {
       const prices = await getMarketPrices(assets)
       return convertToMarketTickers(prices, watchlist)
     },
-    staleTime: 1000 * 30, // 30 seconds
-    refetchInterval: 1000 * 60, // Refresh every 60 seconds
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 30, // fallback baseline; Binance WS drives live updates
   })
+
+  // Overlay live Binance prices over the polling baseline
+  const liveData = useMemo(() => {
+    if (!data) return data
+    return data.map((ticker) => {
+      const live = liveTickers.get(ticker.symbol)
+      if (!live) return ticker
+      const change = live.change24h
+      const sparkline = [...ticker.sparkline.slice(0, -1), live.priceUsd]
+      return {
+        ...ticker,
+        priceUsd: live.priceUsd,
+        change24h: change,
+        sparkline
+      }
+    })
+  }, [data, liveTickers])
+
+  return { ...queryResult, data: liveData }
 }

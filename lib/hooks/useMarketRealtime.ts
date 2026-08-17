@@ -78,12 +78,8 @@ export function useMarketRealtime(userId: string | null) {
 }
 
 /**
- * Real-time price updates would typically come from:
- * 1. WebSocket connection to exchange APIs (Binance, CoinGecko)
- * 2. Or polling with React Query refetchInterval
- * 
- * For Phase 1, we use polling via React Query (already implemented in queries.prices.ts)
- * For Phase 2+, consider:
- * - Binance WebSocket for crypto prices
- * - Supabase real-time for sentiment calculations
+ * Real-time price updates come from the Binance WebSocket client
+ * (see lib/market/binance-realtime.ts), which streams crypto prices
+ * at sub-second latency. CoinGecko polling remains as a fallback
+ * baseline, and gold/FX stay on slow polling.
  */

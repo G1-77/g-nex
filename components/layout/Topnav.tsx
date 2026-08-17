@@ -1,14 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Bell,
+  Menu,
   MessageCircle,
   Search,
   Wallet
 } from 'lucide-react'
 import AvatarDropdown from './AvatarDropdown'
+import MobileMenuDrawer from './MobileMenuDrawer'
 
 const navItems = [
   {
@@ -27,6 +30,7 @@ const navItems = [
 
 export default function Topnav() {
   const pathname = usePathname()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-900/60 bg-slate-950/70 backdrop-blur-md">
@@ -35,13 +39,24 @@ export default function Topnav() {
         {/* LEFT SECTION */}
         <div className="flex items-center gap-6">
           
-          {/* BRAND */}
-          <Link
-            href="/"
-            className="text-lg font-black tracking-wider text-yellow-600 transition-opacity hover:opacity-90"
-          >
-            GNEX
-          </Link>
+          {/* MOBILE MENU + BRAND */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-slate-800/80 bg-slate-900/40 transition-colors hover:border-slate-700 hover:bg-slate-900 md:hidden"
+            >
+              <Menu className="h-4 w-4 text-slate-400" />
+            </button>
+
+            <Link
+              href="/"
+              className="text-lg font-black tracking-wider text-yellow-600 transition-opacity hover:opacity-90"
+            >
+              GNEX
+            </Link>
+          </div>
 
           {/* SEARCH */}
           <div className="hidden sm:flex">
@@ -121,6 +136,8 @@ export default function Topnav() {
           <AvatarDropdown />
         </div>
       </div>
+
+      <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
     </header>
   )
 }
