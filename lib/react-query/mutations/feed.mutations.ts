@@ -125,10 +125,14 @@ export function useCreatePostMutation() {
           ? {
               asset_symbol: payload.assetSymbols[0],
               signal_type: payload.signalType ?? 'Bullish',
+              price: null,
+              change: null,
+              direction: null,
             }
           : null,
         likes_count: 0,
         comments_count: 0,
+        shares_count: 0,
       }
 
       queryClient.setQueryData<FeedPost[]>(feedKeys.all, (old = []) => [

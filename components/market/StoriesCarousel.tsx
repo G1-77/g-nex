@@ -12,13 +12,15 @@ export default function StoriesCarousel({ tickers = [], onToggleWatchlist, onAct
   const [startIndex, setStartIndex] = useState(0)
   const totalCount = tickers.length
 
+  const [isPaused, setIsPaused] = useState(false)
+
   useEffect(() => {
-    if (totalCount <= 3) return
+    if (totalCount <= 3 || isPaused) return
     const interval = setInterval(() => {
       setStartIndex((prev) => (prev + 1) % (totalCount - 2))
-    }, 8000)
+    }, 4000) // Changed to 4 seconds as per spec
     return () => clearInterval(interval)
-  }, [totalCount])
+  }, [totalCount, isPaused])
 
   const visibleTickers = useMemo(() => {
     if (totalCount <= 3) return tickers
@@ -27,6 +29,22 @@ export default function StoriesCarousel({ tickers = [], onToggleWatchlist, onAct
 
   return (
     <div className="w-full relative overflow-hidden">
+      {/* Progress Indicators */}
+      {totalCount > 3 && (
+        <div className="flex justify-center gap-1.5 mb-3">
+          {[...Array(totalCount - 2)].map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setStartIndex(idx)}
+              className={`h-1 rounded-full transition-all duration-300 ${
+                idx === startIndex ? 'w-6 bg-yellow-600' : 'w-1.5 bg-slate-800'
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-4 w-full items-stretch">
         <AnimatePresence mode="popLayout" initial={false}>
           {visibleTickers.map((ticker) => {
@@ -45,7 +63,13 @@ export default function StoriesCarousel({ tickers = [], onToggleWatchlist, onAct
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 whileHover={{ y: -4 }}
-                onClick={() => router.push(`/markets/${ticker.symbol.toLowerCase()}`)}
+                onClick={() => {
+                  setIsPaused(false)
+                  router.push(`/markets/${ticker.symbol.toLowerCase()}`)
+                }}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+                onTouchStart={() => setIsPaused(true)}
                 className="relative flex min-h-55 w-full flex-col justify-between rounded-3xl border border-slate-900/60 bg-slate-950/40 p-4 backdrop-blur-xl transition-shadow duration-300 cursor-pointer group"
                 style={{ boxShadow: `0 10px 30px -10px rgba(0,0,0,0.7), inset 0 0 20px ${glowColor}` }}
               >

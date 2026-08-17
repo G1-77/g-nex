@@ -16,7 +16,6 @@ export default function ExecutionPanel({ symbol }: ExecutionPanelProps) {
   const [orderType, setOrderType] = useState<OrderType>('Market')
   const [amountUsd, setAmountUsd] = useState<string>('1000')
 
-  // 🟢 DUAL-CURRENCY CALCULATION MATRIX
   // Automatically computes the local KES transaction footprint behind the scenes
   const estimatedKesConversion = useMemo(() => {
     const parsedAmount = parseFloat(amountUsd) || 0

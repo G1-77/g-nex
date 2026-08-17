@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Coins, Plus } from 'lucide-react'
 
@@ -8,19 +8,17 @@ import MarketSidebar from '@/components/market/MarketSidebar'
 import StoriesCarousel from '@/components/market/StoriesCarousel'
 import MarketSentimentStrip from '@/components/market/MarketSentimentStrip'
 import MarketDataGrid from '@/components/market/MarketDataGrid'
+import MarketInsightsRail from '@/components/market/MarketInsightRail'
+import AlphaFeedPreview from '@/components/market/AlphaFeedPreview'
+import MarketMovers from '@/components/market/MarketMovers'
+import VerifiedPositioning from '@/components/market/VerifiedPositioning'
+import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
+import { useGetUserWatchlistQuery, useToggleWatchlistMutation } from '@/lib/react-query/market/queries.market'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useMarketRealtime } from '@/lib/hooks/useMarketRealtime'
 import type { AssetSymbol } from '@/lib/supabase/types'
 import { MarketFilterType, MarketTicker, VerifiedTraderAllocation } from '@/lib/supabase/market.types'
-import MarketInsightsRail from '@/components/market/MarketInsightRail'
 
-
-const SEED_TICKERS: MarketTicker[] = [
-  { symbol: 'BTC' as AssetSymbol, name: 'Bitcoin', priceUsd: 68572.00, change24h: 2.41, bullishPercent: 76, watcherCount: 1420, isWatching: true, sparkline: [67100, 67500, 68200, 67900, 68400, 68572] },
-  { symbol: 'ETH' as AssetSymbol, name: 'Ethereum', priceUsd: 3420.50, change24h: 1.85, bullishPercent: 68, watcherCount: 945, isWatching: false, sparkline: [3310, 3350, 3390, 3340, 3400, 3420.5] },
-  { symbol: 'SOL' as AssetSymbol, name: 'Solana', priceUsd: 154.35, change24h: -0.92, bullishPercent: 82, watcherCount: 1102, isWatching: true, sparkline: [158, 156, 152, 155, 153, 154.35] },
-  { symbol: 'XRP' as AssetSymbol, name: 'Ripple', priceUsd: 0.58, change24h: 4.20, bullishPercent: 51, watcherCount: 412, isWatching: false, sparkline: [0.55, 0.56, 0.54, 0.57, 0.56, 0.58] },
-  { symbol: 'USDT' as AssetSymbol, name: 'Tether', priceUsd: 1.00, change24h: 0.00, bullishPercent: 50, watcherCount: 184, isWatching: false, sparkline: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
-  { symbol: 'XAU' as AssetSymbol, name: 'Spot Gold', priceUsd: 2342.10, change24h: -0.35, bullishPercent: 43, watcherCount: 684, isWatching: false, sparkline: [2360, 2355, 2350, 2348, 2345, 2342.1] },
-]
 
 const SEED_TRADERS: VerifiedTraderAllocation[] = [
   { id: '1', username: 'alpha_wolf', avatarUrl: '/avatars/1.jpg', monthlyRoi: 42.3, primaryAsset: 'BTC' as AssetSymbol, allocationPercent: 72 },
@@ -29,13 +27,43 @@ const SEED_TRADERS: VerifiedTraderAllocation[] = [
 
 export default function MarketHomePage() {
   const router = useRouter()
-  const [tickers, setTickers] = useState<MarketTicker[]>(SEED_TICKERS)
+  const { user } = useAuth()
   const [activeFilter, setActiveFilter] = useState<MarketFilterType>('All')
+  
+  // Fetch user's watchlist
+  const { data: watchlistSymbols = [] } = useGetUserWatchlistQuery(user?.id || null)
+  
+  // Fetch live market prices
+  const { data: liveTickers = [], isLoading: pricesLoading } = useMarketPrices(watchlistSymbols)
+  
+  // Watchlist toggle mutation
+  const toggleWatchlistMutation = useToggleWatchlistMutation()
+  
+  // Real-time subscriptions for live updates
+  useMarketRealtime(user?.id || null)
+  
+  const [tickers, setTickers] = useState<MarketTicker[]>(liveTickers)
+  
+  // Update local state when live data arrives
+  useEffect(() => {
+    if (liveTickers.length > 0) {
+      setTickers(liveTickers)
+    }
+  }, [liveTickers])
 
   const handleToggleWatchlist = (symbol: AssetSymbol) => {
+    if (!user) {
+      alert('Please sign in to manage your watchlist')
+      return
+    }
+
+    // Optimistic update
     setTickers((prev) =>
       prev.map((item) => item.symbol === symbol ? { ...item, isWatching: !item.isWatching } : item)
     )
+
+    // Execute mutation
+    toggleWatchlistMutation.mutate({ userId: user.id, symbol })
   }
 
   const handleActionClick = (symbol: AssetSymbol, viewMode: 'BUY' | 'SELL' | 'DEPOSIT') => {
@@ -44,6 +72,18 @@ export default function MarketHomePage() {
       return
     }
     router.push(`/market/${symbol.toLowerCase()}?mode=${viewMode.toLowerCase()}`)
+  }
+
+  // Loading state
+  if (pricesLoading && tickers.length === 0) {
+    return (
+      <div className="h-screen w-full bg-slate-950 text-slate-100 font-sans antialiased flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="h-12 w-12 border-4 border-slate-800 border-t-yellow-600 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-slate-500 font-mono">Loading market data...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -87,10 +127,24 @@ export default function MarketHomePage() {
             onActionClick={(sym, mode) => handleActionClick(sym, mode)}
           />
 
+          {/* SECTION 5 — MARKET MOVERS (GAINERS/LOSERS) */}
+          <MarketMovers />
+
+          {/* SECTION 6 — ALPHA FEED PREVIEW */}
+          <AlphaFeedPreview limit={5} />
+
         </div>
 
         {/* COLUMN 3: RIGHT MINI RAIL INSIGHTS CARDS PANEL */}
-        <MarketInsightsRail traders={SEED_TRADERS} />
+        <div className="hidden xl:flex w-80 h-full border-l border-slate-900/60 overflow-y-auto premium-scrollbar">
+          <div className="w-full p-4 space-y-6">
+            {/* Verified Trader Positioning */}
+            <VerifiedPositioning />
+            
+            {/* Market Insights Rail (Legacy - Optional) */}
+            <MarketInsightsRail traders={SEED_TRADERS} />
+          </div>
+        </div>
 
       </div>
 

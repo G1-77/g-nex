@@ -1,10 +1,9 @@
 // /lib/hooks/useNotifications.ts
 import { useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 
 export function useNotificationRealtime() {
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   

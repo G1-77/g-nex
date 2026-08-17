@@ -63,21 +63,28 @@ export function useFeedRealtime() {
             id: data.id,
             content: data.content,
             created_at: data.created_at,
-
-            author: {
-              id: profile?.id ?? '',
-              username: profile?.username ?? 'unknown',
-              full_name: profile?.full_name ?? null,
-              avatar_url: profile?.avatar_url ?? null,
-              is_verified: profile?.is_verified ?? false
-            },
-
-            trade_tag: tradeTag
-              ? {
-                  asset_symbol: tradeTag.asset_symbol,
-                  signal_type: tradeTag.signal_type
-                }
-              : null
+            media_url: null,
+            assetSymbols: tradeTag ? [tradeTag.asset_symbol] : [],
+            signalType: tradeTag?.signal_type ?? null,
+            profiles: profile ? {
+              id: profile.id,
+              username: profile.username ?? 'unknown',
+              full_name: profile.full_name ?? null,
+              avatar_url: profile.avatar_url ?? null,
+              bio: null,
+              is_verified: profile.is_verified ?? false,
+              monthly_roi: 0
+            } : null,
+            trade_tags: tradeTag ? {
+              asset_symbol: tradeTag.asset_symbol,
+              signal_type: tradeTag.signal_type,
+              price: null,
+              change: null,
+              direction: null
+            } : null,
+            likes_count: 0,
+            comments_count: 0,
+            shares_count: 0
           }
 
           queryClient.setQueryData<FeedPost[]>(
