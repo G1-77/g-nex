@@ -16,7 +16,7 @@ export default function TimeframeSelector({ selected, onChange }: TimeframeSelec
         <button
           key={timeframe}
           onClick={() => onChange(timeframe)}
-          className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+          className={`shrink-0 cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
             selected === timeframe
               ? 'bg-amber-500 text-slate-950 shadow-sm'
               : 'bg-slate-900/40 text-slate-400 hover:bg-slate-900/60 hover:text-slate-300'

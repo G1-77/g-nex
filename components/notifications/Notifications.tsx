@@ -29,7 +29,7 @@ export default function NotificationBell() {
 
   return (
     <div className="relative">
-      <button>🔔</button>
+      <button className="cursor-pointer">🔔</button>
 
       {unreadCount > 0 && (
         <span className="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded">

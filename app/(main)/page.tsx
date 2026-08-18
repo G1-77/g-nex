@@ -48,7 +48,7 @@ export default function HomePage() {
                 return (
                   <button
                     key={item.label}
-                    className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-900/60 hover:text-slate-100"
+                    className="group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-900/60 hover:text-slate-100"
                   >
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 transition-colors group-hover:bg-slate-800">
                       <Icon className="h-4 w-4 text-slate-400 transition-colors group-hover:text-yellow-600" />

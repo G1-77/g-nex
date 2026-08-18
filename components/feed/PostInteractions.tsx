@@ -39,7 +39,7 @@ export default function PostInteractions({
       <button
         type="button"
         onClick={handleLike}
-        className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+        className={`group flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
           liked
             ? 'text-yellow-600'
             : 'text-slate-500 hover:bg-slate-900/60 hover:text-slate-200'
@@ -57,7 +57,7 @@ export default function PostInteractions({
       {/* COMMENT */}
       <button
         type="button"
-        className="group flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-900/60 hover:text-slate-200"
+        className="group flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-900/60 hover:text-slate-200"
       >
         <MessageSquare className="h-4 w-4 transition-transform group-hover:scale-110" />
 
@@ -67,7 +67,7 @@ export default function PostInteractions({
       {/* SHARE */}
       <button
         type="button"
-        className="group flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-900/60 hover:text-yellow-600"
+        className="group flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-900/60 hover:text-yellow-600"
       >
         <Share2 className="h-4 w-4 transition-transform group-hover:scale-110" />
 

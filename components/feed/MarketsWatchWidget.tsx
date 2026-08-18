@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 import Sparkline from '@/components/market/Sparkline'
@@ -27,10 +26,10 @@ function WatchRow({ ticker, onOpen }: { ticker: MarketTicker; onOpen: (symbol: M
     <button
       type="button"
       onClick={() => onOpen(ticker.symbol)}
-      className="group flex w-full cursor-pointer items-center justify-between rounded-xl border border-transparent p-2.5 transition-colors hover:border-slate-800/40 hover:bg-slate-900/40"
+      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-transparent p-2.5 transition-colors hover:border-slate-800/40 hover:bg-slate-900/40"
     >
-      <div className="flex min-w-0 items-center gap-2.5">
-        <Image
+      <div className="flex min-w-[74px] flex-1 items-center gap-2.5">
+        <img
           src={ticker.logo}
           width={24}
           height={24}
@@ -38,21 +37,21 @@ function WatchRow({ ticker, onOpen }: { ticker: MarketTicker; onOpen: (symbol: M
           className="h-6 w-6 shrink-0 rounded-full"
         />
         <div className="flex min-w-0 flex-col text-left">
-          <span className="text-sm font-bold text-slate-200 group-hover:text-white">
+          <span className="truncate text-sm font-bold text-slate-200 group-hover:text-white">
             {ticker.symbol}
           </span>
           <span className="truncate text-[11px] text-slate-500">{ticker.name}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Sparkline data={sparkData} color={isPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} width={40} height={14} />
-        <div className="text-right">
-          <p className="font-mono text-xs font-semibold text-slate-200">
+      <div className="flex min-w-0 items-center gap-2">
+        <Sparkline data={sparkData} color={isPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} width={40} height={14} className="shrink-0" />
+        <div className="min-w-0 text-right">
+          <p className="truncate font-mono text-xs font-semibold text-slate-200">
             {priceFormatter.format(ticker.priceUsd)}
           </p>
           <p
-            className="font-mono text-[10px] font-medium"
+            className="truncate font-mono text-[10px] font-medium"
             style={{ color: isPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE }}
           >
             {isPositive ? '+' : ''}

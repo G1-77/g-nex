@@ -36,7 +36,7 @@ export default function StoriesCarousel({ tickers = [], onToggleWatchlist, onAct
             <button
               key={idx}
               onClick={() => setStartIndex(idx)}
-              className={`h-1 rounded-full transition-all duration-300 ${
+              className={`h-1 cursor-pointer rounded-full transition-all duration-300 ${
                 idx === startIndex ? 'w-6 bg-yellow-600' : 'w-1.5 bg-slate-800'
               }`}
               aria-label={`Go to slide ${idx + 1}`}
@@ -88,7 +88,7 @@ export default function StoriesCarousel({ tickers = [], onToggleWatchlist, onAct
                       e.stopPropagation()
                       onToggleWatchlist(ticker.symbol)
                     }}
-                    className={`flex h-6 w-6 items-center justify-center rounded-lg border transition-all active:scale-90 ${
+                    className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border transition-all active:scale-90 ${
                       ticker.isWatching ? 'bg-amber-500 border-amber-600 text-slate-950 shadow-md shadow-amber-500/20' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'
                     }`}
                   >
@@ -119,7 +119,7 @@ export default function StoriesCarousel({ tickers = [], onToggleWatchlist, onAct
                   <div className="pt-2 hidden md:flex items-center justify-between w-full" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => onActionClick(ticker.symbol, 'BUY')}
-                      className="px-3 py-1 bg-emerald-500 text-slate-950 font-black font-mono text-[9px] uppercase tracking-wider rounded-md active:scale-95 transition-all shadow-md shadow-emerald-500/10"
+                      className="px-3 py-1 cursor-pointer bg-emerald-500 text-slate-950 font-black font-mono text-[9px] uppercase tracking-wider rounded-md active:scale-95 transition-all shadow-md shadow-emerald-500/10"
                     >
                       Buy
                     </button>

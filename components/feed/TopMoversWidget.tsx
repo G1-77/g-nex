@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 
@@ -44,7 +43,7 @@ export default function TopMoversWidget() {
               className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-1 py-1.5 text-xs transition-colors hover:bg-slate-900/30"
             >
               <div className="flex min-w-0 items-center gap-2">
-                <Image
+                <img
                   src={ticker.logo}
                   width={20}
                   height={20}

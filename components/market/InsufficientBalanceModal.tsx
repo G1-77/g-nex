@@ -30,7 +30,7 @@ export default function InsufficientBalanceModal({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
+        className="fixed inset-0 z-50 cursor-pointer bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -53,7 +53,7 @@ export default function InsufficientBalanceModal({
             </div>
             <button
               onClick={onClose}
-              className="text-slate-500 hover:text-slate-300 transition-colors"
+              className="cursor-pointer text-slate-500 hover:text-slate-300 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -100,21 +100,21 @@ export default function InsufficientBalanceModal({
           <div className="space-y-2 pt-2">
             <button
               onClick={onDeposit}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl transition-all active:scale-95 shadow-sm"
+              className="w-full cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl transition-all active:scale-95 shadow-sm"
             >
               Deposit KES {shortfall.toLocaleString('en-US', { maximumFractionDigits: 0 })} Now
             </button>
             
             <button
               onClick={onAdjustAmount}
-              className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold py-3 rounded-xl transition-all active:scale-95"
+              className="w-full cursor-pointer bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold py-3 rounded-xl transition-all active:scale-95"
             >
               Adjust Trade Amount
             </button>
             
             <button
               onClick={onClose}
-              className="w-full text-slate-500 hover:text-slate-300 font-bold py-2 text-sm transition-colors"
+              className="w-full cursor-pointer text-slate-500 hover:text-slate-300 font-bold py-2 text-sm transition-colors"
             >
               Cancel
             </button>

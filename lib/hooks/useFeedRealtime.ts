@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/client'
 import { feedKeys } from '@/lib/react-query/keys'
 
 import type { FeedPost } from '@/lib/supabase/types'
+import { normalizeTradeTags } from '@/lib/supabase/types'
 
 export function useFeedRealtime() {
   const queryClient = useQueryClient()
@@ -55,9 +56,7 @@ export function useFeedRealtime() {
             ? data.profiles[0]
             : data.profiles
 
-          const tradeTag = Array.isArray(data.trade_tags)
-            ? data.trade_tags[0]
-            : data.trade_tags
+          const tradeTag = normalizeTradeTags(data.trade_tags)
 
           const realtimePost: FeedPost = {
             id: data.id,

@@ -22,6 +22,10 @@ export interface MarketTicker {
   watcherCount: number
   isWatching: boolean
   sparkline: number[]
+  marketCap?: number
+  volume24h?: number
+  high24h?: number
+  low24h?: number
 }
 
 /** Section 3: Group sentiment consensus metrics format */
@@ -105,24 +109,6 @@ export interface StoriesCarouselProps {
   tickers: MarketTicker[]
   onToggleWatchlist: (symbol: AssetSymbol) => void
   onActionClick: (symbol: AssetSymbol, viewMode: 'BUY' | 'SELL') => void
-}
-
-export interface MarketGridProps {
-  tickers: MarketTicker[]
-  activeFilter: MarketFilterType
-  onToggleWatchlist: (symbol: AssetSymbol) => void
-  onActionClick: (symbol: AssetSymbol, viewMode: 'BUY' | 'SELL') => void
-}
-
-export interface MarketFilterChipsProps {
-  activeFilter: MarketFilterType
-  onFilterChange: (filter: MarketFilterType) => void
-}
-
-export interface StickyTradeFooterProps {
-  selectedSymbol: AssetSymbol
-  priceUsd: number
-  onActionClick: (symbol: AssetSymbol, viewMode: 'BUY' | 'SELL' | 'DEPOSIT') => void
 }
 
 export interface SentimentMeterProps {

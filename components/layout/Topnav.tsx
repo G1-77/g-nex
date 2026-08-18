@@ -33,7 +33,8 @@ export default function Topnav() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-900/60 bg-slate-950/70 backdrop-blur-md">
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-slate-900/60 bg-slate-950/70 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         
         {/* LEFT SECTION */}
@@ -136,8 +137,11 @@ export default function Topnav() {
           <AvatarDropdown />
         </div>
       </div>
+      </header>
 
+      {/* Rendered outside the <header> — backdrop-blur on the header creates a
+          containing block that would trap the drawer's position:fixed */}
       <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
-    </header>
+    </>
   )
 }

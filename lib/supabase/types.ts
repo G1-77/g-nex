@@ -19,6 +19,18 @@ export type AdminRoleType =
   | 'support'
   | 'editor'
 
+/**
+ * Supabase nested selects return related rows as an array. Normalize to the
+ * first trade_tags row (or null) so components can read it as a single object.
+ */
+export function normalizeTradeTags<T>(
+  tags: T | T[] | null | undefined
+): T | null {
+  if (!tags) return null
+  if (Array.isArray(tags)) return tags[0] ?? null
+  return tags
+}
+
 /** profile model */
 export interface Profile {
   id: string

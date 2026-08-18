@@ -51,7 +51,7 @@ function MobileSheet({
       <button
         onClick={onClose}
         aria-label="Close menu"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 cursor-pointer bg-black/70 backdrop-blur-sm"
       />
 
       <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-slate-900 bg-slate-950/95 backdrop-blur-xl p-5 shadow-2xl">
@@ -106,7 +106,7 @@ function MobileSheet({
             <ArrowUpRight className="h-4 w-4 text-slate-500" />
           </Link>
 
-          <button className="w-full flex items-center justify-between rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-900/40 active:scale-95 transition-all">
+          <button className="w-full flex cursor-pointer items-center justify-between rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-900/40 active:scale-95 transition-all">
             <div className="flex items-center gap-3">
               <Wallet className="h-4 w-4 text-slate-500" />
               View Wallet
@@ -130,7 +130,7 @@ function MobileSheet({
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-between rounded-xl border border-rose-500/10 bg-rose-500/5 px-4 py-3 text-xs font-bold text-rose-400 hover:bg-rose-500/10 active:scale-95 transition-all"
+            className="w-full flex cursor-pointer items-center justify-between rounded-xl border border-rose-500/10 bg-rose-500/5 px-4 py-3 text-xs font-bold text-rose-400 hover:bg-rose-500/10 active:scale-95 transition-all"
           >
             <div className="flex items-center gap-3">
               <LogOut className="h-4 w-4" />

@@ -12,7 +12,7 @@ export default function ChartTypeToggle({ chartType, onChange }: ChartTypeToggle
     <div className="flex items-center gap-1 bg-slate-900/40 rounded-lg p-1">
       <button
         onClick={() => onChange('candlestick')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+        className={`flex cursor-pointer items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
           chartType === 'candlestick'
             ? 'bg-slate-950 text-slate-100 shadow-sm'
             : 'text-slate-500 hover:text-slate-300'
@@ -24,7 +24,7 @@ export default function ChartTypeToggle({ chartType, onChange }: ChartTypeToggle
       
       <button
         onClick={() => onChange('line')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+        className={`flex cursor-pointer items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
           chartType === 'line'
             ? 'bg-slate-950 text-slate-100 shadow-sm'
             : 'text-slate-500 hover:text-slate-300'

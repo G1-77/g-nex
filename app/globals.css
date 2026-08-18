@@ -55,6 +55,21 @@ body {
   }
 }
 
+/* TradingView-style progressive sparkline draw-in */
+.sparkline-draw {
+  stroke-dasharray: 1;
+  animation: sparklineDraw 0.6s ease-out both;
+}
+
+@keyframes sparklineDraw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* Custom ultra-thin dark track for our premium grids */
 .premium-scrollbar::-webkit-scrollbar {
   width: 4px;

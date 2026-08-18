@@ -109,7 +109,7 @@ export default function CreatePostCard() {
 
         <div className="flex-1 rounded-full border border-slate-900/80 bg-slate-950/40 px-4 py-2 text-left transition-colors group-hover:bg-slate-900/40">
           <span className="text-xs font-medium text-slate-500">
-            Share your market, or trading
+            Share your trading
             intelligence...
           </span>
         </div>

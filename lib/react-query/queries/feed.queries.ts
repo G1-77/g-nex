@@ -3,6 +3,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { FeedPost, SupabaseFeedPostRow } from '@/lib/supabase/types'
+import { normalizeTradeTags } from '@/lib/supabase/types'
 import { feedKeys } from '../keys'
 
 const PAGE_SIZE = 10
@@ -99,7 +100,7 @@ async function getFeedPage(
       shares_count: row.shares_count,
       assetSymbols: row.assetSymbols, 
       signalType: row.signalType,
-      trade_tags: row.trade_tags,
+      trade_tags: normalizeTradeTags(row.trade_tags),
       isLikedByCurrentUser: likedPostIds.has(row.id),
       profiles: row.profiles
         ? {

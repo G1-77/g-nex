@@ -39,7 +39,11 @@ function convertToMarketTickers(priceData: MarketPrice[], watchlist: AssetSymbol
       bullishPercent: Math.round(bullishPercent),
       watcherCount: Math.floor(Math.random() * 2000) + 100, // Mock for now
       isWatching: watchlist.includes(price.symbol as AssetSymbol),
-      sparkline
+      sparkline,
+      marketCap: price.market_cap,
+      volume24h: price.volume_24h,
+      high24h: price.high_24h,
+      low24h: price.low_24h
     }
   })
 }
@@ -82,7 +86,9 @@ export function useMarketPrices(watchlist: AssetSymbol[] = []) {
         ...ticker,
         priceUsd: live.priceUsd,
         change24h: change,
-        sparkline
+        sparkline,
+        high24h: live.high24h || ticker.high24h,
+        low24h: live.low24h || ticker.low24h
       }
     })
   }, [data, liveTickers])

@@ -292,13 +292,13 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
       </div>
 
       {post.media_url && (
-        <div className="mt-4 w-full overflow-hidden rounded-2xl border border-slate-900 bg-slate-950 shadow-inner group">
+        <div className="mt-4 w-full overflow-hidden rounded-xl border border-slate-800/40 bg-slate-900/20 group">
           <Image
             src={post.media_url}
             alt="Trading intelligence chart layout attachment"
             width={450}
             height={450}
-            className="w-full h-auto max-h-112.5 object-cover rounded-2xl transition-transform duration-500 group-hover:scale-[1.01]"
+            className="aspect-[16/9] w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.01]"
             loading="lazy"
           />
         </div>
@@ -312,7 +312,7 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
         >
           <div className="flex items-center justify-between">
             <div className="flex min-w-0 items-center gap-2.5">
-              <Image
+              <img
                 src={assetLogo as string}
                 width={28}
                 height={28}

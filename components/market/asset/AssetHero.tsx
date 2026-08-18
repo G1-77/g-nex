@@ -42,7 +42,7 @@ export default function AssetHero({ asset, onToggleWatchlist }: AssetHeroProps) 
           <button
             type="button"
             onClick={() => onToggleWatchlist(asset.symbol)}
-            className="flex items-center gap-1 text-slate-400 hover:text-amber-500 transition-colors"
+            className="flex cursor-pointer items-center gap-1 text-slate-400 hover:text-amber-500 transition-colors"
           >
             <Star className={`h-4 w-4 ${asset.isWatching ? 'fill-amber-500 text-amber-500' : ''}`} />
             <span className="text-[10px] font-bold font-sans uppercase tracking-wider hidden sm:inline">Watchlist</span>
@@ -59,7 +59,7 @@ export default function AssetHero({ asset, onToggleWatchlist }: AssetHeroProps) 
           <div className="flex items-baseline gap-1.5">
             <h1 className="text-xl font-black font-sans tracking-tight text-slate-100">{asset.name}</h1>
             <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">{asset.symbol}/USD</span>
-            <button type="button" className="text-slate-600 hover:text-slate-400 p-1"><Share2 className="h-3 w-3" /></button>
+            <button type="button" className="cursor-pointer text-slate-600 hover:text-slate-400 p-1"><Share2 className="h-3 w-3" /></button>
           </div>
         </div>
 

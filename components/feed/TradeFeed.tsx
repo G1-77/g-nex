@@ -105,7 +105,7 @@ export default function TradeFeed() {
             </div>
 
             {/* CTA */}
-            <button className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-xs font-bold text-emerald-400 transition-all hover:bg-emerald-500 hover:text-slate-950">
+            <button className="cursor-pointer rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-xs font-bold text-emerald-400 transition-all hover:bg-emerald-500 hover:text-slate-950">
               Copy This Setup
             </button>
           </div>
@@ -119,7 +119,7 @@ export default function TradeFeed() {
             return (
               <button
                 key={item.label}
-                className="group flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-800/40 hover:text-slate-200"
+                className="group flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-800/40 hover:text-slate-200"
               >
                 <Icon className="h-4 w-4 transition group-hover:scale-105" />
 
@@ -210,14 +210,14 @@ export default function TradeFeed() {
               {['Buy $10', 'Buy $50', 'Buy $100'].map((amount) => (
                 <button
                   key={amount}
-                  className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-yellow-600/30 hover:bg-yellow-600/10 hover:text-yellow-600"
+                  className="cursor-pointer rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-yellow-600/30 hover:bg-yellow-600/10 hover:text-yellow-600"
                 >
                   {amount}
                 </button>
               ))}
             </div>
 
-            <button className="w-full rounded-xl bg-yellow-600 px-4 py-3 text-sm font-bold text-slate-950 transition-all hover:bg-yellow-500">
+            <button className="w-full cursor-pointer rounded-xl bg-yellow-600 px-4 py-3 text-sm font-bold text-slate-950 transition-all hover:bg-yellow-500">
               Accumulate Gold
             </button>
           </div>
@@ -231,7 +231,7 @@ export default function TradeFeed() {
             return (
               <button
                 key={item.label}
-                className="group flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-800/40 hover:text-slate-200"
+                className="group flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-800/40 hover:text-slate-200"
               >
                 <Icon className="h-4 w-4 transition group-hover:scale-105" />
 

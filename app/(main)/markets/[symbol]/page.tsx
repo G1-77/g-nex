@@ -121,7 +121,7 @@ export default function AssetDetailPage({ params }: PageProps) {
           <p className="text-lg font-bold text-slate-300">Asset not found</p>
           <button
             onClick={() => router.back()}
-            className="text-sm text-emerald-500 hover:text-emerald-400"
+            className="cursor-pointer text-sm text-emerald-500 hover:text-emerald-400"
           >
             Go back
           </button>
@@ -143,7 +143,7 @@ export default function AssetDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="text-slate-400 hover:text-slate-200 transition-colors"
+              className="cursor-pointer text-slate-400 hover:text-slate-200 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
@@ -161,7 +161,7 @@ export default function AssetDetailPage({ params }: PageProps) {
           <button
             onClick={handleWatchlistToggle}
             disabled={toggleWatchlistMutation.isPending}
-            className={`flex items-center justify-center h-10 w-10 rounded-full border transition-all ${
+            className={`flex items-center justify-center h-10 w-10 rounded-full border transition-all cursor-pointer ${
               isWatching
                 ? 'bg-amber-500 border-amber-600 text-slate-950'
                 : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200'
@@ -223,13 +223,13 @@ export default function AssetDetailPage({ params }: PageProps) {
         <div className="max-w-7xl mx-auto flex gap-3">
           <button
             onClick={handleBuy}
-            className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl text-lg transition-all active:scale-95 shadow-lg"
+            className="flex-1 cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl text-lg transition-all active:scale-95 shadow-lg"
           >
             Buy {symbol}
           </button>
           <button
             onClick={handleSell}
-            className="flex-1 bg-slate-900 hover:bg-[#f43f5e] hover:border-[#f43f5e] border border-slate-800 text-slate-100 hover:text-slate-950 font-black py-4 rounded-xl text-lg transition-all duration-300 active:scale-95"
+            className="flex-1 cursor-pointer bg-slate-900 hover:bg-[#f43f5e] hover:border-[#f43f5e] border border-slate-800 text-slate-100 hover:text-slate-950 font-black py-4 rounded-xl text-lg transition-all duration-300 active:scale-95"
           >
             Sell {symbol}
           </button>
