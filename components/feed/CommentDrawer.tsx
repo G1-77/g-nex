@@ -152,7 +152,7 @@ export default function CommentDrawer({ postId, isOpen, onClose }: CommentDrawer
         </div>
 
         {/* MIDDLE SCROLLABLE COMMENT FEEDS BODY CONTAINER BLOCK */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-4">
           
           {/* PULSE SKELETAL PROGRESS INDICATION LOADING SKINS */}
           {isLoading && (

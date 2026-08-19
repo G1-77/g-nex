@@ -60,7 +60,7 @@ export default function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProp
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}
-            className="fixed left-0 top-0 z-[60] flex h-full w-[min(85vw,320px)] flex-col overflow-y-auto border-r border-slate-900 bg-slate-950 md:hidden"
+            className="fixed left-0 top-0 z-[60] flex h-full w-[min(85vw,320px)] flex-col overflow-y-auto border-r border-slate-900 bg-slate-950 no-scrollbar md:hidden"
           >
             <div className="flex items-center justify-between border-b border-slate-900/60 px-4 py-4">
               <span className="text-lg font-black tracking-wider text-yellow-600">

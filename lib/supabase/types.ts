@@ -41,6 +41,8 @@ export interface Profile {
   is_verified: boolean
   monthly_roi: number
   followers_count?: number // Handles Facebook-style follower totals tracking safely
+  reputation_status?: ReputationStatus | null
+  reputation_score?: number | null
 }
 
 /** feed post model */
@@ -85,12 +87,32 @@ export interface CreatePostPayload {
   }
 }
 
-/** Admin role table */
+/** Admin role table — the row also carries the effective permission codes. */
 export interface AdminRole {
   id: string
   user_id: string
   role: AdminRoleType
+  permissions: string[] | null
+  granted_by: string | null
   created_at: string
+  updated_at: string | null
+}
+
+/** Community reputation status (decoupled from admin roles). */
+export type ReputationStatus =
+  | 'new_trader'
+  | 'active_trader'
+  | 'community_analyst'
+  | 'verified_trader'
+  | 'top_trader'
+
+export interface TraderReputation {
+  user_id: string
+  status: ReputationStatus
+  score: number
+  criteria: Record<string, unknown> | null
+  computed_at: string | null
+  updated_at: string
 }
 
 // =========================================================================
@@ -118,5 +140,10 @@ export interface SupabaseFeedPostRow {
     price: number | string | null
     change: string | null
     direction: string | null
+  } | null
+  trader_reputation: {
+    user_id: string
+    status: ReputationStatus
+    score: number
   } | null
 }

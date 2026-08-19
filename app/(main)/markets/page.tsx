@@ -67,7 +67,7 @@ export default function MarketsPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen w-full flex-col bg-slate-950 text-slate-100 pb-8 md:pb-0">
       {/* MAIN PAGE HEADER */}
       <header className="-mx-4 border-b border-slate-900/60 bg-slate-950/90 px-4 py-5 backdrop-blur-md md:-mx-6 md:px-6">
         <h1 className="text-2xl font-black tracking-wide text-slate-100">Explore</h1>

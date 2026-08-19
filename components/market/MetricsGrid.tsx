@@ -1,14 +1,15 @@
 'use client'
 
 interface MetricsGridProps {
-  high24h: number
-  low24h: number
-  volume24h: number
-  marketCap: number
+  high24h: number | null
+  low24h: number | null
+  volume24h: number | null
+  marketCap: number | null
 }
 
 export default function MetricsGrid({ high24h, low24h, volume24h, marketCap }: MetricsGridProps) {
-  const formatLargeNumber = (num: number): string => {
+  const formatLargeNumber = (num: number | null): string => {
+    if (num == null) return '—'
     if (num >= 1e9) return '$' + (num / 1e9).toFixed(2) + 'B'
     if (num >= 1e6) return '$' + (num / 1e6).toFixed(2) + 'M'
     if (num >= 1e3) return '$' + (num / 1e3).toFixed(2) + 'K'
@@ -16,8 +17,8 @@ export default function MetricsGrid({ high24h, low24h, volume24h, marketCap }: M
   }
 
   const metrics = [
-    { label: '24H HIGH', value: '$' + high24h.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
-    { label: '24H LOW', value: '$' + low24h.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+    { label: '24H HIGH', value: high24h == null ? '—' : '$' + high24h.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+    { label: '24H LOW', value: low24h == null ? '—' : '$' + low24h.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     { label: '24H VOLUME', value: formatLargeNumber(volume24h) },
     { label: 'MKT CAP', value: formatLargeNumber(marketCap) },
   ]

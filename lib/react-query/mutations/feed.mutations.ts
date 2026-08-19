@@ -253,3 +253,119 @@ export function useToggleLikeMutation() {
     },
   })
 }
+
+// MUTATION 3: SHARE ENGINE (INCREMENTS SHARE COUNTER VIA API ROUTE)
+
+async function sharePost(postId: string) {
+  const res = await fetch(`/api/posts/${postId}`, { method: "POST" })
+  if (!res.ok) throw new Error("Share failed")
+  return { postId }
+}
+
+export function useSharePostMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: sharePost,
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: feedKeys.all })
+
+      const previousFeed = queryClient.getQueryData<FeedPost[]>(feedKeys.all)
+
+      queryClient.setQueryData<FeedPost[]>(feedKeys.all, (oldData) => {
+        if (!oldData) return []
+        return oldData.map((post) =>
+          post.id === postId
+            ? { ...post, shares_count: (post.shares_count ?? 0) + 1 }
+            : post
+        )
+      })
+
+      return { previousFeed }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousFeed) {
+        queryClient.setQueryData(feedKeys.all, context.previousFeed)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: feedKeys.all })
+    },
+  })
+}
+
+// MUTATION 4: EDIT OWN POST (PATCH VIA API ROUTE — RLS OWNERSHIP ENFORCED)
+
+interface EditPostPayload {
+  postId: string
+  content: string
+  assetSymbols?: AssetSymbol[]
+  signalType?: SignalType | null
+}
+
+async function editPost(payload: EditPostPayload) {
+  const res = await fetch(`/api/posts/${payload.postId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content: payload.content,
+      assetSymbols: payload.assetSymbols ?? [],
+      signalType: payload.signalType ?? null,
+    }),
+  })
+  if (!res.ok) {
+    const message = await res.text()
+    throw new Error(message || "Edit failed")
+  }
+  return { postId: payload.postId }
+}
+
+export function useEditPostMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: editPost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: feedKeys.all })
+    },
+  })
+}
+
+// MUTATION 5: DELETE OWN POST (DELETE VIA API ROUTE — RLS OWNERSHIP ENFORCED)
+
+async function deletePost(postId: string) {
+  const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" })
+  if (!res.ok) {
+    const message = await res.text()
+    throw new Error(message || "Delete failed")
+  }
+  return { postId }
+}
+
+export function useDeletePostMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deletePost,
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: feedKeys.all })
+
+      const previousFeed = queryClient.getQueryData<FeedPost[]>(feedKeys.all)
+
+      queryClient.setQueryData<FeedPost[]>(feedKeys.all, (oldData) => {
+        if (!oldData) return []
+        return oldData.filter((post) => post.id !== postId)
+      })
+
+      return { previousFeed }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousFeed) {
+        queryClient.setQueryData(feedKeys.all, context.previousFeed)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: feedKeys.all })
+    },
+  })
+}

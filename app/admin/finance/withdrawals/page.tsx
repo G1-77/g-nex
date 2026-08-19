@@ -1,0 +1,158 @@
+"use client"
+
+import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/components/providers/AuthProvider"
+import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
+import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
+import { StatusBadge, StatusTone } from "@/components/admin/status"
+import { formatKes, formatTimestamp, statusTone } from "@/lib/admin/format"
+
+interface WithdrawalsData {
+  withdrawals: Array<{
+    id: string
+    username: string | null
+    amount_kes: number
+    fee_kes: number
+    mobile_money_number: string | null
+    mobile_money_provider: string | null
+    asset_symbol: string | null
+    status: string
+    approved_by: string | null
+    approved_at: string | null
+    processed_at: string | null
+    admin_notes: string | null
+    created_at: string
+  }>
+}
+
+export default function AdminWithdrawalsPage() {
+  const [status, setStatus] = useState("pending")
+  const queryClient = useQueryClient()
+  const { can } = useAuth()
+  const canProcess = can("withdrawals.process")
+
+  const url = `/api/admin/finance/withdrawals?status=${status}`
+  const { data, isLoading, error } = useAdminQuery<WithdrawalsData>(url)
+
+  async function act(withdrawalId: string, action: string) {
+    const note = window.prompt(`Note for ${action} (optional):`) ?? ""
+    try {
+      await adminAction("/api/admin/finance/withdrawals", "POST", { withdrawalId, action, note })
+      await queryClient.invalidateQueries({ queryKey: [url] })
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] })
+    } catch (e) {
+      alert((e as Error).message)
+    }
+  }
+
+  const columns: AdminColumn<WithdrawalsData["withdrawals"][number]>[] = [
+    {
+      key: "user",
+      label: "User",
+      render: (w) => <span className="font-semibold text-slate-100">@{w.username ?? "unknown"}</span>,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      render: (w) => <span className="font-mono font-bold text-slate-100">{formatKes(w.amount_kes)}</span>,
+    },
+    {
+      key: "fee",
+      label: "Fee",
+      render: (w) => <span className="font-mono text-[var(--admin-text-dim)]">{formatKes(w.fee_kes)}</span>,
+      preview: false,
+    },
+    {
+      key: "net",
+      label: "Net payout",
+      render: (w) => (
+        <span className="font-mono text-emerald-300">{formatKes(w.amount_kes - w.fee_kes)}</span>
+      ),
+    },
+    {
+      key: "destination",
+      label: "Destination",
+      render: (w) => (
+        <div className="text-[11px]">
+          <p className="font-mono text-slate-100">{w.mobile_money_number ?? "—"}</p>
+          <p className="capitalize text-[var(--admin-text-dim)]">{w.mobile_money_provider ?? "—"}</p>
+        </div>
+      ),
+    },
+    {
+      key: "asset",
+      label: "Asset",
+      render: (w) => <span className="text-[var(--admin-text-dim)]">{w.asset_symbol ?? "KES"}</span>,
+      preview: false,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (w) => <StatusBadge status={w.status} tone={statusTone(w.status) as StatusTone} />,
+    },
+    {
+      key: "requested",
+      label: "Requested",
+      render: (w) => (
+        <span className="text-[11px] text-[var(--admin-text-dim)]">{formatTimestamp(w.created_at)}</span>
+      ),
+      preview: false,
+    },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {["pending", "approved", "processing", "sent", "rejected"].map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatus(s)}
+            className={
+              status === s
+                ? "rounded-lg bg-[var(--admin-green)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--admin-green)]"
+                : "rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
+            }
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">{error.message}</div>
+      )}
+
+      <AdminTable
+        columns={columns}
+        rows={data?.withdrawals}
+        loading={isLoading}
+        emptyMessage="No withdrawals in this queue"
+        actions={
+          canProcess
+            ? (w) => (
+                <div className="flex gap-1.5">
+                  {(w.status === "pending" || w.status === "approved") && (
+                    <>
+                      <button
+                        onClick={() => act(w.id, "process")}
+                        className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/20"
+                      >
+                        Process
+                      </button>
+                      <button
+                        onClick={() => act(w.id, "reject")}
+                        className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/20"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </div>
+              )
+            : undefined
+        }
+      />
+    </div>
+  )
+}

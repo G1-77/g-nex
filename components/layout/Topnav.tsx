@@ -12,6 +12,9 @@ import {
 } from 'lucide-react'
 import AvatarDropdown from './AvatarDropdown'
 import MobileMenuDrawer from './MobileMenuDrawer'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { usePortfolioSummary } from '@/lib/react-query/market/queries.market'
+import { formatKes } from '@/lib/market/wallet-utils'
 
 const navItems = [
   {
@@ -31,6 +34,8 @@ const navItems = [
 export default function Topnav() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+  const { user } = useAuth()
+  const { totalKes, growthPct } = usePortfolioSummary(user?.id ?? null)
 
   return (
     <>
@@ -102,19 +107,30 @@ export default function Topnav() {
         <div className="flex items-center gap-2.5">
           
           {/* PORTFOLIO SNAPSHOT */}
-          <div className="hidden items-center gap-3 rounded-full border border-slate-800/60 bg-slate-900/30 px-3 py-1 lg:flex">
+          <Link
+            href="/wallet"
+            className="hidden items-center gap-3 rounded-full border border-slate-800/60 bg-slate-900/30 px-3 py-1 transition-colors hover:border-slate-700 lg:flex"
+          >
             <div className="flex items-center gap-1.5">
               <Wallet className="h-3.5 w-3.5 text-yellow-600" />
 
               <span className="text-xs font-mono font-bold text-slate-200">
-                $12,450.80
+                KES {formatKes(totalKes)}
               </span>
             </div>
 
-            <span className="rounded-md border border-emerald-500/10 bg-emerald-500/5 px-1.5 py-0.5 font-mono text-[10px] font-bold text-emerald-400">
-              +12.8%
+            <span
+              className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold ${
+                growthPct === null
+                  ? 'border-slate-700 bg-slate-800/40 text-slate-400'
+                  : growthPct >= 0
+                    ? 'border-[#8DFF45]/10 bg-[#8DFF45]/5 text-[#8DFF45]'
+                    : 'border-[#FF5A5A]/10 bg-[#FF5A5A]/5 text-[#FF5A5A]'
+              }`}
+            >
+              {growthPct === null ? 'Demo' : `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(1)}%`}
             </span>
-          </div>
+          </Link>
 
           {/* MOBILE SEARCH */}
           <button className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-slate-800/80 bg-slate-900/40 transition-colors hover:border-slate-700 hover:bg-slate-900 sm:hidden">

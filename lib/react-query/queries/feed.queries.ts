@@ -44,6 +44,11 @@ async function getFeedPage(
         price,
         change,
         direction
+      ),
+      trader_reputation (
+        user_id,
+        status,
+        score
       )
     `)
     .order('created_at', { ascending: false })
@@ -107,6 +112,10 @@ async function getFeedPage(
             ...row.profiles,
             is_verified: shouldBeVerified,
             followers_count: calculatedFollowersCount,
+            reputation_status:
+              normalizeTradeTags(row.trader_reputation)?.status ?? null,
+            reputation_score:
+              normalizeTradeTags(row.trader_reputation)?.score ?? null,
           }
         : null,
     } as unknown as FeedPost

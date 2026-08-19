@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { BadgeCheck, MessagesSquare,Share2,ThumbsUp,} from 'lucide-react'
+import { BadgeCheck, MessagesSquare, Pencil, Share2, ThumbsUp, Trash2 } from 'lucide-react'
 
 import Sparkline from '@/components/market/Sparkline'
-import { useToggleLikeMutation } from '@/lib/react-query/mutations/feed.mutations'
+import { useToggleLikeMutation, useSharePostMutation, useEditPostMutation, useDeletePostMutation } from '@/lib/react-query/mutations/feed.mutations'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
 import { usePriceHistory } from '@/lib/market/binance-realtime'
 import type { FeedPost } from '@/lib/supabase/types'
@@ -16,6 +16,8 @@ import type { AssetSymbol } from '@/lib/supabase/types'
 import { useAuth } from '../providers/AuthProvider'
 import CommentDrawer from './CommentDrawer'
 import { useToggleFollowMutation } from '@/lib/react-query/mutations/follow.mutations'
+import { ReputationBadge } from '@/components/reputation/ReputationBadge'
+import { EditPostModal } from './EditPostModal'
 
 interface FeedPostCardProps {
   post: FeedPost
@@ -58,10 +60,33 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
 
   const [commentOpen, setCommentOpen] =
     useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
 
   const toggleLikeMutation = useToggleLikeMutation()
 
   const toggleFollowMutation = useToggleFollowMutation()
+
+  const shareMutation = useSharePostMutation()
+  const editMutation = useEditPostMutation()
+  const deleteMutation = useDeletePostMutation()
+
+  const isOwnPost = user?.id === post.profiles?.id
+
+  const handleShareClick = () => {
+    if (!user) {
+      alert('Please sign in to share posts.')
+      return
+    }
+    if (shareMutation.isPending) return
+    shareMutation.mutate(post.id)
+  }
+
+  const handleDeleteClick = () => {
+    if (!window.confirm('Delete this post permanently? This cannot be undone.')) return
+    deleteMutation.mutate(post.id)
+    setMenuOpen(false)
+  }
 
   const handleFollowClick = () => {
     if (!user) {
@@ -252,6 +277,11 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
               {post.profiles ?.is_verified && (
                 <BadgeCheck className="h-4 w-4 shrink-0 fill-yellow-600 stroke-slate-950 text-slate-950" />
               )}
+
+              <ReputationBadge
+                status={post.profiles?.reputation_status ?? null}
+                score={post.profiles?.reputation_score ?? null}
+              />
             </div>
 
             <div className="flex items-center gap-2">
@@ -266,7 +296,45 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
           </div>
         </div>
 
-        {user && user.id !== post.profiles?.id && (
+        {isOwnPost ? (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/40 text-slate-400 transition hover:text-white cursor-pointer"
+              aria-label="Post actions"
+            >
+              <span className="text-lg leading-none">⋯</span>
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-10 z-20 w-40 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    setEditOpen(true)
+                  }}
+                  className="flex w-full items-center gap-2 px-3.5 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-900 hover:text-white cursor-pointer"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit Post
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  disabled={deleteMutation.isPending}
+                  className="flex w-full items-center gap-2 px-3.5 py-2.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/10 cursor-pointer"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {deleteMutation.isPending ? 'Deleting...' : 'Delete Post'}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+        user && user.id !== post.profiles?.id && (
           <button
             type="button"
             onClick={handleFollowClick}
@@ -281,6 +349,7 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
           >
             {toggleFollowMutation.isPending ? 'Syncing...' : 'follow'}
           </button>
+        )
         )}
 
       </div>
@@ -462,10 +531,17 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
 
         <button
           type="button"
+          onClick={handleShareClick}
+          disabled={shareMutation.isPending}
           className="flex flex-1 items-center justify-center cursor-pointer gap-2 rounded-xl py-2 text-xs font-semibold text-slate-500 transition-all hover:bg-slate-900/40 hover:text-slate-300"
         >
           <Share2 className="h-4 w-4" />
           <span>Share</span>
+          {(post.shares_count ?? 0) > 0 && (
+            <span className="ml-1 rounded-md bg-slate-900 border border-slate-800/60 px-1.5 py-0.5 font-mono text-[10px] font-black text-emerald-400 animate-fadeIn">
+              {post.shares_count}
+            </span>
+          )}
         </button>
       </div>
 
@@ -475,6 +551,27 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
         onClose={() =>
           setCommentOpen(false)
         }
+      />
+
+      <EditPostModal
+        post={post}
+        isOpen={editOpen}
+        isSaving={editMutation.isPending}
+        onClose={() => setEditOpen(false)}
+        onSave={(content) => {
+          editMutation.mutate(
+            {
+              postId: post.id,
+              content,
+              assetSymbols: post.assetSymbols,
+              signalType: post.signalType,
+            },
+            {
+              onSuccess: () => setEditOpen(false),
+              onError: (error) => alert(error.message),
+            }
+          )
+        }}
       />
     </article>
   )

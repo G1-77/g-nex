@@ -200,7 +200,7 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
         {isLoading && (
           <div className="absolute inset-0 z-10 bg-slate-950/80 flex items-center justify-center">
             <div className="text-center space-y-3">
-              <div className="h-10 w-10 border-4 border-slate-800 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+              <div className="h-10 w-10 border-4 border-slate-800 border-t-yellow-600 rounded-full animate-spin mx-auto" />
               <p className="text-xs text-slate-500 font-mono">Loading chart data...</p>
             </div>
           </div>

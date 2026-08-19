@@ -15,13 +15,23 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 })
   }
 
+  // Trading fee comes from platform settings (default 0.5%).
+  const { data: feeSetting } = await supabase
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'trading_fee_pct')
+    .maybeSingle()
+
+  const feePercent =
+    typeof feeSetting?.value === "number" ? feeSetting.value : 0.5
+
   const { data, error } = await supabase.rpc('execute_market_order', {
     p_user: user.id,
     p_asset: body.asset_id,
     p_side: body.side,
     p_quantity: body.quantity,
     p_price: price,
-    p_fee_percent: 0.5
+    p_fee_percent: feePercent
   })
 
   if (error) {

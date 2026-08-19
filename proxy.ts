@@ -70,6 +70,32 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
+  // Maintenance mode: block non-staff traffic platform-wide.
+  if (pathname !== '/maintenance') {
+    const { data: maintenance } = await supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .maybeSingle()
+
+    const inMaintenance =
+      maintenance?.value === true ||
+      (typeof maintenance?.value === 'object' && maintenance.value !== null &&
+        JSON.parse(JSON.stringify(maintenance.value)).enabled === true)
+
+    if (inMaintenance && !user.user_metadata?.is_admin) {
+      const { data: staffCheck } = await supabase
+        .from('admin_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!staffCheck) {
+        return NextResponse.redirect(new URL('/maintenance', req.url))
+      }
+    }
+  }
+
   // Admin security roles routing filter block
   if (pathname.startsWith('/admin')) {
     const { data: role } = await supabase

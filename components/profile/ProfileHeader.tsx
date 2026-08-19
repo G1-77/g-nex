@@ -5,6 +5,8 @@ import { BadgeCheck, Pencil } from 'lucide-react'
 import Image from 'next/image'
 import EditProfileModal from './EditProfileModal'
 import { useUserIdentity } from '@/lib/hooks/useUserIdentity'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { ReputationBadge } from '@/components/reputation/ReputationBadge'
 
 interface ProfileHeaderProps {
   username: string
@@ -13,6 +15,8 @@ interface ProfileHeaderProps {
   isVerified?: boolean
   monthlyRoi?: number
   isOwnProfile?: boolean
+  reputationStatus?: string | null
+  reputationScore?: number | null
 }
 
 export default function ProfileHeader({
@@ -21,10 +25,17 @@ export default function ProfileHeader({
   bio,
   isVerified,
   monthlyRoi,
-  isOwnProfile = true
+  isOwnProfile = true,
+  reputationStatus,
+  reputationScore,
 }: ProfileHeaderProps) {
   const [openEditModal, setOpenEditModal] = useState(false)
   const { profile } = useUserIdentity()
+  const { reputation } = useAuth()
+
+  const effectiveStatus = reputationStatus ?? reputation?.status ?? null
+  const effectiveScore =
+    reputationScore ?? (typeof reputation?.score === "number" ? reputation.score : null)
 
   return (
     <>
@@ -59,6 +70,8 @@ export default function ProfileHeader({
               {isVerified && (
                 <BadgeCheck className="h-5 w-5 fill-yellow-600 stroke-slate-950 shrink-0" />
               )}
+
+              <ReputationBadge status={effectiveStatus} score={effectiveScore} />
             </div>
 
             <p className="max-w-md text-sm text-slate-400 leading-relaxed">

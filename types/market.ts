@@ -54,6 +54,9 @@ export type GoldPrice = {
   symbol: 'XAU'
   price_usd: number
   change_24h: number
+  high_usd?: number
+  low_usd?: number
+  market_cap_usd?: number | null
   last_updated: string
 }
 

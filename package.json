@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push": "supabase db push --password \"$SUPABASE_DB_PASSWORD\" --yes",
+    "db:push:dry": "supabase db push --password \"$SUPABASE_DB_PASSWORD\" --dry-run --yes"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",

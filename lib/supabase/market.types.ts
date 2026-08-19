@@ -69,7 +69,45 @@ export interface UserWalletState {
   userId: string
   balanceKes: number           // Tracked in local KES to drive local financial motivation
   escrowKes: number            // Locked escrow margin safety pool balance
+  lockedKes: number            // Voluntary user-initiated lock (24h unlock cooling-off)
+  reserveKes: number           // Silent 10% platform reserve (visible as a neutral line, not spendable)
   updatedAt: string
+}
+
+/** Voluntary user fund lock — separate from the automatic reserve */
+export interface FundLock {
+  id: string
+  userId: string
+  amountKes: number
+  status: 'locked' | 'unlock_pending' | 'released' | 'cancelled'
+  createdAt: string
+  unlockAvailableAt: string | null
+  releasedAt: string | null
+  cancelledAt: string | null
+}
+
+/** Savings-style portfolio holding — units of an asset with KES cost basis */
+export interface UserHolding {
+  id: string
+  userId: string
+  assetSymbol: AssetSymbol
+  units: number
+  avgCostKes: number
+  updatedAt: string
+}
+
+/** Deposit / withdrawal request row used by the wallet history */
+export interface FundingRequest {
+  id: string
+  kind: 'deposit' | 'withdrawal'
+  amountKes: number
+  provider: string
+  mobileNumber: string | null
+  reference: string | null
+  status: string
+  createdAt: string
+  paymentChannel?: string | null
+  accountNumber?: string | null
 }
 
 /** Live open position entry log matrix model */

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Star } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchCryptoPrices } from '@/lib/market/coingecko'
+import { fetchGoldPrice } from '@/lib/market/gold'
 import { useBinanceRealtime } from '@/lib/market/binance-realtime'
 import { MARKET_ASSETS } from '@/lib/constants/market-assets'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -29,6 +30,15 @@ const COINGECKO_ID_MAP: Record<string, string> = {
   SOL: 'solana',
   XRP: 'ripple',
   USDT: 'tether'
+}
+
+interface AssetPriceData {
+  current_price: number
+  price_change_percentage_24h: number
+  high_24h: number | null
+  low_24h: number | null
+  total_volume: number | null
+  market_cap: number | null
 }
 
 const KES_TO_USD_RATE = 130
@@ -57,12 +67,33 @@ export default function AssetDetailPage({ params }: PageProps) {
   // Fetch live price data
   const { data: priceData, isLoading } = useQuery({
     queryKey: ['asset-price', symbol],
-    queryFn: async () => {
+    queryFn: async (): Promise<AssetPriceData> => {
+      // Gold is fetched from the XAUS API (spot + daily history) instead of CoinGecko
+      if (symbol === 'XAU') {
+        const gold = await fetchGoldPrice()
+        return {
+          current_price: gold.price_usd,
+          price_change_percentage_24h: gold.change_24h,
+          high_24h: gold.high_usd ?? null,
+          low_24h: gold.low_usd ?? null,
+          total_volume: null,
+          market_cap: gold.market_cap_usd ?? null,
+        }
+      }
+
       const coinId = COINGECKO_ID_MAP[symbol]
       if (!coinId) throw new Error('Unsupported asset')
-      
+
       const data = await fetchCryptoPrices([coinId])
-      return data[0]
+      const price = data[0]
+      return {
+        current_price: price.current_price,
+        price_change_percentage_24h: price.price_change_percentage_24h,
+        high_24h: price.high_24h,
+        low_24h: price.low_24h,
+        total_volume: price.total_volume,
+        market_cap: price.market_cap,
+      }
     },
     refetchInterval: 30000, // fallback baseline; Binance WS drives live updates
   })
@@ -107,7 +138,7 @@ export default function AssetDetailPage({ params }: PageProps) {
     return (
       <div className="h-screen w-full bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-3">
-          <div className="h-12 w-12 border-4 border-slate-800 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+          <div className="h-12 w-12 border-4 border-slate-800 border-t-yellow-600 rounded-full animate-spin mx-auto" />
           <p className="text-sm text-slate-500 font-mono">Loading {symbol} data...</p>
         </div>
       </div>
