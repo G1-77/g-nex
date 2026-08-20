@@ -4,6 +4,7 @@ import {
   Share2,
   ThumbsUp
 } from 'lucide-react'
+import Image from 'next/image'
 
 const interactions = [
   {
@@ -30,9 +31,11 @@ export default function TradeFeed() {
         {/* HEADER */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"
               alt="Solana Samurai"
+              width={44}
+              height={44}
               className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-800"
             />
 
@@ -136,9 +139,11 @@ export default function TradeFeed() {
         {/* HEADER */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop"
               alt="Gold Theory"
+              width={44}
+              height={44}
               className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-800"
             />
 

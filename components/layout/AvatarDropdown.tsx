@@ -236,7 +236,7 @@ export default function AvatarDropdown() {
       {/* Trigger */}
       <button
         onClick={() => setOpen((p) => !p)}
-        className="h-8 w-8 flex items-center justify-center rounded-full cursor-pointer bg-slate-900/60 border border-slate-900/80 active:scale-95"
+        className="relative h-8 w-8 flex items-center justify-center rounded-full cursor-pointer bg-slate-900/60 border border-slate-900/80 active:scale-95"
       >
         {profile?.avatar_url ? (
           <Image

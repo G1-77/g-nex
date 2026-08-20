@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useAdminQuery } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
+import { AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
 import { formatTimestamp } from "@/lib/admin/format"
 
 interface AuditData {
@@ -17,6 +18,22 @@ interface AuditData {
     created_at: string
   }>
 }
+
+const ACTIONS = [
+  "all",
+  "deposits.approve",
+  "deposits.reject",
+  "withdrawals.process",
+  "withdrawals.reject",
+  "users.suspend",
+  "users.unsuspend",
+  "users.verify",
+  "admin_roles.assign",
+  "admin_roles.revoke",
+  "admin_roles.update_permissions",
+  "settings.update",
+  "editorial.pick",
+] as const
 
 export default function AdminAuditPage() {
   const [action, setAction] = useState("all")
@@ -34,7 +51,9 @@ export default function AdminAuditPage() {
       key: "action",
       label: "Action",
       render: (l) => (
-        <span className="rounded-md bg-white/5 px-2 py-1 font-mono text-[11px] text-sky-300">{l.action}</span>
+        <span className="rounded-md border border-sky-500/20 bg-sky-500/10 px-2 py-1 font-mono text-[11px] text-sky-300">
+          {l.action}
+        </span>
       ),
     },
     {
@@ -75,20 +94,16 @@ export default function AdminAuditPage() {
 
   return (
     <div className="space-y-4">
+      <AdminPageHeader title="Audit Log" subtitle="Immutable trail of every administrative action" />
+
       <div className="flex flex-wrap gap-2">
-        {["all", "deposits.approve", "deposits.reject", "withdrawals.process", "withdrawals.reject", "users.suspend", "users.unsuspend", "users.verify", "admin_roles.assign", "admin_roles.revoke", "admin_roles.update_permissions", "settings.update", "editorial.pick"].map((a) => (
-          <button
-            key={a}
-            onClick={() => setAction(a)}
-            className={
-              action === a
-                ? "rounded-lg bg-[var(--admin-green)]/10 px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-green)]"
-                : "rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
-            }
-          >
-            {a === "all" ? "All actions" : a.replace("_", " ")}
-          </button>
-        ))}
+        <AdminTabs>
+          {ACTIONS.map((a) => (
+            <AdminTab key={a} active={action === a} onClick={() => setAction(a)}>
+              {a === "all" ? "All actions" : a.replace("_", " ")}
+            </AdminTab>
+          ))}
+        </AdminTabs>
       </div>
 
       {error && (

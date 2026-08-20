@@ -6,6 +6,7 @@ import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
+import { AdminButton, AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
 import { formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface ReportsData {
@@ -22,6 +23,8 @@ interface ReportsData {
     created_at: string
   }>
 }
+
+const FILTERS = ["pending", "under_review", "actioned", "dismissed"] as const
 
 export default function AdminReportsPage() {
   const [status, setStatus] = useState("pending")
@@ -99,21 +102,15 @@ export default function AdminReportsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {["pending", "under_review", "actioned", "dismissed"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatus(s)}
-            className={
-              status === s
-                ? "rounded-lg bg-[var(--admin-green)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--admin-green)]"
-                : "rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
-            }
-          >
+      <AdminPageHeader title="Reports" subtitle="Review and moderate flagged content" />
+
+      <AdminTabs>
+        {FILTERS.map((s) => (
+          <AdminTab key={s} active={status === s} onClick={() => setStatus(s)}>
             {s.replace("_", " ")}
-          </button>
+          </AdminTab>
         ))}
-      </div>
+      </AdminTabs>
 
       {error && (
         <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">{error.message}</div>
@@ -129,18 +126,12 @@ export default function AdminReportsPage() {
             ? (r) =>
                 r.status === "pending" || r.status === "under_review" ? (
                   <div className="flex gap-1.5">
-                    <button
-                      onClick={() => act(r.id, "resolve")}
-                      className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/20"
-                    >
+                    <AdminButton variant="danger" onClick={() => act(r.id, "resolve")}>
                       Take action
-                    </button>
-                    <button
-                      onClick={() => act(r.id, "dismiss")}
-                      className="rounded-lg bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-[var(--admin-text-dim)] hover:bg-white/10"
-                    >
+                    </AdminButton>
+                    <AdminButton variant="subtle" onClick={() => act(r.id, "dismiss")}>
                       Dismiss
-                    </button>
+                    </AdminButton>
                   </div>
                 ) : undefined
             : undefined

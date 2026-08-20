@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useAdminQuery } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
+import { AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
 import { formatNumber, formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface OrdersData {
@@ -21,6 +22,9 @@ interface OrdersData {
     created_at: string
   }>
 }
+
+const STATUS_FILTERS = ["all", "open", "filled", "partial", "cancelled"] as const
+const SIDE_FILTERS = ["all", "buy", "sell"] as const
 
 export default function AdminOrdersPage() {
   const [status, setStatus] = useState("all")
@@ -92,34 +96,24 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {["all", "open", "filled", "partial", "cancelled"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatus(s)}
-            className={
-              status === s
-                ? "rounded-lg bg-[var(--admin-green)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--admin-green)]"
-                : "rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
-            }
-          >
-            {s}
-          </button>
-        ))}
-        <span className="mx-1 w-px bg-[var(--admin-border)]" />
-        {["all", "buy", "sell"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setSide(s)}
-            className={
-              side === s
-                ? "rounded-lg bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-300"
-                : "rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
-            }
-          >
-            {s === "all" ? "All sides" : s}
-          </button>
-        ))}
+      <AdminPageHeader title="Orders" subtitle="Market and limit order book" />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <AdminTabs>
+          {STATUS_FILTERS.map((s) => (
+            <AdminTab key={s} active={status === s} onClick={() => setStatus(s)}>
+              {s}
+            </AdminTab>
+          ))}
+        </AdminTabs>
+        <span className="h-6 w-px bg-[var(--admin-border)]" />
+        <AdminTabs>
+          {SIDE_FILTERS.map((s) => (
+            <AdminTab key={s} active={side === s} onClick={() => setSide(s)}>
+              {s === "all" ? "All sides" : s}
+            </AdminTab>
+          ))}
+        </AdminTabs>
       </div>
 
       {error && (

@@ -1,6 +1,11 @@
+import { notFound } from 'next/navigation'
+
 import ProfileHeader from '@/components/profile/ProfileHeader'
-// import { BadgeCheck } from 'lucide-react'
-// import Image from 'next/image'
+import ProfilePosts from '@/components/profile/ProfilePosts'
+import { createServerClient } from '@/lib/supabase/server'
+import type { AdminRoleType } from '@/lib/supabase/types'
+
+export const dynamic = 'force-dynamic'
 
 interface ProfilePageProps {
   params: Promise<{
@@ -12,6 +17,28 @@ export default async function ProfilePage({
   params
 }: ProfilePageProps) {
   const { username } = await params
+
+  const supabase = await createServerClient()
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('username', username)
+    .maybeSingle()
+
+  if (!profile) notFound()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data: roleRow } = await supabase
+    .from('admin_roles')
+    .select('role')
+    .eq('user_id', profile.id)
+    .maybeSingle()
+
+  const isOwnProfile = user?.id === profile.id
 
   return (
     <div className="min-h-screen bg-slate-950 pb-20 text-slate-100 antialiased">
@@ -26,14 +53,14 @@ export default async function ProfilePage({
         <section className="relative px-2 pt-16 sm:px-4 md:pt-4">
 
           <ProfileHeader
-            username={username}
-            avatarUrl={null}
-            bio="Crypto & Gold Investor"
-            isVerified
-            monthlyRoi={42.6}
-            isOwnProfile
+            username={profile.username}
+            avatarUrl={profile.avatar_url}
+            bio={profile.bio}
+            isVerified={profile.is_verified}
+            monthlyRoi={profile.monthly_roi ?? 0}
+            isOwnProfile={isOwnProfile}
+            role={(roleRow?.role as AdminRoleType) ?? null}
           />
-         
 
           {/* PROFILE NAVIGATION */}
           <div className="mt-8 flex items-center gap-6 border-b border-slate-900">
@@ -48,18 +75,9 @@ export default async function ProfilePage({
             </button>
           </div>
 
-          {/* CONTENT HOLDER */}
-          <div className="mt-6 rounded-2xl border border-slate-800/40 bg-slate-900/40 p-8 backdrop-blur-sm">
-            <div className="mx-auto max-w-sm text-center">
-              <h2 className="text-sm font-semibold text-slate-200">
-                Trader Activity Stream
-              </h2>
-
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                User posts, historical chart configurations, and
-                copy trading analytical nodes will render here.
-              </p>
-            </div>
+          {/* POSTS */}
+          <div className="mt-6">
+            <ProfilePosts userId={profile.id} />
           </div>
         </section>
       </div>

@@ -15,8 +15,9 @@ import type { AssetSymbol } from '@/lib/supabase/types'
 
 import { useAuth } from '../providers/AuthProvider'
 import CommentDrawer from './CommentDrawer'
+import FollowersPopup from './FollowersPopup'
 import { useToggleFollowMutation } from '@/lib/react-query/mutations/follow.mutations'
-import { ReputationBadge } from '@/components/reputation/ReputationBadge'
+// import { ReputationBadge } from '@/components/reputation/ReputationBadge'
 import { EditPostModal } from './EditPostModal'
 
 interface FeedPostCardProps {
@@ -62,6 +63,12 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
     useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [followersOpen, setFollowersOpen] = useState(false)
+  const [mediaPreviewOpen, setMediaPreviewOpen] = useState(false)
+  const [assetPreviewOpen, setAssetPreviewOpen] = useState(false)
+  const [isFollowing, setIsFollowing] = useState(
+    post.profiles?.isFollowingByViewer ?? false
+  )
 
   const toggleLikeMutation = useToggleLikeMutation()
 
@@ -102,10 +109,15 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
 
     if (toggleFollowMutation.isPending) return
 
-    toggleFollowMutation.mutate({
-      followerId: user.id,
-      followingId: post.profiles?.id || '',
-    })
+    toggleFollowMutation.mutate(
+      {
+        followerId: user.id,
+        followingId: post.profiles?.id || '',
+      },
+      {
+        onSuccess: (result) => setIsFollowing(result.followed),
+      }
+    )
   }
 
 
@@ -278,21 +290,37 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
                 <BadgeCheck className="h-4 w-4 shrink-0 fill-yellow-600 stroke-slate-950 text-slate-950" />
               )}
 
-              <ReputationBadge
+              {/* <ReputationBadge
                 status={post.profiles?.reputation_status ?? null}
                 score={post.profiles?.reputation_score ?? null}
+              /> */}
+            </div>
+
+            <div className="relative mt-1 w-fit">
+              <button
+                type="button"
+                onClick={() => setFollowersOpen((v) => !v)}
+                className="cursor-pointer text-xs text-slate-500 transition-colors hover:text-slate-300 hover:underline"
+                title="View followers"
+              >
+                {followersCount} {followersCount === 1 ? 'follower' : 'followers'}
+              </button>
+
+              <FollowersPopup
+                userId={post.profiles?.id ?? ''}
+                count={followersCount}
+                isOpen={followersOpen}
+                onOpenChange={setFollowersOpen}
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">
-                 {followersCount} {followersCount === 1 ? 'follower' : 'followers'}
-              </span>
-
-              <span className="text-[10px] font-mono font-black text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-1.5 py-0.5 rounded">
-                + {post.profiles?.monthly_roi ?? 0}% ROI
-              </span>
-            </div>
+            <Link
+              href={`/user/${cleanUsername}/activities`}
+              className="mt-0.5 w-fit cursor-pointer font-mono text-[10px] font-black text-emerald-400 transition-colors hover:text-emerald-300 hover:underline"
+              title="View trading activities"
+            >
+              + {post.profiles?.monthly_roi ?? 0}% ROI
+            </Link>
           </div>
         </div>
 
@@ -340,14 +368,14 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
             onClick={handleFollowClick}
             disabled={toggleFollowMutation.isPending}
             className={`rounded-full border px-3.5 py-1 text-[11px] font-black  tracking-wider transition-all duration-150 active:scale-95 cursor-pointer shadow-sm ${
-              // Note: Once Phase 3C hydrates a full following look-up hash map array inside getFeedPosts,
-              // we can swap this local condition for a persistent boolean state check cleanly!
               toggleFollowMutation.isPending
                 ? 'border-slate-800 bg-slate-900/20 text-slate-600 pointer-events-none'
-                : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-yellow-600/40 hover:text-yellow-600'
+                : isFollowing
+                  ? 'border-rose-500/30 bg-rose-500/10 text-rose-400 hover:border-rose-500/50 hover:text-rose-300'
+                  : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-yellow-600/40 hover:text-yellow-600'
             }`}
           >
-            {toggleFollowMutation.isPending ? 'Syncing...' : 'follow'}
+            {toggleFollowMutation.isPending ? 'Syncing...' : isFollowing ? 'unfollow' : 'follow'}
           </button>
         )
         )}
@@ -361,13 +389,17 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
       </div>
 
       {post.media_url && (
-        <div className="mt-4 w-full overflow-hidden rounded-xl border border-slate-800/40 bg-slate-900/20 group">
+        <div
+          className="mt-4 w-full overflow-hidden rounded-xl border border-slate-800/40 bg-slate-900/20 group"
+          onMouseEnter={() => setMediaPreviewOpen(true)}
+          onMouseLeave={() => setMediaPreviewOpen(false)}
+        >
           <Image
             src={post.media_url}
             alt="Trading intelligence chart layout attachment"
             width={450}
             height={450}
-            className="aspect-[16/9] w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.01]"
+            className="aspect-video w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.01]"
             loading="lazy"
           />
         </div>
@@ -379,9 +411,13 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
             isStale ? 'opacity-60' : ''
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div
+            className="relative flex items-center justify-between"
+            onMouseEnter={() => setAssetPreviewOpen(true)}
+            onMouseLeave={() => setAssetPreviewOpen(false)}
+          >
             <div className="flex min-w-0 items-center gap-2.5">
-              <img
+              <Image
                 src={assetLogo as string}
                 width={28}
                 height={28}
@@ -426,6 +462,58 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
               <span className="shrink-0 rounded-md border border-slate-800 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-600">
                 Expired
               </span>
+            )}
+
+            {assetPreviewOpen && assetMeta && (
+              <div className="pointer-events-none absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl border border-slate-800 bg-slate-950/95 p-4 shadow-2xl shadow-black backdrop-blur-xl animate-fadeIn">
+                <div className="flex items-center gap-2.5">
+                  <Image
+                    src={assetLogo as string}
+                    width={32}
+                    height={32}
+                    alt={assetMeta.name}
+                    className="h-8 w-8 shrink-0 rounded-full"
+                  />
+
+                  <div className="flex min-w-0 flex-col">
+                    <span className="text-sm font-bold text-white">
+                      {assetMeta.symbol}
+                    </span>
+                    <span className="truncate text-xs text-slate-500">
+                      {assetMeta.name}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-baseline justify-between gap-2">
+                  <span className="text-lg font-black text-white">
+                    {displayPriceLabel}
+                  </span>
+                  <span
+                    className={`text-sm font-bold ${
+                      isLiveChangePositive ? 'text-emerald-400' : 'text-rose-500'
+                    }`}
+                  >
+                    {displayChangeLabel}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <Sparkline
+                    data={sparkData}
+                    color={assetPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE}
+                    width={110}
+                    height={26}
+                  />
+
+                  <Link
+                    href={`/markets/${assetMeta.symbol.toLowerCase()}`}
+                    className="shrink-0 rounded-lg border border-yellow-600/30 bg-yellow-600/10 px-2.5 py-1.5 text-[10px] font-black text-yellow-600 transition-colors hover:bg-yellow-600/20"
+                  >
+                    View Market
+                  </Link>
+                </div>
+              </div>
             )}
           </div>
 
@@ -545,7 +633,23 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
         </button>
       </div>
 
-       <CommentDrawer
+       {mediaPreviewOpen && post.media_url && (
+        <div
+          className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-fadeIn"
+          onMouseEnter={() => setMediaPreviewOpen(true)}
+          onMouseLeave={() => setMediaPreviewOpen(false)}
+        >
+          <Image
+            src={post.media_url}
+            alt="Trading intelligence chart layout attachment preview"
+            width={1200}
+            height={675}
+            className="max-h-[90vh] w-auto max-w-full rounded-xl border border-slate-800 object-contain shadow-2xl"
+          />
+        </div>
+      )}
+
+      <CommentDrawer
         postId={post.id}
         isOpen={commentOpen}
         onClose={() =>

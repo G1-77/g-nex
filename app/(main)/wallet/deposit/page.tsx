@@ -224,7 +224,7 @@ export default function DepositPage() {
       </Link>
 
       <h1 className="mt-4 text-xl font-black tracking-tight text-slate-100">Deposit</h1>
-      <p className="mt-0.5 text-xs text-slate-500">Send money to GNex and we credit your wallet instantly.</p>
+      <p className="mt-0.5 text-xs text-slate-500">Deposit to your wallet instantly.</p>
 
       {DEMO_MODE && (
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/5 px-3.5 py-2.5">
@@ -260,11 +260,11 @@ export default function DepositPage() {
 
       {/* SEND TO */}
       <section className="mt-4 rounded-xl border border-slate-900/60 bg-slate-900/20 p-5">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">1 · Send money to GNex</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">1 · Fund your GNEX Wallet</p>
         <p className="mt-1.5 text-xs text-slate-400">
           {paybill
-            ? 'Pay with M-Pesa PayBill. You can pay from any Safaricom line — just use your account number below.'
-            : 'Use your mobile money app to send to the number below. Use your registered phone number when sending so we can verify it quickly.'}
+            ? 'Pay with M-Pesa PayBill. Enter paybill and your account number below.'
+            : 'Use airtel money app to send to the number below. For quick verification use your registered airtel line.'}
         </p>
 
         <div className="mt-3 space-y-2.5">
@@ -272,9 +272,9 @@ export default function DepositPage() {
             <>
               <CopyRow label="PayBill · Business number" value={WALLET_CONFIG.MPESA_PAYBILL_NUMBER} />
               <CopyRow
-                label="Account number · Yours"
+                label="Your Account number"
                 value={accountNumber ?? 'Loading…'}
-                hint="This is your permanent GNex account number — always the same"
+                hint="This is your permanent GNEX account number — always the same"
               />
             </>
           ) : (
@@ -285,7 +285,7 @@ export default function DepositPage() {
 
       {/* REQUEST CREDIT */}
       <form onSubmit={handleSubmit} className="mt-4 rounded-xl border border-slate-900/60 bg-slate-900/20 p-5">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">2 · Tell us you&apos;ve sent it</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">2 · Confirm your deposit to admin</p>
 
         {/* AMOUNT */}
         <label className="mt-4 block">
@@ -356,7 +356,7 @@ export default function DepositPage() {
             ? 'Submitting…'
             : DEMO_MODE
               ? `Simulate sending via ${provider}`
-              : "I've sent the money"}
+              : "I've deposited to my account"}
         </button>
       </form>
 

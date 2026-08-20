@@ -6,6 +6,7 @@ import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge } from "@/components/admin/status"
+import { AdminButton, AdminPageHeader, AdminPanel, AdminSectionLabel } from "@/components/admin/ui"
 import { formatTimestamp } from "@/lib/admin/format"
 
 interface EditorialData {
@@ -96,32 +97,29 @@ export default function AdminEditorialPage() {
 
   return (
     <div className="space-y-4">
+      <AdminPageHeader title="Editorial" subtitle="Curate the picks that anchor the community feed" />
+
       {canManage && (
-        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--admin-text-dim)]">
-            Add an editorial pick
-          </p>
+        <AdminPanel className="p-4">
+          <AdminSectionLabel className="mb-3">Add an editorial pick</AdminSectionLabel>
           <div className="flex flex-col gap-2 md:flex-row">
             <input
               value={postId}
               onChange={(e) => setPostId(e.target.value)}
               placeholder="Post ID (uuid)"
-              className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 font-mono text-xs text-slate-100 outline-none placeholder:text-[var(--admin-text-dim)] focus:border-[var(--admin-green)]/50 md:max-w-xs"
+              className="admin-input w-full font-mono md:max-w-xs"
             />
             <input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Why is this pick-worthy?"
-              className="w-full flex-1 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 text-xs text-slate-100 outline-none placeholder:text-[var(--admin-text-dim)] focus:border-[var(--admin-green)]/50"
+              className="admin-input w-full flex-1"
             />
-            <button
-              onClick={addPick}
-              className="rounded-lg bg-[var(--admin-green)] px-4 py-2 text-xs font-bold text-black hover:brightness-110"
-            >
+            <AdminButton variant="primary" onClick={addPick}>
               Add pick
-            </button>
+            </AdminButton>
           </div>
-        </div>
+        </AdminPanel>
       )}
 
       {error && (
@@ -136,12 +134,9 @@ export default function AdminEditorialPage() {
         actions={
           canManage
             ? (p) => (
-                <button
-                  onClick={() => unpick(p.id)}
-                  className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/20"
-                >
+                <AdminButton variant="danger" onClick={() => unpick(p.id)}>
                   Remove
-                </button>
+                </AdminButton>
               )
             : undefined
         }

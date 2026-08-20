@@ -13,14 +13,24 @@ const TONE_CLASSES: Record<StatusTone, string> = {
   violet: "bg-violet-500/10 text-violet-300 border-violet-500/20",
 }
 
+const DOT_CLASSES: Record<StatusTone, string> = {
+  green: "bg-emerald-400",
+  amber: "bg-amber-400",
+  red: "bg-rose-400",
+  gray: "bg-slate-400",
+  blue: "bg-sky-400",
+  violet: "bg-violet-400",
+}
+
 export function StatusBadge({ status, tone }: { status: string; tone: StatusTone }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
         TONE_CLASSES[tone]
       )}
     >
+      <span className={cn("h-1.5 w-1.5 rounded-full", DOT_CLASSES[tone])} />
       {status.replace(/_/g, " ")}
     </span>
   )

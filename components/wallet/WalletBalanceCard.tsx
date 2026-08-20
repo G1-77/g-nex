@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowDownLeft, ArrowUpRight, Sparkles, TrendingUp } from 'lucide-react'
 import PerformanceArea from './PerformanceArea'
 import { allocationColor, formatKes, formatUsd } from '@/lib/market/wallet-utils'
@@ -197,9 +198,11 @@ export default function WalletBalanceCard({
                       className="h-2 w-2 shrink-0 rounded-full"
                       style={{ backgroundColor: allocationColor(slice.symbol) }}
                     />
-                    <img
+                    <Image
                       src={slice.logo}
                       alt={slice.name}
+                      width={16}
+                      height={16}
                       className="h-4 w-4 shrink-0"
                     />
                     <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-300 group-hover:text-slate-100">

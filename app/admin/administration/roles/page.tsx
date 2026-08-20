@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
+import { AdminButton, AdminPageHeader, AdminPanel, AdminSectionLabel, AdminSelect } from "@/components/admin/ui"
 import { formatTimestamp } from "@/lib/admin/format"
 import type { PermissionCode } from "@/lib/admin/permissions"
 
@@ -115,18 +116,18 @@ export default function AdminRolesPage() {
       key: "role",
       label: "Role",
       render: (s) => (
-        <select
+        <AdminSelect
           value={s.role}
           onChange={(e) => changeRole(s.user_id, e.target.value)}
           disabled={s.user_id === user?.id}
-          className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-2 py-1 text-xs font-semibold capitalize text-slate-100 outline-none disabled:opacity-50"
+          className="py-1! text-xs font-semibold capitalize disabled:opacity-50"
         >
           {ROLES.map((r) => (
             <option key={r} value={r}>
               {r.replace("_", " ")}
             </option>
           ))}
-        </select>
+        </AdminSelect>
       ),
     },
     {
@@ -138,12 +139,9 @@ export default function AdminRolesPage() {
           {editingUserId === s.id ? (
             <span className="text-[var(--admin-green)]">editing…</span>
           ) : (
-            <button
-              onClick={() => startEditing(s.id, s.permissions)}
-              className="rounded-lg bg-white/5 px-2 py-1 text-[10px] font-semibold text-slate-300 hover:bg-white/10"
-            >
+            <AdminButton variant="subtle" onClick={() => startEditing(s.id, s.permissions)}>
               Edit
-            </button>
+            </AdminButton>
           )}
         </div>
       ),
@@ -161,36 +159,33 @@ export default function AdminRolesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-        <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--admin-text-dim)]">
-          Grant admin access
-        </p>
+      <AdminPageHeader title="Admin Users" subtitle="Grant roles and fine-grained permissions" />
+
+      <AdminPanel className="p-4">
+        <AdminSectionLabel className="mb-3">Grant admin access</AdminSectionLabel>
         <div className="flex flex-col gap-2 md:flex-row">
           <input
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             placeholder="User ID (uuid)"
-            className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 font-mono text-xs text-slate-100 outline-none placeholder:text-[var(--admin-text-dim)] focus:border-[var(--admin-green)]/50 md:max-w-xs"
+            className="admin-input w-full font-mono md:max-w-xs"
           />
-          <select
+          <AdminSelect
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-2 py-2 text-xs font-semibold capitalize text-slate-100 outline-none"
+            className="font-semibold capitalize"
           >
             {ROLES.map((r) => (
               <option key={r} value={r}>
                 {r.replace("_", " ")}
               </option>
             ))}
-          </select>
-          <button
-            onClick={assign}
-            className="rounded-lg bg-[var(--admin-green)] px-4 py-2 text-xs font-bold text-black hover:brightness-110"
-          >
+          </AdminSelect>
+          <AdminButton variant="primary" onClick={assign}>
             Grant access
-          </button>
+          </AdminButton>
         </div>
-      </div>
+      </AdminPanel>
 
       {error && (
         <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">{error.message}</div>
@@ -204,12 +199,9 @@ export default function AdminRolesPage() {
         actions={(s) => (
           <div className="flex gap-1.5">
             {s.user_id !== user?.id && (
-              <button
-                onClick={() => revoke(s.id, s.user_id)}
-                className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/20"
-              >
+              <AdminButton variant="danger" onClick={() => revoke(s.id, s.user_id)}>
                 Revoke
-              </button>
+              </AdminButton>
             )}
           </div>
         )}
@@ -222,17 +214,15 @@ export default function AdminRolesPage() {
             onClick={() => setEditingUserId(null)}
             className="absolute inset-0 cursor-pointer bg-black/70 backdrop-blur-sm"
           />
-          <div className="relative max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-[var(--admin-border)] bg-[var(--admin-panel-elevated)] p-5 pb-8 shadow-2xl md:rounded-2xl">
-            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-100">
-              Edit permissions
-            </p>
+          <div className="admin-panel relative max-h-[80vh] w-full max-w-lg overflow-y-auto p-5 pb-8 shadow-[var(--admin-shadow)] md:rounded-2xl">
+            <AdminSectionLabel className="mb-4 text-slate-100">Edit permissions</AdminSectionLabel>
             <div className="grid grid-cols-1 gap-1.5">
               {data?.catalog.map((perm) => {
                 const selected = editingSelections.includes(perm.code as PermissionCode)
                 return (
                   <label
                     key={perm.code}
-                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--admin-border)] p-2.5 hover:bg-white/5"
+                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] p-2.5 transition-colors hover:bg-[var(--admin-panel-hover)]"
                   >
                     <input
                       type="checkbox"
@@ -249,34 +239,26 @@ export default function AdminRolesPage() {
               })}
             </div>
             <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => setEditingUserId(null)}
-                className="rounded-lg border border-[var(--admin-border)] px-4 py-2 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
-              >
+              <AdminButton variant="subtle" onClick={() => setEditingUserId(null)}>
                 Cancel
-              </button>
-              <button
-                onClick={() => savePermissions(editingUserId)}
-                className="rounded-lg bg-[var(--admin-green)] px-4 py-2 text-xs font-bold text-black hover:brightness-110"
-              >
+              </AdminButton>
+              <AdminButton variant="primary" onClick={() => savePermissions(editingUserId)}>
                 Save permissions
-              </button>
+              </AdminButton>
             </div>
           </div>
         </div>
       )}
 
-      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-        <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--admin-text-dim)]">
-          Role defaults (applied at grant time)
-        </p>
+      <AdminPanel className="p-4">
+        <AdminSectionLabel className="mb-3">Role defaults (applied at grant time)</AdminSectionLabel>
         <div className="grid gap-3 md:grid-cols-2">
           {ROLES.map((r) => (
-            <div key={r} className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] p-3">
+            <div key={r} className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)]/60 p-3">
               <p className="mb-2 text-xs font-bold capitalize text-slate-100">{r.replace("_", " ")}</p>
               <div className="flex flex-wrap gap-1">
                 {(data?.roleDefaults[r] ?? []).map((p) => (
-                  <span key={p} className="rounded-full border border-[var(--admin-border)] px-2 py-0.5 font-mono text-[9px] text-[var(--admin-text-dim)]">
+                  <span key={p} className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-panel)] px-2 py-0.5 font-mono text-[9px] text-[var(--admin-text-dim)]">
                     {p}
                   </span>
                 ))}
@@ -284,7 +266,7 @@ export default function AdminRolesPage() {
             </div>
           ))}
         </div>
-      </div>
+      </AdminPanel>
     </div>
   )
 }

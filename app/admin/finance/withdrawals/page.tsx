@@ -6,6 +6,7 @@ import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
+import { AdminButton, AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
 import { formatKes, formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface WithdrawalsData {
@@ -25,6 +26,8 @@ interface WithdrawalsData {
     created_at: string
   }>
 }
+
+const FILTERS = ["pending", "approved", "processing", "sent", "rejected"] as const
 
 export default function AdminWithdrawalsPage() {
   const [status, setStatus] = useState("pending")
@@ -103,21 +106,15 @@ export default function AdminWithdrawalsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {["pending", "approved", "processing", "sent", "rejected"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatus(s)}
-            className={
-              status === s
-                ? "rounded-lg bg-[var(--admin-green)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--admin-green)]"
-                : "rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
-            }
-          >
+      <AdminPageHeader title="Withdrawals" subtitle="Process or reject payout requests" />
+
+      <AdminTabs>
+        {FILTERS.map((s) => (
+          <AdminTab key={s} active={status === s} onClick={() => setStatus(s)}>
             {s}
-          </button>
+          </AdminTab>
         ))}
-      </div>
+      </AdminTabs>
 
       {error && (
         <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">{error.message}</div>
@@ -134,18 +131,12 @@ export default function AdminWithdrawalsPage() {
                 <div className="flex gap-1.5">
                   {(w.status === "pending" || w.status === "approved") && (
                     <>
-                      <button
-                        onClick={() => act(w.id, "process")}
-                        className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/20"
-                      >
+                      <AdminButton variant="subtle" onClick={() => act(w.id, "process")}>
                         Process
-                      </button>
-                      <button
-                        onClick={() => act(w.id, "reject")}
-                        className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/20"
-                      >
+                      </AdminButton>
+                      <AdminButton variant="danger" onClick={() => act(w.id, "reject")}>
                         Reject
-                      </button>
+                      </AdminButton>
                     </>
                   )}
                 </div>

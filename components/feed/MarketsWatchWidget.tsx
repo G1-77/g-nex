@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 import Sparkline from '@/components/market/Sparkline'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
@@ -29,7 +30,7 @@ function WatchRow({ ticker, onOpen }: { ticker: MarketTicker; onOpen: (symbol: M
       className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-transparent p-2.5 transition-colors hover:border-slate-800/40 hover:bg-slate-900/40"
     >
       <div className="flex min-w-[74px] flex-1 items-center gap-2.5">
-        <img
+        <Image
           src={ticker.logo}
           width={24}
           height={24}

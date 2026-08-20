@@ -6,6 +6,7 @@ import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge } from "@/components/admin/status"
+import { AdminButton, AdminPageHeader, AdminSearch, AdminTab, AdminTabs } from "@/components/admin/ui"
 import { ReputationBadge } from "@/components/reputation/ReputationBadge"
 import { formatTimestamp } from "@/lib/admin/format"
 
@@ -23,6 +24,8 @@ interface UsersData {
     reputation_status: string | null
   }>
 }
+
+const FILTERS = ["all", "active", "suspended", "verified"] as const
 
 export default function AdminUsersPage() {
   const [q, setQ] = useState("")
@@ -52,7 +55,7 @@ export default function AdminUsersPage() {
       label: "User",
       render: (u) => (
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[10px] font-black text-slate-200">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-[10px] font-black text-slate-200">
             {u.username.slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -111,28 +114,22 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-4">
+      <AdminPageHeader title="Users" subtitle="Search, verify and manage account standing" />
+
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <input
+        <AdminSearch
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by username or name…"
-          className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-2 text-xs text-slate-100 outline-none placeholder:text-[var(--admin-text-dim)] focus:border-[var(--admin-green)]/50 md:max-w-xs"
+          className="md:max-w-xs"
         />
-        <div className="flex gap-2">
-          {["all", "active", "suspended", "verified"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatus(s)}
-              className={
-                status === s
-                  ? "rounded-lg bg-[var(--admin-green)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--admin-green)]"
-                  : "rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-slate-100"
-              }
-            >
+        <AdminTabs>
+          {FILTERS.map((s) => (
+            <AdminTab key={s} active={status === s} onClick={() => setStatus(s)}>
               {s[0].toUpperCase() + s.slice(1)}
-            </button>
+            </AdminTab>
           ))}
-        </div>
+        </AdminTabs>
       </div>
 
       {error && (
@@ -149,34 +146,22 @@ export default function AdminUsersPage() {
             ? (u) => (
                 <div className="flex gap-1.5">
                   {u.is_active ? (
-                    <button
-                      onClick={() => act(u.id, "suspend")}
-                      className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/20"
-                    >
+                    <AdminButton variant="danger" onClick={() => act(u.id, "suspend")}>
                       Suspend
-                    </button>
+                    </AdminButton>
                   ) : (
-                    <button
-                      onClick={() => act(u.id, "unsuspend")}
-                      className="rounded-lg bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/20"
-                    >
+                    <AdminButton variant="subtle" onClick={() => act(u.id, "unsuspend")}>
                       Reinstate
-                    </button>
+                    </AdminButton>
                   )}
                   {u.is_verified ? (
-                    <button
-                      onClick={() => act(u.id, "unverify")}
-                      className="rounded-lg bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-[var(--admin-text-dim)] hover:bg-white/10"
-                    >
+                    <AdminButton variant="subtle" onClick={() => act(u.id, "unverify")}>
                       Unverify
-                    </button>
+                    </AdminButton>
                   ) : (
-                    <button
-                      onClick={() => act(u.id, "verify")}
-                      className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/20"
-                    >
+                    <AdminButton variant="subtle" onClick={() => act(u.id, "verify")}>
                       Verify
-                    </button>
+                    </AdminButton>
                   )}
                 </div>
               )

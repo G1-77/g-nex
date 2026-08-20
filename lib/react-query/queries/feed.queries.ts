@@ -1,6 +1,6 @@
 'use client'
 
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import type { FeedPost, SupabaseFeedPostRow } from '@/lib/supabase/types'
 import { normalizeTradeTags } from '@/lib/supabase/types'
@@ -8,63 +8,49 @@ import { feedKeys } from '../keys'
 
 const PAGE_SIZE = 10
 
-// 🟢 FIXED: Converted to a paginated offset cursor function targeting explicit range arrays
-async function getFeedPage(
-  currentUserId: string | null,
-  pageParam: number
-): Promise<{ posts: FeedPost[]; nextPage: number | null }> {
-  const startOffset = pageParam * PAGE_SIZE
-  const endOffset = startOffset + PAGE_SIZE - 1
+const POST_SELECT = `
+  id,
+  content,
+  created_at,
+  media_url,
+  likes_count,
+  comments_count,
+  shares_count,
+  assetSymbols,
+  signalType,
+  profiles:profiles!user_id (
+    id,
+    username,
+    full_name,
+    avatar_url,
+    bio,
+    is_verified,
+    monthly_roi,
+    trader_reputation (
+      user_id,
+      status,
+      score
+    )
+  ),
+  trade_tags (
+    asset_symbol,
+    signal_type,
+    price,
+    change,
+    direction
+  )
+`
 
-  // 1. Fetch exact row segments matching our paginated cursor parameters
-  const { data, error } = await supabase
-    .from('posts')
-    .select(`
-      id,
-      content,
-      created_at,
-      media_url,
-      likes_count,
-      comments_count,
-      shares_count,
-      assetSymbols,
-      signalType,
-      profiles:profiles!user_id (
-        id,
-        username,
-        full_name,
-        avatar_url,
-        bio,
-        is_verified,
-        monthly_roi
-      ),
-      trade_tags (
-        asset_symbol,
-        signal_type,
-        price,
-        change,
-        direction
-      ),
-      trader_reputation (
-        user_id,
-        status,
-        score
-      )
-    `)
-    .order('created_at', { ascending: false })
-    .range(startOffset, endOffset)
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  if (!data || data.length === 0) {
-    return { posts: [], nextPage: null }
-  }
-
-  const rawRows = data as unknown as SupabaseFeedPostRow[]
-
-  // 2. High-speed lookup map configuration batch for followers counters
+/**
+ * Enrich raw post rows into the component-facing FeedPost shape:
+ * follower counts, effective verification, per-session like flags and
+ * reputation fields sourced from the nested trader_reputation row.
+ */
+export async function hydrateFeedRows(
+  rawRows: SupabaseFeedPostRow[],
+  currentUserId: string | null
+): Promise<FeedPost[]> {
+  // 1. High-speed lookup map configuration batch for followers counters
   const { data: globalFollows } = await supabase
     .from('follows')
     .select('following_id')
@@ -77,15 +63,23 @@ async function getFeedPage(
     }
   })
 
-  // 3. Fetch liked posts matching the active user session token key
+  // 2. Fetch liked posts matching the active user session token key
   const { data: userLikes } = currentUserId
     ? await supabase.from('likes').select('post_id').eq('user_id', currentUserId)
     : { data: null }
 
   const likedPostIds = new Set(userLikes?.map((l) => l.post_id) ?? [])
 
-  // 4. Map true database persistence flags natively into the page payload records
-  const hydratedPosts: FeedPost[] = rawRows.map((row: SupabaseFeedPostRow) => {
+  // 2b. Fetch follow rows initiated by the current session to tag each author
+  // with a persistent isFollowingByViewer boolean state check.
+  const { data: userFollows } = currentUserId
+    ? await supabase.from('follows').select('following_id').eq('follower_id', currentUserId)
+    : { data: null }
+
+  const followedAuthorIds = new Set(userFollows?.map((f) => f.following_id) ?? [])
+
+  // 3. Map true database persistence flags natively into the page payload records
+  return rawRows.map((row: SupabaseFeedPostRow): FeedPost => {
     const authorId = row.profiles?.id || ''
     const calculatedFollowersCount = followerCountMap.get(authorId) || 0
 
@@ -112,14 +106,44 @@ async function getFeedPage(
             ...row.profiles,
             is_verified: shouldBeVerified,
             followers_count: calculatedFollowersCount,
+            isFollowingByViewer: followedAuthorIds.has(authorId),
             reputation_status:
-              normalizeTradeTags(row.trader_reputation)?.status ?? null,
+              normalizeTradeTags(row.profiles?.trader_reputation)?.status ?? null,
             reputation_score:
-              normalizeTradeTags(row.trader_reputation)?.score ?? null,
+              normalizeTradeTags(row.profiles?.trader_reputation)?.score ?? null,
           }
         : null,
     } as unknown as FeedPost
   })
+}
+
+// 🟢 FIXED: Converted to a paginated offset cursor function targeting explicit range arrays
+async function getFeedPage(
+  currentUserId: string | null,
+  pageParam: number
+): Promise<{ posts: FeedPost[]; nextPage: number | null }> {
+  const startOffset = pageParam * PAGE_SIZE
+  const endOffset = startOffset + PAGE_SIZE - 1
+
+  // 1. Fetch exact row segments matching our paginated cursor parameters
+  const { data, error } = await supabase
+    .from('posts')
+    .select(POST_SELECT)
+    .order('created_at', { ascending: false })
+    .range(startOffset, endOffset)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (!data || data.length === 0) {
+    return { posts: [], nextPage: null }
+  }
+
+  const hydratedPosts = await hydrateFeedRows(
+    data as unknown as SupabaseFeedPostRow[],
+    currentUserId
+  )
 
   // Determine if more records exist further down the table matrix array to trigger next page param offsets
   const hasNextPage = data.length === PAGE_SIZE
@@ -138,6 +162,41 @@ export function useGetInfiniteFeedQuery(currentUserId: string | null) {
     queryFn: ({ pageParam = 0 }) => getFeedPage(currentUserId, pageParam),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    staleTime: 1000 * 10,
+    refetchOnWindowFocus: false,
+  })
+}
+
+/** Fetch one author's posts for the profile page, newest first. */
+async function getUserPosts(
+  authorUserId: string,
+  currentUserId: string | null
+): Promise<FeedPost[]> {
+  const { data, error } = await supabase
+    .from('posts')
+    .select(POST_SELECT)
+    .eq('user_id', authorUserId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (!data || data.length === 0) {
+    return []
+  }
+
+  return hydrateFeedRows(data as unknown as SupabaseFeedPostRow[], currentUserId)
+}
+
+export function useGetUserPostsQuery(
+  authorUserId: string | null,
+  currentUserId: string | null
+) {
+  return useQuery({
+    queryKey: [...feedKeys.all, 'user', authorUserId, currentUserId],
+    queryFn: () => getUserPosts(authorUserId!, currentUserId),
+    enabled: !!authorUserId,
     staleTime: 1000 * 10,
     refetchOnWindowFocus: false,
   })

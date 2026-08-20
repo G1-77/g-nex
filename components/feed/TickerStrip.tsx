@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 import Sparkline from '@/components/market/Sparkline'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
@@ -33,7 +34,7 @@ function TickerItem({ ticker, onOpen }: TickerItemProps) {
       onClick={() => onOpen(ticker.symbol)}
       className="flex shrink-0 cursor-pointer items-center gap-2.5 border-r border-slate-900/60 px-4 transition-colors hover:bg-slate-900/40"
     >
-      <img
+      <Image
         src={ticker.logo}
         width={20}
         height={20}

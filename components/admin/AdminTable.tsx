@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { X } from "lucide-react"
+import { X, BarChart3, TrendingUp, Clock3, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface AdminColumn<T> {
@@ -35,9 +35,13 @@ export function AdminTable<T extends { id: string }>({
 
   if (loading) {
     return (
-      <div className="space-y-2">
+      <div className="admin-panel space-y-2 overflow-hidden p-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-12 animate-pulse rounded-lg bg-white/5" />
+          <div
+            key={i}
+            className="h-12 animate-pulse rounded-xl bg-gradient-to-r from-white/[0.02] via-white/[0.06] to-white/[0.02]"
+            style={{ animationDelay: `${i * 80}ms` }}
+          />
         ))}
       </div>
     )
@@ -48,24 +52,24 @@ export function AdminTable<T extends { id: string }>({
   return (
     <>
       {/* Desktop table */}
-      <div className="hidden overflow-hidden rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] md:block">
-        <div className="overflow-x-auto">
+      <div className="hidden overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] shadow-[var(--admin-shadow-sm)] backdrop-blur-md md:block">
+        <div className="premium-scrollbar overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--admin-border)] text-[10px] uppercase tracking-wider text-[var(--admin-text-dim)]">
+              <tr className="border-b border-[var(--admin-border)] bg-[rgba(148,163,184,0.03)] text-[10px] uppercase tracking-[0.12em] text-[var(--admin-text-dim)]">
                 {columns.map((col) => (
-                  <th key={col.key} className="px-4 py-3 font-semibold">
+                  <th key={col.key} className="px-4 py-3 font-bold">
                     {col.label}
                   </th>
                 ))}
-                {actions && <th className="px-4 py-3 text-right font-semibold">Actions</th>}
+                {actions && <th className="px-4 py-3 text-right font-bold">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {list.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-[var(--admin-border)]/60 last:border-0 hover:bg-white/[0.03]"
+                  className="border-b border-[var(--admin-border)]/60 transition-colors duration-100 last:border-0 hover:bg-[rgba(141,255,69,0.03)]"
                 >
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3 align-middle">
@@ -89,7 +93,7 @@ export function AdminTable<T extends { id: string }>({
           <button
             key={row.id}
             onClick={() => setDetail(row)}
-            className="block w-full cursor-pointer rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3 text-left active:scale-[0.99]"
+            className="admin-panel block w-full cursor-pointer p-3 text-left transition-all active:scale-[0.99]"
           >
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
               {columns
@@ -106,7 +110,7 @@ export function AdminTable<T extends { id: string }>({
           </button>
         ))}
         {list.length === 0 && (
-          <p className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-8 text-center text-xs text-[var(--admin-text-dim)]">
+          <p className="admin-panel px-4 py-8 text-center text-xs text-[var(--admin-text-dim)]">
             {emptyMessage}
           </p>
         )}
@@ -148,6 +152,29 @@ export function AdminTable<T extends { id: string }>({
   )
 }
 
+const METRIC_TONE = {
+  default: {
+    chip: "bg-white/5 text-slate-100",
+    value: "text-slate-100",
+    icon: BarChart3,
+  },
+  green: {
+    chip: "bg-[rgba(141,255,69,0.12)] text-[var(--admin-green)]",
+    value: "text-[var(--admin-green)]",
+    icon: TrendingUp,
+  },
+  amber: {
+    chip: "bg-[rgba(251,191,36,0.12)] text-amber-300",
+    value: "text-amber-300",
+    icon: Clock3,
+  },
+  red: {
+    chip: "bg-[rgba(244,63,94,0.12)] text-rose-300",
+    value: "text-rose-300",
+    icon: AlertTriangle,
+  },
+} as const
+
 export function AdminMetricCard({
   label,
   value,
@@ -159,21 +186,25 @@ export function AdminMetricCard({
   sub?: string
   tone?: "default" | "green" | "amber" | "red"
 }) {
+  const t = METRIC_TONE[tone]
+  const Icon = t.icon
+
   return (
-    <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-text-dim)]">{label}</p>
-      <p
-        className={cn(
-          "mt-2 font-mono text-xl font-black",
-          tone === "green" && "text-[var(--admin-green)]",
-          tone === "amber" && "text-amber-300",
-          tone === "red" && "text-rose-300",
-          tone === "default" && "text-slate-100"
-        )}
-      >
+    <div className="admin-panel group p-4 transition-all duration-150 hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-glow)]">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--admin-text-dim)]">
+          {label}
+        </p>
+        <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-transform duration-150 group-hover:scale-105", t.chip)}>
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className={cn("mt-3 font-mono text-2xl font-black leading-none tracking-tight", t.value)}>
         {value}
       </p>
-      {sub && <p className="mt-1 text-[11px] text-[var(--admin-text-dim)]">{sub}</p>}
+      {sub && (
+        <p className="mt-2 text-[11px] text-[var(--admin-text-dim)]">{sub}</p>
+      )}
     </div>
   )
 }

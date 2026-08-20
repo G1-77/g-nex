@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useAdminQuery } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
+import { AdminPageHeader, AdminSearch, AdminSelect } from "@/components/admin/ui"
 import { formatKes, formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface TransactionsData {
@@ -79,29 +80,23 @@ export default function AdminTransactionsPage() {
 
   return (
     <div className="space-y-4">
+      <AdminPageHeader title="Transactions" subtitle="Every deposit, withdrawal and trade" />
+
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <input
+        <AdminSearch
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by reference or user…"
-          className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-2 text-xs text-slate-100 outline-none placeholder:text-[var(--admin-text-dim)] focus:border-[var(--admin-green)]/50 md:max-w-xs"
+          className="md:max-w-xs"
         />
         <div className="flex flex-wrap gap-2">
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-2 py-2 text-xs text-slate-100 outline-none"
-          >
+          <AdminSelect value={type} onChange={(e) => setType(e.target.value)}>
             <option value="all">All types</option>
             <option value="deposit">Deposits</option>
             <option value="withdrawal">Withdrawals</option>
             <option value="trade">Trades</option>
-          </select>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-2 py-2 text-xs text-slate-100 outline-none"
-          >
+          </AdminSelect>
+          <AdminSelect value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="all">All statuses</option>
             <option value="pending_verification">Pending verification</option>
             <option value="pending">Pending</option>
@@ -111,7 +106,7 @@ export default function AdminTransactionsPage() {
             <option value="sent">Sent</option>
             <option value="rejected">Rejected</option>
             <option value="failed">Failed</option>
-          </select>
+          </AdminSelect>
         </div>
       </div>
 

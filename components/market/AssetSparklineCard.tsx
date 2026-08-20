@@ -1,6 +1,7 @@
 'use client'
 
 import { Star } from 'lucide-react'
+import Image from 'next/image'
 import SparklineArea from '@/components/market/SparklineArea'
 import type { MarketTicker } from '@/lib/supabase/market.types'
 import type { AssetSymbol } from '@/lib/supabase/types'
@@ -54,10 +55,11 @@ export default function AssetSparklineCard({
       {/* Asset identity */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={ticker.logo}
             alt={ticker.name}
+            width={28}
+            height={28}
             className="h-7 w-7 shrink-0"
           />
           <div className="min-w-0">

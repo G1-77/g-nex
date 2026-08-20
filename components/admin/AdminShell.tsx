@@ -49,35 +49,58 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const initials = profile?.username?.slice(0, 2).toUpperCase() ?? "AD"
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-[var(--admin-bg-elevated)]">
-      <div className="flex h-16 items-center border-b border-[var(--admin-border)] px-5">
-        <Link href="/" className="text-slate-100">
-          <GNEXLogo height={26} />
+    <div className="flex h-full flex-col bg-[var(--admin-bg-elevated)]/80">
+      {/* Brand header */}
+      <div className="flex h-16 items-center gap-2.5 border-b border-[var(--admin-border)] px-5">
+        <Link href="/" className="flex items-center gap-2 text-slate-100">
+          <GNEXLogo height={22} />
         </Link>
+        <span className="rounded-md border border-[var(--admin-border)] bg-[var(--admin-panel)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[var(--admin-text-faint)]">
+          Console
+        </span>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto p-3">
+      {/* Navigation */}
+      <nav className="premium-scrollbar flex-1 space-y-5 overflow-y-auto p-3">
         {nav.map((section) => (
           <div key={section.title}>
-            <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-[var(--admin-text-dim)]">
+            <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--admin-text-faint)]">
               {section.title}
             </p>
             <div className="space-y-0.5">
               {section.items.map((item) => {
-                const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href)
+                const active =
+                  item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href)
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setDrawerOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+                      "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-150",
                       active
-                        ? "bg-[var(--admin-green)]/10 text-[var(--admin-green)]"
-                        : "text-[var(--admin-text-dim)] hover:bg-white/5 hover:text-[var(--admin-text)]"
+                        ? "bg-[rgba(141,255,69,0.10)] text-[var(--admin-green)]"
+                        : "text-[var(--admin-text-dim)] hover:bg-[var(--admin-panel-hover)] hover:text-[var(--admin-text)]"
                     )}
+                    style={
+                      active
+                        ? { boxShadow: "inset 0 0 0 1px rgba(141,255,69,0.18)" }
+                        : undefined
+                    }
                   >
-                    {item.icon}
+                    {active && (
+                      <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--admin-green)] shadow-[0_0_10px_var(--admin-green-glow)]" />
+                    )}
+                    <span
+                      className={cn(
+                        "flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
+                        active
+                          ? "bg-[rgba(141,255,69,0.15)] text-[var(--admin-green)]"
+                          : "bg-white/[0.04] text-[var(--admin-text-dim)] group-hover:text-[var(--admin-text)]"
+                      )}
+                    >
+                      {item.icon}
+                    </span>
                     {item.label}
                   </Link>
                 )
@@ -87,14 +110,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
         ))}
       </nav>
 
+      {/* Current user */}
       <div className="border-t border-[var(--admin-border)] p-3">
-        <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-[10px] font-black text-slate-200">
+        <div className="flex items-center gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-2.5">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgba(141,255,69,0.12)] text-[11px] font-black text-[var(--admin-green)]"
+            style={{ boxShadow: "0 0 0 1px rgba(141,255,69,0.25)" }}
+          >
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold text-slate-100">@{profile?.username ?? "admin"}</p>
-            <p className="text-[10px] uppercase tracking-wide text-[var(--admin-text-dim)]">
+            <p className="truncate text-xs font-bold text-slate-100">
+              @{profile?.username ?? "admin"}
+            </p>
+            <p className="text-[10px] uppercase tracking-wide text-[var(--admin-green)]">
               {role?.replace("_", " ") ?? "staff"}
             </p>
           </div>
@@ -104,9 +133,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
   )
 
   return (
-    <div className="min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text)]">
+    <div className="relative min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text)]">
+      {/* Ambient brand glow */}
+      <div className="admin-ambient" aria-hidden />
+
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-[var(--admin-border)] lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-[var(--admin-border)] backdrop-blur-xl lg:block">
         {sidebar}
       </aside>
 
@@ -118,11 +150,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 cursor-pointer bg-black/70 backdrop-blur-sm"
           />
-          <div className="absolute inset-y-0 left-0 w-72 border-r border-[var(--admin-border)] bg-[var(--admin-bg-elevated)] shadow-2xl">
+          <div className="absolute inset-y-0 left-0 w-72 border-r border-[var(--admin-border)] shadow-2xl">
             <button
               aria-label="Close"
               onClick={() => setDrawerOpen(false)}
-              className="absolute right-3 top-4 rounded-lg p-1 text-[var(--admin-text-dim)] hover:bg-white/10"
+              className="absolute right-3 top-4 z-10 cursor-pointer rounded-lg p-1.5 text-[var(--admin-text-dim)] hover:bg-white/10"
             >
               <X className="h-5 w-5" />
             </button>
@@ -132,30 +164,38 @@ export function AdminShell({ children }: { children: ReactNode }) {
       )}
 
       {/* Main column */}
-      <div className="lg:pl-64">
+      <div className="relative z-10 lg:pl-64">
         {/* Header */}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-[var(--admin-border)] bg-[var(--admin-bg)]/90 px-4 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-[var(--admin-border)] bg-[var(--admin-bg)]/80 px-4 backdrop-blur-xl">
           <button
             aria-label="Open menu"
             onClick={() => setDrawerOpen(true)}
-            className="rounded-lg p-2 text-[var(--admin-text-dim)] hover:bg-white/10 lg:hidden"
+            className="cursor-pointer rounded-lg p-2 text-[var(--admin-text-dim)] transition-colors hover:bg-white/5 hover:text-slate-100 lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
 
-          <h1 className="text-sm font-bold uppercase tracking-widest text-slate-100">{pageTitle}</h1>
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-bold uppercase tracking-widest text-slate-100">
+              {pageTitle}
+            </h1>
+            <p className="hidden text-[10px] text-[var(--admin-text-faint)] sm:block">
+              GNEX Admin Console
+            </p>
+          </div>
 
           <div className="ml-auto flex items-center gap-2">
             <Link
               href="/notifications"
-              className="rounded-lg p-2 text-[var(--admin-text-dim)] hover:bg-white/10"
               aria-label="Notifications"
+              className="relative rounded-lg p-2 text-[var(--admin-text-dim)] transition-colors hover:bg-white/5 hover:text-slate-100"
             >
               <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--admin-green)] shadow-[0_0_8px_var(--admin-green-glow)]" />
             </Link>
             <Link
               href="/"
-              className="hidden items-center gap-1.5 rounded-lg border border-[var(--admin-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-dim)] hover:text-slate-100 sm:flex"
+              className="hidden items-center gap-1.5 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-dim)] transition-colors hover:border-[var(--admin-border-strong)] hover:text-slate-100 sm:flex"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               View site
@@ -163,7 +203,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
             {isLoading ? (
               <div className="h-8 w-8 animate-pulse rounded-full bg-white/10" />
             ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--admin-green)]/15 text-[10px] font-black text-[var(--admin-green)]">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(141,255,69,0.12)] text-[10px] font-black text-[var(--admin-green)]"
+                style={{ boxShadow: "0 0 0 1px rgba(141,255,69,0.2)" }}
+              >
                 {initials}
               </div>
             )}

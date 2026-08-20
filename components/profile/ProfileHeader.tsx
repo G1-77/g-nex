@@ -6,7 +6,15 @@ import Image from 'next/image'
 import EditProfileModal from './EditProfileModal'
 import { useUserIdentity } from '@/lib/hooks/useUserIdentity'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { ReputationBadge } from '@/components/reputation/ReputationBadge'
+// import { ReputationBadge } from '@/components/reputation/ReputationBadge'
+import type { AdminRoleType } from '@/lib/supabase/types'
+
+// const ROLE_LABELS: Record<AdminRoleType, string> = {
+//   super_admin: 'Super Admin',
+//   admin: 'Admin',
+//   support: 'Support',
+//   editor: 'Editor',
+// }
 
 interface ProfileHeaderProps {
   username: string
@@ -15,6 +23,7 @@ interface ProfileHeaderProps {
   isVerified?: boolean
   monthlyRoi?: number
   isOwnProfile?: boolean
+  role?: AdminRoleType | null
   reputationStatus?: string | null
   reputationScore?: number | null
 }
@@ -26,6 +35,7 @@ export default function ProfileHeader({
   isVerified,
   monthlyRoi,
   isOwnProfile = true,
+  // role,
   reputationStatus,
   reputationScore,
 }: ProfileHeaderProps) {
@@ -33,9 +43,9 @@ export default function ProfileHeader({
   const { profile } = useUserIdentity()
   const { reputation } = useAuth()
 
-  const effectiveStatus = reputationStatus ?? reputation?.status ?? null
-  const effectiveScore =
-    reputationScore ?? (typeof reputation?.score === "number" ? reputation.score : null)
+  // const effectiveStatus = reputationStatus ?? reputation?.status ?? null
+  // const effectiveScore =
+  //   reputationScore ?? (typeof reputation?.score === "number" ? reputation.score : null)
 
   return (
     <>
@@ -63,7 +73,7 @@ export default function ProfileHeader({
           {/* USER INFO */}
           <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white truncate">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white truncate mt-2">
                 @{username}
               </h1>
 
@@ -71,7 +81,13 @@ export default function ProfileHeader({
                 <BadgeCheck className="h-5 w-5 fill-yellow-600 stroke-slate-950 shrink-0" />
               )}
 
-              <ReputationBadge status={effectiveStatus} score={effectiveScore} />
+              {/* {role && (
+                <span className="rounded-md border border-slate-800 bg-slate-900/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {ROLE_LABELS[role]}
+                </span>
+              )} */}
+
+              {/* <ReputationBadge status={effectiveStatus} score={effectiveScore} /> */}
             </div>
 
             <p className="max-w-md text-sm text-slate-400 leading-relaxed">

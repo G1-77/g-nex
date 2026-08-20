@@ -213,10 +213,11 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
 
                     {assetSymbol && (
                       <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md border border-slate-800 bg-slate-950/90 px-1.5 py-0.5 backdrop-blur-sm">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={`/icons/${assetSymbol.toLowerCase()}.svg`}
                           alt=""
+                          width={12}
+                          height={12}
                           className="h-3 w-3"
                         />
                         <span className="font-mono text-[10px] font-black text-slate-200">

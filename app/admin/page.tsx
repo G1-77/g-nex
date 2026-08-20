@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminMetricCard } from "@/components/admin/AdminTable"
+import { AdminButton, AdminPageHeader, AdminPanel, AdminSectionLabel } from "@/components/admin/ui"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
 import { formatKesCompact, formatTimestamp } from "@/lib/admin/format"
 import { statusTone } from "@/lib/admin/format"
@@ -50,6 +51,16 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="space-y-6">
+      <AdminPageHeader
+        title="Operations Overview"
+        subtitle="Live snapshot of users, liquidity, orders and moderation queues"
+        right={
+          isSuperAdmin ? (
+            <AdminButton onClick={recalcReputation}>Recompute reputation scores</AdminButton>
+          ) : undefined
+        }
+      />
+
       {error && (
         <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
           Could not load overview data: {error.message}
@@ -91,20 +102,9 @@ export default function AdminOverviewPage() {
         <AdminMetricCard label="Active Editorial" value={value(data?.queues.editorialActive, (n) => n.toLocaleString())} />
       </div>
 
-      {isSuperAdmin && (
-        <button
-          onClick={recalcReputation}
-          className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-2 text-xs font-semibold text-[var(--admin-text-dim)] hover:text-[var(--admin-green)]"
-        >
-          Recompute all reputation scores
-        </button>
-      )}
-
       <div className="grid gap-6 lg:grid-cols-2">
-        <section>
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--admin-text-dim)]">
-            Recent deposits
-          </h2>
+        <AdminPanel className="p-4">
+          <AdminSectionLabel className="mb-3">Recent deposits</AdminSectionLabel>
           <div className="space-y-2">
             {(data?.recent.deposits ?? []).map((d) => (
               <div key={d.id} className="flex items-center justify-between rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-2.5 text-xs">
@@ -121,12 +121,10 @@ export default function AdminOverviewPage() {
               <p className="text-xs text-[var(--admin-text-dim)]">No recent deposits</p>
             )}
           </div>
-        </section>
+        </AdminPanel>
 
-        <section>
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--admin-text-dim)]">
-            Recent withdrawals
-          </h2>
+        <AdminPanel className="p-4">
+          <AdminSectionLabel className="mb-3">Recent withdrawals</AdminSectionLabel>
           <div className="space-y-2">
             {(data?.recent.withdrawals ?? []).map((w) => (
               <div key={w.id} className="flex items-center justify-between rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-2.5 text-xs">
@@ -143,7 +141,7 @@ export default function AdminOverviewPage() {
               <p className="text-xs text-[var(--admin-text-dim)]">No recent withdrawals</p>
             )}
           </div>
-        </section>
+        </AdminPanel>
       </div>
     </div>
   )

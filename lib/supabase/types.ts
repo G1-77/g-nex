@@ -41,6 +41,7 @@ export interface Profile {
   is_verified: boolean
   monthly_roi: number
   followers_count?: number // Handles Facebook-style follower totals tracking safely
+  isFollowingByViewer?: boolean // Tracks whether the active session follows this profile row
   reputation_status?: ReputationStatus | null
   reputation_score?: number | null
 }
@@ -133,17 +134,18 @@ export interface SupabaseFeedPostRow {
   shares_count: number
   assetSymbols: AssetSymbol[]
   signalType: SignalType | null
-  profiles: Profile | null
+  profiles: (Profile & {
+    trader_reputation?: {
+      user_id: string
+      status: ReputationStatus
+      score: number
+    } | null
+  }) | null
   trade_tags: {
     asset_symbol: AssetSymbol
     signal_type: SignalType
     price: number | string | null
     change: string | null
     direction: string | null
-  } | null
-  trader_reputation: {
-    user_id: string
-    status: ReputationStatus
-    score: number
   } | null
 }

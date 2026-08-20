@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatKes, formatUnits } from '@/lib/market/wallet-utils'
 import type { AssetSymbol } from '@/lib/supabase/types'
 
@@ -67,7 +68,7 @@ export default function HoldingsList({ rows, loading }: HoldingsListProps) {
               href={`/markets/${row.symbol.toLowerCase()}`}
               className="flex items-center gap-3 py-3 transition-colors hover:bg-slate-900/30"
             >
-              <img src={row.logo} alt={row.name} className="h-9 w-9 shrink-0" />
+              <Image src={row.logo} alt={row.name} width={36} height={36} className="h-9 w-9 shrink-0" />
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-semibold text-slate-200">{row.name}</p>
@@ -102,7 +103,7 @@ export default function HoldingsList({ rows, loading }: HoldingsListProps) {
                 href={`/markets/${row.symbol.toLowerCase()}`}
                 className="flex items-center gap-3 rounded-lg px-2 py-2 opacity-50 transition-all hover:bg-slate-900/40 hover:opacity-100"
               >
-                <img src={row.logo} alt={row.name} className="h-7 w-7 shrink-0 grayscale" />
+                <Image src={row.logo} alt={row.name} width={28} height={28} className="h-7 w-7 shrink-0 grayscale" />
                 <span className="min-w-0 flex-1 truncate text-[12px] text-slate-400">{row.name}</span>
                 <span className="text-[10px] font-semibold text-yellow-600">Start buying</span>
               </Link>

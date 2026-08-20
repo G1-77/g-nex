@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
+import { AdminButton, AdminPageHeader, AdminPanel, AdminSectionLabel } from "@/components/admin/ui"
 import { SETTING_KEYS } from "@/lib/admin/settings"
 
 interface SettingsData {
@@ -62,7 +63,7 @@ export default function AdminSettingsPage() {
   }
 
   if (isLoading) {
-    return <div className="h-40 animate-pulse rounded-xl bg-white/5" />
+    return <div className="admin-panel h-40 animate-pulse p-4" />
   }
 
   if (error) {
@@ -73,24 +74,31 @@ export default function AdminSettingsPage() {
 
   const num = (key: string) => Number(settings[key] ?? 0)
 
+  const chip = (active: boolean) =>
+    active
+      ? "border-[rgba(141,255,69,0.4)] bg-[rgba(141,255,69,0.1)] text-[var(--admin-green)]"
+      : "border-[var(--admin-border)] bg-transparent text-[var(--admin-text-dim)]"
+
   return (
     <div className="max-w-3xl space-y-6">
+      <AdminPageHeader title="Settings" subtitle="Platform-wide trading and deposit configuration" />
+
       <div className="grid gap-3 md:grid-cols-2">
-        <label className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
+        <AdminPanel className="p-4">
           <span className="text-xs font-semibold text-[var(--admin-text-dim)]">{SETTING_LABELS.trading_fee_pct}</span>
           <input
             type="number"
             step="0.01"
             value={num("trading_fee_pct")}
             onChange={(e) => setField(SETTING_KEYS.TRADING_FEE_PCT, Number(e.target.value))}
-            className="mt-2 w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 font-mono text-sm text-slate-100 outline-none focus:border-[var(--admin-green)]/50"
+            className="admin-input mt-2 w-full font-mono text-sm"
           />
           <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">
             Consumed by the market order execution engine (default 0.5).
           </p>
-        </label>
+        </AdminPanel>
 
-        <label className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
+        <AdminPanel className="p-4">
           <span className="text-xs font-semibold text-[var(--admin-text-dim)]">{SETTING_LABELS.max_withdraw_pct}</span>
           <input
             type="number"
@@ -99,14 +107,14 @@ export default function AdminSettingsPage() {
             max="1"
             value={num("max_withdraw_pct")}
             onChange={(e) => setField(SETTING_KEYS.MAX_WITHDRAW_PCT, Number(e.target.value))}
-            className="mt-2 w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 font-mono text-sm text-slate-100 outline-none focus:border-[var(--admin-green)]/50"
+            className="admin-input mt-2 w-full font-mono text-sm"
           />
           <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">
             Consumed by the withdrawal availability calculator (default 0.7).
           </p>
-        </label>
+        </AdminPanel>
 
-        <label className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
+        <AdminPanel className="p-4">
           <span className="text-xs font-semibold text-[var(--admin-text-dim)]">{SETTING_LABELS.withdrawal_fee_rate}</span>
           <input
             type="number"
@@ -115,14 +123,14 @@ export default function AdminSettingsPage() {
             max="1"
             value={num("withdrawal_fee_rate")}
             onChange={(e) => setField(SETTING_KEYS.WITHDRAWAL_FEE_RATE, Number(e.target.value))}
-            className="mt-2 w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 font-mono text-sm text-slate-100 outline-none focus:border-[var(--admin-green)]/50"
+            className="admin-input mt-2 w-full font-mono text-sm"
           />
           <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">
             Consumed by the withdrawal fee calculation (default 0.02).
           </p>
-        </label>
+        </AdminPanel>
 
-        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
+        <AdminPanel className="p-4">
           <span className="text-xs font-semibold text-[var(--admin-text-dim)]">Deposit limits (KES)</span>
           <div className="mt-2 flex items-center gap-2">
             <input
@@ -130,7 +138,7 @@ export default function AdminSettingsPage() {
               min="0"
               value={num("deposit_min_kes")}
               onChange={(e) => setField(SETTING_KEYS.DEPOSIT_MIN_KES, Number(e.target.value))}
-              className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 font-mono text-sm text-slate-100 outline-none focus:border-[var(--admin-green)]/50"
+              className="admin-input w-full font-mono text-sm"
             />
             <span className="text-[var(--admin-text-dim)]">–</span>
             <input
@@ -138,21 +146,21 @@ export default function AdminSettingsPage() {
               min="0"
               value={num("deposit_max_kes")}
               onChange={(e) => setField(SETTING_KEYS.DEPOSIT_MAX_KES, Number(e.target.value))}
-              className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2 font-mono text-sm text-slate-100 outline-none focus:border-[var(--admin-green)]/50"
+              className="admin-input w-full font-mono text-sm"
             />
           </div>
           <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">
             Enforced by the deposit route (defaults 100 – 500,000).
           </p>
-        </div>
+        </AdminPanel>
       </div>
 
-      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
+      <AdminPanel className="p-4">
         <span className="text-xs font-semibold text-[var(--admin-text-dim)]">Maintenance mode</span>
         <div className="mt-2 flex items-center gap-3">
           <button
             onClick={() => setField(SETTING_KEYS.MAINTENANCE_MODE, !Boolean(settings.maintenance_mode))}
-            className={`relative h-6 w-11 rounded-full transition-colors ${
+            className={`relative h-6 w-11 cursor-pointer rounded-full transition-colors ${
               settings.maintenance_mode ? "bg-[var(--admin-green)]" : "bg-white/10"
             }`}
             aria-pressed={Boolean(settings.maintenance_mode)}
@@ -170,11 +178,11 @@ export default function AdminSettingsPage() {
         <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">
           Enforced in the edge proxy; staff keep access while it is on.
         </p>
-      </div>
+      </AdminPanel>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-          <span className="text-xs font-semibold text-[var(--admin-text-dim)]">Supported payment providers</span>
+        <AdminPanel className="p-4">
+          <AdminSectionLabel className="mb-2">Supported payment providers</AdminSectionLabel>
           <div className="mt-2 flex flex-wrap gap-2">
             {PROVIDERS.map((p) => {
               const current = Array.isArray(settings.payment_providers)
@@ -190,21 +198,17 @@ export default function AdminSettingsPage() {
                       active ? current.filter((x) => x !== p) : [...current, p]
                     )
                   }
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold capitalize ${
-                    active
-                      ? "border-[var(--admin-green)]/40 bg-[var(--admin-green)]/10 text-[var(--admin-green)]"
-                      : "border-[var(--admin-border)] text-[var(--admin-text-dim)]"
-                  }`}
+                  className={`cursor-pointer rounded-lg border px-3 py-1.5 text-xs font-semibold capitalize transition-colors ${chip(active)}`}
                 >
                   {p}
                 </button>
               )
             })}
           </div>
-        </div>
+        </AdminPanel>
 
-        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-          <span className="text-xs font-semibold text-[var(--admin-text-dim)]">Supported trading assets</span>
+        <AdminPanel className="p-4">
+          <AdminSectionLabel className="mb-2">Supported trading assets</AdminSectionLabel>
           <div className="mt-2 flex flex-wrap gap-2">
             {ASSETS.map((a) => {
               const current = Array.isArray(settings.supported_assets)
@@ -220,31 +224,27 @@ export default function AdminSettingsPage() {
                       active ? current.filter((x) => x !== a) : [...current, a]
                     )
                   }
-                  className={`rounded-lg border px-3 py-1.5 font-mono text-xs font-bold ${
-                    active
-                      ? "border-[var(--admin-green)]/40 bg-[var(--admin-green)]/10 text-[var(--admin-green)]"
-                      : "border-[var(--admin-border)] text-[var(--admin-text-dim)]"
-                  }`}
+                  className={`cursor-pointer rounded-lg border px-3 py-1.5 font-mono text-xs font-bold transition-colors ${chip(active)}`}
                 >
                   {a}
                 </button>
               )
             })}
           </div>
-        </div>
+        </AdminPanel>
       </div>
 
       {saved && (
         <p className="text-xs font-semibold text-emerald-300">Settings saved and audited.</p>
       )}
 
-      <button
+      <AdminButton
+        variant="primary"
         onClick={save}
         disabled={saving || !form}
-        className="rounded-lg bg-[var(--admin-green)] px-6 py-2.5 text-xs font-bold text-black hover:brightness-110 disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save settings"}
-      </button>
+      </AdminButton>
     </div>
   )
 }
