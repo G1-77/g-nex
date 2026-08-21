@@ -5,6 +5,8 @@ import { useAdminQuery } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
 import { AdminPageHeader, AdminSearch, AdminSelect } from "@/components/admin/ui"
+import { RowActions } from "@/components/admin/rowActions"
+import { useAuth } from "@/components/providers/AuthProvider"
 import { formatKes, formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface TransactionsData {
@@ -25,6 +27,9 @@ export default function AdminTransactionsPage() {
   const [q, setQ] = useState("")
   const [type, setType] = useState("all")
   const [status, setStatus] = useState("all")
+  const { can } = useAuth()
+  const canEdit = can("data.edit")
+  const canDelete = can("data.delete")
 
   const url = `/api/admin/finance/transactions?q=${encodeURIComponent(q)}&type=${type}&status=${status}`
   const { data, isLoading, error } = useAdminQuery<TransactionsData>(url)
@@ -119,6 +124,35 @@ export default function AdminTransactionsPage() {
         rows={data?.transactions}
         loading={isLoading}
         emptyMessage="No transactions match your filters"
+        actions={
+          canEdit || canDelete
+            ? (t) => (
+                <RowActions
+                  url="/api/admin/finance/transactions"
+                  id={t.id}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  row={{ id: t.id, status: t.status, notes: "", reference: t.reference ?? "", amount_kes: t.amount_kes }}
+                  fields={[
+                    {
+                      key: "status",
+                      label: "Status",
+                      type: "select",
+                      options: [
+                        { value: "pending", label: "pending" },
+                        { value: "confirmed", label: "confirmed" },
+                        { value: "failed", label: "failed" },
+                        { value: "cancelled", label: "cancelled" },
+                      ],
+                    },
+                    { key: "notes", label: "Notes", type: "textarea" },
+                    { key: "reference", label: "Reference" },
+                    { key: "amount_kes", label: "Amount (KES)", type: "number" },
+                  ]}
+                />
+              )
+            : undefined
+        }
       />
     </div>
   )

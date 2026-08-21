@@ -154,6 +154,9 @@ export default function VerifiedPositioning() {
           const cleanUsername = position.username.replace('@', '')
           const initials = cleanUsername.slice(0, 2).toUpperCase()
           const isLong = position.direction === 'Long'
+            const roi = position.monthlyRoi ?? 0
+            const roiText = `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`
+            const roiColor = roi < 0 ? 'text-rose-400 bg-rose-500/5 border-rose-500/10' : 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10'
 
           return (
             <Link
@@ -193,8 +196,8 @@ export default function VerifiedPositioning() {
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-black text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-1.5 py-0.5 rounded">
-                      +{position.monthlyRoi.toFixed(1)}%
+                    <span className={`text-[10px] font-mono font-black px-1.5 py-0.5 rounded border ${roiColor}`}>
+                      {roiText}
                     </span>
 
                     <div className="flex items-center gap-1.5">

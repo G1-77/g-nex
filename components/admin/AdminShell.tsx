@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X, ExternalLink, Bell } from "lucide-react"
 import { useAuth } from "@/components/providers/AuthProvider"
+import { useAdminQuery } from "@/components/admin/useAdminQuery"
 import { GNEXLogo } from "@/components/brand/GNEXLogo"
 import { NAV_SECTIONS } from "./status"
 import { cn } from "@/lib/utils"
@@ -18,6 +19,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   const can = (permission: string | null) =>
     permission === null || (permissions as PermissionCode[]).includes(permission as PermissionCode)
+
+  // Pending approval count for the sidebar badge (approvals.review holders only).
+  const canReviewApprovals = can("approvals.review")
+  const { data: approvalsData } = useAdminQuery<{ pendingCount: number }>(
+    "/api/admin/approvals?status=pending&limit=1",
+    { enabled: canReviewApprovals, staleTime: 30_000, refetchInterval: 60_000 }
+  )
+  const pendingApprovals = canReviewApprovals ? approvalsData?.pendingCount ?? 0 : 0
 
   const pageTitle = useMemo(() => {
     const flat = NAV_SECTIONS.flatMap((s) => s.items)
@@ -102,6 +111,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       {item.icon}
                     </span>
                     {item.label}
+                    {item.href === "/admin/approvals" && pendingApprovals > 0 && (
+                      <span className="ml-auto rounded-full bg-[rgba(141,255,69,0.15)] px-1.5 py-0.5 font-mono text-[10px] font-black text-[var(--admin-green)]">
+                        {pendingApprovals > 99 ? "99+" : pendingApprovals}
+                      </span>
+                    )}
                   </Link>
                 )
               })}

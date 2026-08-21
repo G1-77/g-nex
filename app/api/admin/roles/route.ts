@@ -1,9 +1,14 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { requireSuperAdmin, forbiddenResponse, canManageRole } from "@/lib/admin/authorization"
+import {
+  requirePermission,
+  requireSuperAdmin,
+  forbiddenResponse,
+} from "@/lib/admin/authorization"
 import { createServiceClient } from "@/lib/admin/service"
 import { recordAudit } from "@/lib/admin/audit"
 import {
   ROLE_DEFAULT_PERMISSIONS,
+  ROLE_HIERARCHY,
   PERMISSIONS,
   ALL_PERMISSIONS,
   isPermissionCode,
@@ -22,23 +27,48 @@ export interface AdminStaffRow {
   created_at: string
 }
 
+/** Roles an actor may grant or change someone into, given their own rank. */
+export function assignableRoles(actorRole: AdminRoleType): AdminRoleType[] {
+  if (actorRole === "super_admin") return ["super_admin", "admin", "support", "editor"]
+  if (actorRole === "admin") return ["support", "editor"]
+  return []
+}
+
+/** Whether the actor may take any management action on a target holding targetRole. */
+export function canManageTarget(actorRole: AdminRoleType, targetRole: AdminRoleType): boolean {
+  if (actorRole === "super_admin") return true
+  return ROLE_HIERARCHY[targetRole] < ROLE_HIERARCHY[actorRole]
+}
+
 export async function GET() {
   const supabase = await createServerClient()
-  await requireSuperAdmin(supabase)
+  const ctx = await requirePermission(supabase, "admins.manage")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
+  // admin_roles.user_id references auth.users (not profiles), so profiles
+  // must be resolved in a separate query keyed on the staff user ids.
   const { data, error } = await service
     .from("admin_roles")
-    .select("id, user_id, role, permissions, granted_by, created_at, user:profiles(username, full_name)")
+    .select("id, user_id, role, permissions, granted_by, created_at")
     .order("created_at", { ascending: true })
 
   if (error) return new Response(error.message, { status: 500 })
 
+  const ids = (data ?? []).map((r) => r.user_id)
+  const { data: profiles } = await service
+    .from("profiles")
+    .select("id, username, full_name")
+    .in("id", ids.length > 0 ? ids : [""])
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.id, { username: p.username ?? null, full_name: p.full_name ?? null }])
+  )
+
   const staff: AdminStaffRow[] = (data ?? []).map((r) => ({
     id: r.id,
     user_id: r.user_id,
-    username: r.user?.[0]?.username ?? null,
-    full_name: r.user?.[0]?.full_name ?? null,
+    username: profileMap.get(r.user_id)?.username ?? null,
+    full_name: profileMap.get(r.user_id)?.full_name ?? null,
     role: r.role,
     permissions: Array.isArray(r.permissions) ? r.permissions.map(String) : [],
     granted_by: r.granted_by,
@@ -55,7 +85,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const supabase = await createServerClient()
-  const ctx = await requireSuperAdmin(supabase)
+  const ctx = await requirePermission(supabase, "admins.manage")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const body = await req.json()
@@ -65,6 +96,9 @@ export async function POST(req: Request) {
   const permissions: unknown[] = Array.isArray(body.permissions) ? body.permissions : []
 
   if (!targetUserId) return new Response("Missing userId", { status: 400 })
+  if (targetUserId === ctx.userId && action !== "update_permissions") {
+    return new Response("You cannot manage your own role", { status: 400 })
+  }
 
   const { data: targetProfile, error: profileError } = await service
     .from("profiles")
@@ -78,13 +112,27 @@ export async function POST(req: Request) {
 
   const { data: existing } = await service
     .from("admin_roles")
-    .select("id, role, permissions, granted_by")
+    .select("id, user_id, role, permissions, granted_by")
     .eq("user_id", targetUserId)
     .maybeSingle()
 
+  /** Block demotions/removals that would leave the platform without a super admin. */
+  async function guardLastSuperAdmin(currentRole: AdminRoleType, nextRole?: AdminRoleType) {
+    if (currentRole !== "super_admin" || nextRole === "super_admin") return null
+    const { count } = await service
+      .from("admin_roles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "super_admin")
+    if ((count ?? 0) <= 1) {
+      return new Response("Cannot remove the last super admin", { status: 400 })
+    }
+    return null
+  }
+
   if (action === "assign") {
-    if (!["super_admin", "admin", "support", "editor"].includes(role)) {
-      return new Response("Invalid role", { status: 400 })
+    if (!isKnownRole(role)) return new Response("Invalid role", { status: 400 })
+    if (!assignableRoles(ctx.role).includes(role)) {
+      return forbiddenResponse("You cannot grant roles at or above your own level")
     }
     if (existing) return new Response("User already has an admin role", { status: 400 })
 
@@ -114,12 +162,16 @@ export async function POST(req: Request) {
   }
 
   if (!existing) return new Response("User has no admin role", { status: 404 })
-  if (!canManageRole(ctx.role, existing.role as AdminRoleType)) {
+  const existingRole = existing.role as AdminRoleType
+
+  if (action !== "update_permissions" && !canManageTarget(ctx.role, existingRole)) {
     return forbiddenResponse("You cannot manage a role at or above your own level")
   }
 
   if (action === "revoke") {
-    if (targetUserId === ctx.userId) return new Response("Cannot revoke your own access", { status: 400 })
+    const blocked = await guardLastSuperAdmin(existingRole)
+    if (blocked) return blocked
+
     const { error } = await service.from("admin_roles").delete().eq("user_id", targetUserId)
     if (error) return new Response(error.message, { status: 500 })
 
@@ -136,12 +188,13 @@ export async function POST(req: Request) {
   }
 
   if (action === "update_role") {
-    if (!["super_admin", "admin", "support", "editor"].includes(role)) {
-      return new Response("Invalid role", { status: 400 })
+    if (!isKnownRole(role)) return new Response("Invalid role", { status: 400 })
+    if (!assignableRoles(ctx.role).includes(role)) {
+      return forbiddenResponse("You cannot grant roles at or above your own level")
     }
-    if (!canManageRole(ctx.role, role)) {
-      return forbiddenResponse("You cannot grant a role at or above your own level")
-    }
+    const blocked = await guardLastSuperAdmin(existingRole, role)
+    if (blocked) return blocked
+
     const { error } = await service
       .from("admin_roles")
       .update({ role, permissions: [...ROLE_DEFAULT_PERMISSIONS[role]] })
@@ -162,6 +215,9 @@ export async function POST(req: Request) {
   }
 
   if (action === "update_permissions") {
+    const superCtx = await requireSuperAdmin(supabase)
+    if (superCtx instanceof Response) return superCtx
+
     const clean = permissions
       .filter((p): p is PermissionCode => typeof p === "string" && isPermissionCode(p))
     const { error } = await service
@@ -184,4 +240,8 @@ export async function POST(req: Request) {
   }
 
   return new Response("Invalid action", { status: 400 })
+}
+
+function isKnownRole(role: AdminRoleType): boolean {
+  return ["super_admin", "admin", "support", "editor"].includes(role)
 }

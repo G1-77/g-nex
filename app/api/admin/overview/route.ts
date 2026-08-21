@@ -8,7 +8,8 @@ import { createServiceClient } from "@/lib/admin/service"
  */
 export async function GET() {
   const supabase = await createServerClient()
-  await requirePermission(supabase, "users.read")
+  const ctx = await requirePermission(supabase, "users.read")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   async function safeAggregate<T>(fn: () => Promise<T>): Promise<T | null> {

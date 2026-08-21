@@ -6,7 +6,7 @@ import { LayoutDashboard, BarChart3, Trophy, MessageSquare, Briefcase, Settings,
 const TERMINAL_NAV = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/market/dashboard' },
   { label: 'Markets', icon: BarChart3, href: '/market' },
-  { label: 'Leaderboards', icon: Trophy, href: '/market/leaderboards' },
+  { label: 'Leaderboards', icon: Trophy, href: '/leaderboard' },
   { label: 'Discussions', icon: MessageSquare, href: '/market/discussions' },
   { label: 'Portfolio', icon: Briefcase, href: '/market/portfolio' },
   { label: 'Settings', icon: Settings, href: '/market/settings' },

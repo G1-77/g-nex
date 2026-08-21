@@ -7,6 +7,7 @@ import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge } from "@/components/admin/status"
 import { AdminButton, AdminPageHeader, AdminSearch, AdminTab, AdminTabs } from "@/components/admin/ui"
+import { DeleteButton, EditButton, WipeButton } from "@/components/admin/rowActions"
 import { ReputationBadge } from "@/components/reputation/ReputationBadge"
 import { formatTimestamp } from "@/lib/admin/format"
 
@@ -33,6 +34,8 @@ export default function AdminUsersPage() {
   const queryClient = useQueryClient()
   const { can } = useAuth()
   const canManage = can("users.manage")
+  const canEdit = can("data.edit")
+  const canDelete = can("data.delete")
 
   const url = `/api/admin/users?q=${encodeURIComponent(q)}&status=${status}`
   const { data, isLoading, error } = useAdminQuery<UsersData>(url)
@@ -141,32 +144,56 @@ export default function AdminUsersPage() {
         rows={data?.users}
         loading={isLoading}
         emptyMessage="No users match your filters"
-        actions={
-          canManage
-            ? (u) => (
-                <div className="flex gap-1.5">
-                  {u.is_active ? (
-                    <AdminButton variant="danger" onClick={() => act(u.id, "suspend")}>
-                      Suspend
-                    </AdminButton>
-                  ) : (
-                    <AdminButton variant="subtle" onClick={() => act(u.id, "unsuspend")}>
-                      Reinstate
-                    </AdminButton>
+        actions={(u) => (
+                <div className="flex items-center justify-end gap-1.5">
+                  {canManage && (
+                    <>
+                      {u.is_active ? (
+                        <AdminButton variant="danger" onClick={() => act(u.id, "suspend")}>
+                          Suspend
+                        </AdminButton>
+                      ) : (
+                        <AdminButton variant="subtle" onClick={() => act(u.id, "unsuspend")}>
+                          Reinstate
+                        </AdminButton>
+                      )}
+                      {u.is_verified ? (
+                        <AdminButton variant="subtle" onClick={() => act(u.id, "unverify")}>
+                          Unverify
+                        </AdminButton>
+                      ) : (
+                        <AdminButton variant="subtle" onClick={() => act(u.id, "verify")}>
+                          Verify
+                        </AdminButton>
+                      )}
+                    </>
                   )}
-                  {u.is_verified ? (
-                    <AdminButton variant="subtle" onClick={() => act(u.id, "unverify")}>
-                      Unverify
-                    </AdminButton>
-                  ) : (
-                    <AdminButton variant="subtle" onClick={() => act(u.id, "verify")}>
-                      Verify
-                    </AdminButton>
+                  {canEdit && (
+                    <EditButton
+                      iconOnly
+                      url="/api/admin/users"
+                      id={u.id}
+                      buildBody={(id, changes) => ({ userId: id, action: "edit", changes, username: u.username })}
+                      row={{ id: u.id, full_name: u.full_name ?? "", bio: "", avatar_url: u.avatar_url ?? "" }}
+                      fields={[
+                        { key: "full_name", label: "Full name" },
+                        { key: "bio", label: "Bio", type: "textarea" },
+                        { key: "avatar_url", label: "Avatar URL" },
+                      ]}
+                    />
+                  )}
+                  {canDelete && <WipeButton username={u.username} userId={u.id} />}
+                  {canDelete && (
+                    <DeleteButton
+                      iconOnly
+                      url="/api/admin/users"
+                      id={u.id}
+                      label="Delete account"
+                      confirmMessage={`Permanently delete @${u.username} and ALL of their data (posts, orders, deposits, wallet, account)? This cannot be undone.`}
+                    />
                   )}
                 </div>
-              )
-            : undefined
-        }
+              )}
       />
     </div>
   )

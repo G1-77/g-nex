@@ -123,6 +123,116 @@ export interface ActivePositionNode {
   createdAt: string
 }
 
+// ============================================================================
+// CORE BROKERAGE — ORDER / LEDGER / POSITION TYPES
+// Mirrors the recovered production schema (see supabase/migrations
+// 20260820100000_brokerage_baseline.sql and 20260820110000_brokerage_execution.sql).
+// ============================================================================
+
+export type TradeSide = 'buy' | 'sell'
+export type TradeMode = 'spot' | 'margin'
+export type PositionDirection = 'Long' | 'Short'
+export type PositionStatus = 'OPEN' | 'CLOSED'
+export type OrderRowStatus = 'open' | 'filled' | 'partial' | 'cancelled'
+
+export interface OrderRow {
+  id: string
+  userId: string
+  assetId: string | null
+  orderType: 'market' | 'limit' | 'stop_limit'
+  side: TradeSide
+  mode: TradeMode
+  quantity: number
+  price: number | null
+  filledQuantity: number
+  averageFillPrice: number | null
+  fee: number
+  marginKes: number
+  status: OrderRowStatus
+  idempotencyKey: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TransactionRow {
+  id: string
+  userId: string
+  assetId: string | null
+  assetSymbol: AssetSymbol | null
+  type: 'buy' | 'sell' | 'deposit' | 'withdrawal'
+  amount: number
+  priceAtTime: number | null
+  fee: number
+  amountKes: number | null
+  status: string
+  reference: string | null
+  notes: string | null
+  orderId: string | null
+  createdAt: string
+}
+
+export interface PositionRow {
+  id: string
+  userId: string
+  assetSymbol: AssetSymbol
+  direction: PositionDirection
+  entryPriceUsd: number
+  units: number
+  marginKes: number
+  leverage: number
+  liquidationPriceUsd: number | null
+  status: PositionStatus
+  realizedPnlKes: number | null
+  feeKes: number
+  closePriceUsd: number | null
+  closedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TradeQuote {
+  symbol: AssetSymbol
+  side: TradeSide
+  mode: TradeMode
+  amountUsd: number
+  priceUsd: number
+  fxRate: number
+  feePercent: number
+  quantity: number
+  feeUsd: number
+  feeKes: number
+  amountKes: number
+  leverage: number | null
+  marginKes: number | null
+  liquidationPriceUsd: number | null
+}
+
+export interface TradeExecutionResult {
+  ok: boolean
+  duplicate: boolean
+  orderId: string
+  positionId: string | null
+  mode: TradeMode
+  side: TradeSide
+  symbol: AssetSymbol
+  quantity: number
+  priceUsd: number
+  feeKes: number
+  amountKes: number
+  leverage: number | null
+  liquidationPriceUsd: number | null
+  wallet: { balanceKes: number; lockedKes: number }
+}
+
+export interface ClosePositionResult {
+  ok: boolean
+  positionId: string
+  liquidated: boolean
+  realizedPnlKes: number
+  creditKes: number
+  wallet: { balanceKes: number; lockedKes: number }
+}
+
 /** Extended telemetry node schema contract model for single asset detail screens */
 export interface AssetDetailPayload {
   symbol: AssetSymbol

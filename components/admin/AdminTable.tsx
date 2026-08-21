@@ -62,7 +62,7 @@ export function AdminTable<T extends { id: string }>({
                     {col.label}
                   </th>
                 ))}
-                {actions && <th className="px-4 py-3 text-right font-bold">Actions</th>}
+                {actions && <th className="whitespace-nowrap px-4 py-3 text-right font-bold">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -76,7 +76,11 @@ export function AdminTable<T extends { id: string }>({
                       {col.render(row)}
                     </td>
                   ))}
-                  {actions && <td className="px-4 py-3 text-right align-middle">{actions(row)}</td>}
+                  {actions && (
+                    <td className="whitespace-nowrap px-4 py-3 text-right align-middle">
+                      {actions(row)}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -3,10 +3,12 @@
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/components/providers/AuthProvider"
-import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
+import { Trash2 } from "lucide-react"
+import { useAdminQuery, runAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
-import { AdminButton, AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
+import { AdminButton, AdminIconButton, AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
+import { DeleteButton } from "@/components/admin/rowActions"
 import { formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface ReportsData {
@@ -31,17 +33,20 @@ export default function AdminReportsPage() {
   const queryClient = useQueryClient()
   const { can } = useAuth()
   const canModerate = can("community.moderate") || can("community.report_review")
+  const canDelete = can("data.delete")
 
   const url = `/api/admin/reports?status=${status}`
   const { data, isLoading, error } = useAdminQuery<ReportsData>(url)
 
-  async function act(reportId: string, action: "resolve" | "dismiss") {
+  async function act(reportId: string, action: "resolve" | "dismiss" | "delete_content") {
+    if (action === "delete_content" && !window.confirm("Permanently delete the reported content? This cannot be undone.")) return
     const resolution =
       action === "resolve" ? window.prompt("Resolution / moderation outcome:") ?? "" : ""
     if (action === "resolve" && !resolution) return
     try {
-      await adminAction("/api/admin/reports", "PATCH", { reportId, action, resolution })
+      await runAction("/api/admin/reports", "PATCH", { reportId, action, resolution })
       await queryClient.invalidateQueries({ queryKey: [url] })
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/approvals"] })
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] })
     } catch (e) {
       alert((e as Error).message)
@@ -121,21 +126,36 @@ export default function AdminReportsPage() {
         rows={data?.reports}
         loading={isLoading}
         emptyMessage="No reports in this queue"
-        actions={
-          canModerate
-            ? (r) =>
-                r.status === "pending" || r.status === "under_review" ? (
-                  <div className="flex gap-1.5">
-                    <AdminButton variant="danger" onClick={() => act(r.id, "resolve")}>
-                      Take action
-                    </AdminButton>
-                    <AdminButton variant="subtle" onClick={() => act(r.id, "dismiss")}>
-                      Dismiss
-                    </AdminButton>
+        actions={(r) => {
+                const moderatable = r.status === "pending" || r.status === "under_review"
+                return (
+                  <div className="flex items-center justify-end gap-1.5">
+                    {canModerate && moderatable && (
+                      <>
+                        <AdminButton variant="danger" onClick={() => act(r.id, "resolve")}>
+                          Take action
+                        </AdminButton>
+                        <AdminButton variant="subtle" onClick={() => act(r.id, "dismiss")}>
+                          Dismiss
+                        </AdminButton>
+                      </>
+                    )}
+                    {canDelete && (
+                      <>
+                        <AdminIconButton
+                          variant="danger"
+                          title="Delete content"
+                          aria-label="Delete content"
+                          onClick={() => act(r.id, "delete_content")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </AdminIconButton>
+                        <DeleteButton iconOnly url="/api/admin/reports" id={r.id} label="Delete report" />
+                      </>
+                    )}
                   </div>
-                ) : undefined
-            : undefined
-        }
+                )
+              }}
       />
     </div>
   )

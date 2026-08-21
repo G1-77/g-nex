@@ -61,6 +61,7 @@ const STATUS_TONES: Record<string, StatusTone> = {
   partial: "blue",
   rejected: "red",
   failed: "red",
+  executed: "green",
   cancelled: "gray",
   dismissed: "gray",
   reversed: "red",

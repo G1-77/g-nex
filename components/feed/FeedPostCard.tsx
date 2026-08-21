@@ -22,6 +22,12 @@ import { EditPostModal } from './EditPostModal'
 
 interface FeedPostCardProps {
   post: FeedPost
+  /**
+   * Where the card is rendered. In the normal feed a user you already follow
+   * gets no button at all (X/Instagram style); on their profile page the full
+   * follow/unfollow toggle stays available.
+   */
+  variant?: 'feed' | 'profile'
 }
 
 function getAssetMeta(symbol?: string | null) {
@@ -55,7 +61,7 @@ const SIGNAL_BADGES: Record<string, string> = {
   'Long-Term': 'border-violet-500/20 bg-violet-500/10 text-violet-400',
 }
 
-export default function FeedPostCard({ post,}:FeedPostCardProps) {
+export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProps) {
   const { user } = useAuth()
   const router = useRouter()
 
@@ -362,7 +368,7 @@ export default function FeedPostCard({ post,}:FeedPostCardProps) {
             )}
           </div>
         ) : (
-        user && user.id !== post.profiles?.id && (
+        user && user.id !== post.profiles?.id && !(variant === 'feed' && isFollowing) && (
           <button
             type="button"
             onClick={handleFollowClick}

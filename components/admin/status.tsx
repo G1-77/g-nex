@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
-import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, BookOpenText, Boxes, Flag, Star, ShieldCheck, Settings, ScrollText } from "lucide-react"
+import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, BookOpenText, Boxes, Flag, Star, ShieldCheck, Settings, ScrollText, ClipboardCheck } from "lucide-react"
 
 export type StatusTone = "green" | "amber" | "red" | "gray" | "blue" | "violet"
 
@@ -67,6 +67,7 @@ export const NAV_SECTIONS: {
   {
     title: "Administration",
     items: [
+      { href: "/admin/approvals", label: "Approvals", icon: <ClipboardCheck className="h-4 w-4" />, permission: "approvals.review" },
       { href: "/admin/administration/roles", label: "Admin Users", icon: <ShieldCheck className="h-4 w-4" />, permission: "admins.manage" },
     ],
   },

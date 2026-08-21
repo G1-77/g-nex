@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import WalletBalanceCard, { type AllocationSlice } from '@/components/wallet/WalletBalanceCard'
 import HoldingsList, { type HoldingRowData } from '@/components/wallet/HoldingsList'
 import LockCard from '@/components/wallet/LockCard'
+import OpenPositionsCard from '@/components/wallet/OpenPositionsCard'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
 import {
@@ -16,10 +17,15 @@ import {
   useUnlockFundsMutation,
   useReleaseUnlocksMutation,
 } from '@/lib/react-query/market/queries.market'
+import { useGetUserTransactionsQuery } from '@/lib/react-query/queries/orders.queries'
+import { useRealtimeFinance } from '@/lib/react-query/market/useRealtimeFinance'
+import type { PerformancePoint } from '@/components/wallet/PerformanceArea'
 import { MARKET_ASSETS_LIST } from '@/lib/constants/market-assets'
 import { allocationColor } from '@/lib/market/wallet-utils'
 import { DEMO_MODE } from '@/lib/constants/wallet'
 import { useDemoSimulation } from '@/lib/hooks/useDemoSimulation'
+
+const PERFORMANCE_WINDOW_MS = 1000 * 60 * 60 * 24 * 31
 
 export default function WalletPage() {
   const { user } = useAuth()
@@ -40,9 +46,53 @@ export default function WalletPage() {
   const demoFund = useDemoFundMutation()
   const { data: locks = [] } = useGetFundLocksQuery(userId)
   const { data: requests = [] } = useGetUserRequestsQuery(userId)
+  const { data: transactions = [] } = useGetUserTransactionsQuery(userId)
   const lockFunds = useLockFundsMutation()
   const unlockFunds = useUnlockFundsMutation()
   const releaseUnlocks = useReleaseUnlocksMutation()
+
+  useRealtimeFinance(userId)
+
+  // Real performance curve: cash events are real ledger rows; the invested
+  // portion is interpolated from cash effect to today's portfolio total.
+  const [now] = useState(() => Date.now())
+  const performanceSeries = useMemo<PerformancePoint[]>(() => {
+    const cashEvents = transactions
+      .filter((t) => t.createdAt)
+      .map((t) => {
+        const delta =
+          t.type === 'deposit' || t.type === 'sell'
+            ? (t.amountKes ?? t.amount)
+            : t.type === 'buy' || t.type === 'withdrawal'
+              ? -(t.amountKes ?? t.amount) - (t.type === 'buy' ? t.fee : 0)
+              : 0
+        return { ts: new Date(t.createdAt).getTime(), delta }
+      })
+      .filter((e) => Number.isFinite(e.delta))
+      .sort((a, b) => a.ts - b.ts)
+
+    const windowStart = now - PERFORMANCE_WINDOW_MS
+    const inWindow = cashEvents.filter((e) => e.ts >= windowStart)
+    if (inWindow.length === 0) return []
+
+    const totalDelta = inWindow.reduce((acc, e) => acc + e.delta, 0)
+    const investedPortion = Math.max(0, totalKes - totalDelta)
+    const points: PerformancePoint[] = []
+    let cash = 0
+
+    for (const event of inWindow) {
+      cash += event.delta
+      const progress = Math.min(1, Math.max(0, (event.ts - windowStart) / PERFORMANCE_WINDOW_MS))
+      points.push({
+        timestamp: new Date(event.ts).toISOString(),
+        valueKes: Math.max(0, cash + investedPortion * progress),
+      })
+    }
+
+    if (points.length === 1) points.push({ ...points[0], timestamp: new Date(now).toISOString() })
+    points.push({ timestamp: new Date(now).toISOString(), valueKes: Math.max(0, totalKes) })
+    return points
+  }, [transactions, totalKes, now])
 
   // Demo mode: keep balances/lifecycle live as deposits confirm and payouts land.
   const hasPendingDemoItems = requests.some(
@@ -134,19 +184,26 @@ export default function WalletPage() {
         growthPct={growthPct}
         usdKes={usdKes}
         allocation={allocation}
+        performanceSeries={performanceSeries}
         demoFunding={demoFund.isPending}
         onDemoFund={handleDemoFund}
       />
 
-      <LockCard
-        lockedKes={lockedKes}
-        availableKes={balanceKes}
-        locks={locks}
-        locking={lockFunds.isPending}
-        unlocking={unlockFunds.isPending}
-        onLock={(amount) => userId && lockFunds.mutate({ userId, amount })}
-        onUnlock={() => userId && unlockFunds.mutate({ userId })}
-      />
+      <div className="mt-4">
+        <OpenPositionsCard />
+      </div>
+
+      <div className="mt-4">
+        <LockCard
+          lockedKes={lockedKes}
+          availableKes={balanceKes}
+          locks={locks}
+          locking={lockFunds.isPending}
+          unlocking={unlockFunds.isPending}
+          onLock={(amount) => userId && lockFunds.mutate({ userId, amount })}
+          onUnlock={() => userId && unlockFunds.mutate({ userId })}
+        />
+      </div>
 
       <div className="mt-4">
         <HoldingsList rows={holdingRows} loading={holdingsLoading} />

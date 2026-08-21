@@ -7,6 +7,7 @@ import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
 import { AdminButton, AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
+import { DeleteButton, EditButton } from "@/components/admin/rowActions"
 import { formatKes, formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface DepositsData {
@@ -34,6 +35,8 @@ export default function AdminDepositsPage() {
   const queryClient = useQueryClient()
   const { can } = useAuth()
   const canApprove = can("deposits.approve")
+  const canEdit = can("data.edit")
+  const canDelete = can("data.delete")
 
   const url = `/api/admin/finance/deposits?status=${status}`
   const { data, isLoading, error } = useAdminQuery<DepositsData>(url)
@@ -134,11 +137,9 @@ export default function AdminDepositsPage() {
         rows={data?.deposits}
         loading={isLoading}
         emptyMessage="No deposits in this queue"
-        actions={
-          canApprove
-            ? (d) => (
-                <div className="flex gap-1.5">
-                  {d.status === "pending_verification" && (
+        actions={(d) => (
+                <div className="flex items-center justify-end gap-1.5">
+                  {canApprove && d.status === "pending_verification" && (
                     <>
                       <AdminButton variant="subtle" onClick={() => act(d.id, "approve")}>
                         Approve
@@ -148,10 +149,33 @@ export default function AdminDepositsPage() {
                       </AdminButton>
                     </>
                   )}
+                  {canEdit && (
+                    <EditButton
+                      iconOnly
+                      url="/api/admin/finance/deposits"
+                      id={d.id}
+                      row={{ id: d.id, status: d.status, admin_notes: d.admin_notes ?? "", amount_kes: d.amount_kes }}
+                      fields={[
+                        {
+                          key: "status",
+                          label: "Status",
+                          type: "select",
+                          options: [
+                            { value: "pending", label: "pending" },
+                            { value: "pending_verification", label: "pending_verification" },
+                            { value: "confirmed", label: "confirmed" },
+                            { value: "rejected", label: "rejected" },
+                            { value: "reversed", label: "reversed" },
+                          ],
+                        },
+                        { key: "admin_notes", label: "Admin notes", type: "textarea" },
+                        { key: "amount_kes", label: "Amount (KES)", type: "number" },
+                      ]}
+                    />
+                  )}
+                  {canDelete && <DeleteButton iconOnly url="/api/admin/finance/deposits" id={d.id} />}
                 </div>
-              )
-            : undefined
-        }
+              )}
       />
     </div>
   )

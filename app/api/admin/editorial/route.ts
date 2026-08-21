@@ -14,9 +14,24 @@ export interface EditorialPickRow {
   created_at: string
 }
 
+interface EditorialPickRowRaw {
+  id: string
+  post_id: string
+  reason: string | null
+  sort_order: number
+  active: boolean
+  created_at: string
+  post: {
+    content: string | null
+    user_id: string
+    profiles: { username: string | null; full_name: string | null } | null
+  } | null
+}
+
 export async function GET() {
   const supabase = await createServerClient()
-  await requirePermission(supabase, "content.manage")
+  const ctx = await requirePermission(supabase, "content.manage")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const { data, error } = await service
@@ -27,11 +42,11 @@ export async function GET() {
 
   if (error) return new Response(error.message, { status: 500 })
 
-  const rows: EditorialPickRow[] = (data ?? []).map((p) => ({
+  const rows: EditorialPickRow[] = ((data ?? []) as unknown as EditorialPickRowRaw[]).map((p) => ({
     id: p.id,
     post_id: p.post_id,
-    post_content: p.post?.[0]?.content ?? null,
-    author_name: p.post?.[0]?.profiles?.[0]?.full_name ?? p.post?.[0]?.profiles?.[0]?.username ?? null,
+    post_content: p.post?.content ?? null,
+    author_name: p.post?.profiles?.full_name ?? p.post?.profiles?.username ?? null,
     reason: p.reason,
     sort_order: p.sort_order,
     active: p.active,
@@ -44,6 +59,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const supabase = await createServerClient()
   const ctx = await requirePermission(supabase, "content.manage")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const body = await req.json()
@@ -96,6 +112,7 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const supabase = await createServerClient()
   const ctx = await requirePermission(supabase, "content.manage")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const { searchParams } = new URL(req.url)

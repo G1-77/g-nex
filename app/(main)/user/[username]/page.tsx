@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import ProfilePosts from '@/components/profile/ProfilePosts'
 import { createServerClient } from '@/lib/supabase/server'
+import { fetchUserRoi } from '@/lib/market/roi'
 import type { AdminRoleType } from '@/lib/supabase/types'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +41,11 @@ export default async function ProfilePage({
 
   const isOwnProfile = user?.id === profile.id
 
+  // Real, daily-computed ROI (30d realized P&L / total confirmed deposits).
+  // When the RPC fails (e.g. migration missing) we pass undefined so the UI
+  // renders "unavailable" instead of a misleading +0.00%.
+  const roi = await fetchUserRoi(supabase, profile.id)
+
   return (
     <div className="min-h-screen bg-slate-950 pb-20 text-slate-100 antialiased">
       <div className="mx-auto max-w-5xl px-4 py-4">
@@ -57,7 +63,8 @@ export default async function ProfilePage({
             avatarUrl={profile.avatar_url}
             bio={profile.bio}
             isVerified={profile.is_verified}
-            monthlyRoi={profile.monthly_roi ?? 0}
+            monthlyRoi={roi.ok ? roi.roiPct : undefined}
+            realizedPnlKes={roi.ok ? roi.realizedKes : undefined}
             isOwnProfile={isOwnProfile}
             role={(roleRow?.role as AdminRoleType) ?? null}
           />

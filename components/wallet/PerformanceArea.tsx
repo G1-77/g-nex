@@ -2,8 +2,14 @@
 
 import { useMemo } from 'react'
 
+export interface PerformancePoint {
+  timestamp: string
+  valueKes: number
+}
+
 interface PerformanceAreaProps {
   endValue: number
+  data?: PerformancePoint[]
   seed?: string
   points?: number
 }
@@ -17,21 +23,36 @@ function mulberry32(seed: number) {
   }
 }
 
-export default function PerformanceArea({ endValue, seed = 'gnex', points = 30 }: PerformanceAreaProps) {
-  const chart = useMemo(() => {
-    const rand = mulberry32(
-      Array.from(seed).reduce((acc, c) => acc + c.charCodeAt(0), 7)
-    )
-    const start = Math.max(1, endValue * (0.9 + rand() * 0.06))
-    const values: number[] = []
-    for (let i = 0; i < points; i++) {
-      const progress = i / (points - 1)
-      const target = start + (endValue - start) * progress
-      const noise = (rand() - 0.5) * endValue * 0.012
-      values.push(Math.max(0, target + noise))
-    }
-    values[values.length - 1] = endValue
+function buildFallback(seed: string, endValue: number, points: number) {
+  const rand = mulberry32(
+    Array.from(seed).reduce((acc, c) => acc + c.charCodeAt(0), 7)
+  )
+  const start = Math.max(1, endValue * (0.9 + rand() * 0.06))
+  const values: number[] = []
+  for (let i = 0; i < points; i++) {
+    const progress = i / (points - 1)
+    const target = start + (endValue - start) * progress
+    const noise = (rand() - 0.5) * endValue * 0.012
+    values.push(Math.max(0, target + noise))
+  }
+  values[values.length - 1] = endValue
+  return values
+}
 
+export default function PerformanceArea({
+  endValue,
+  data,
+  seed = 'gnex',
+  points = 30,
+}: PerformanceAreaProps) {
+  const values = useMemo(() => {
+    if (data && data.length >= 2) {
+      return data.map((d) => Math.max(0, d.valueKes))
+    }
+    return buildFallback(seed, Math.max(1, endValue), points)
+  }, [data, endValue, seed, points])
+
+  const chart = useMemo(() => {
     const width = 320
     const height = 96
     const padY = 6
@@ -40,7 +61,7 @@ export default function PerformanceArea({ endValue, seed = 'gnex', points = 30 }
     const span = Math.max(1, max - min)
 
     const coords = values.map((v, i) => {
-      const x = (i / (points - 1)) * width
+      const x = (i / (values.length - 1)) * width
       const y = padY + (1 - (v - min) / span) * (height - padY * 2)
       return [x, y] as const
     })
@@ -49,8 +70,8 @@ export default function PerformanceArea({ endValue, seed = 'gnex', points = 30 }
     const area = `0,${height} ${line} ${width},${height}`
     const mid = coords[Math.floor(coords.length / 2)]
 
-    return { line, area, maxLabel: max, minLabel: min, midX: mid[0], midY: mid[1] }
-  }, [endValue, seed, points])
+    return { line, area, midX: mid[0], midY: mid[1] }
+  }, [values])
 
   return (
     <svg

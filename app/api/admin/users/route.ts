@@ -2,6 +2,12 @@ import { createServerClient } from "@/lib/supabase/server"
 import { requirePermission } from "@/lib/admin/authorization"
 import { createServiceClient } from "@/lib/admin/service"
 import { recordAudit } from "@/lib/admin/audit"
+import { resolveAction } from "@/lib/admin/actions"
+import {
+  deleteUserAccount,
+  editRecord,
+  wipeUserFinancials,
+} from "@/lib/admin/executors"
 
 export interface AdminUserRow {
   id: string
@@ -18,7 +24,8 @@ export interface AdminUserRow {
 
 export async function GET(req: Request) {
   const supabase = await createServerClient()
-  await requirePermission(supabase, "users.read")
+  const ctx = await requirePermission(supabase, "users.read")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const { searchParams } = new URL(req.url)
@@ -76,14 +83,55 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   const supabase = await createServerClient()
   const ctx = await requirePermission(supabase, "users.manage")
-  const service = createServiceClient()
+  if (ctx instanceof Response) return ctx
 
   const body = await req.json()
   const targetUserId = String(body.userId ?? "")
-  const action = String(body.action ?? "") // suspend | unsuspend | verify | unverify
+  const action = String(body.action ?? "") // suspend | unsuspend | verify | unverify | edit | wipe
   const reason = String(body.reason ?? "").trim()
 
+  // Profile edits and financial wipes are data mutations: they need the
+  // dedicated permission and (below super_admin) a higher-rank approval.
+  if (action === "edit") {
+    const editCtx = await requirePermission(supabase, "data.edit")
+    if (editCtx instanceof Response) return editCtx
+
+    const changes = (body.changes ?? {}) as Record<string, unknown>
+    const safe: Record<string, unknown> = {}
+    for (const key of Object.keys(changes)) {
+      if (["full_name", "bio", "avatar_url", "is_verified", "is_active"].includes(key)) safe[key] = changes[key]
+    }
+    if (Object.keys(safe).length === 0) return new Response("No editable columns provided", { status: 400 })
+    if (!targetUserId) return new Response("Missing userId", { status: 400 })
+
+    const service = createServiceClient()
+    return resolveAction(editCtx, service, {
+      actionType: "edit",
+      targetTable: "profiles",
+      targetId: targetUserId,
+      label: `Edit profile @${String(body.username ?? targetUserId.slice(0, 8))} (${Object.keys(safe).join(", ")})`,
+      payload: { changes: safe },
+      execute: () => editRecord(service, editCtx.userId, "profiles", targetUserId, safe),
+    })
+  }
+
+  if (action === "wipe") {
+    const delCtx = await requirePermission(supabase, "data.delete")
+    if (delCtx instanceof Response) return delCtx
+    if (!targetUserId) return new Response("Missing userId", { status: 400 })
+
+    const service = createServiceClient()
+    return resolveAction(delCtx, service, {
+      actionType: "wipe",
+      targetTable: "profiles",
+      targetId: targetUserId,
+      label: `Wipe trading history for ${String(body.username ?? targetUserId.slice(0, 8))}`,
+      execute: () => wipeUserFinancials(service, delCtx.userId, targetUserId),
+    })
+  }
+
   if (!targetUserId) return new Response("Missing userId", { status: 400 })
+  const service = createServiceClient()
   if (targetUserId === ctx.userId && action === "suspend") {
     return new Response("Cannot suspend your own account", { status: 400 })
   }
@@ -170,4 +218,25 @@ export async function PATCH(req: Request) {
   }
 
   return Response.json({ success: true })
+}
+
+/** Permanently delete a user and all of their data (data.delete; approval-gated below super_admin). */
+export async function DELETE(req: Request) {
+  const supabase = await createServerClient()
+  const ctx = await requirePermission(supabase, "data.delete")
+  if (ctx instanceof Response) return ctx
+  const service = createServiceClient()
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get("id") ?? ""
+
+  if (!id) return new Response("Missing id", { status: 400 })
+
+  return resolveAction(ctx, service, {
+    actionType: "delete",
+    targetTable: "profiles",
+    targetId: id,
+    label: `Delete account ${id.slice(0, 8)}… and all their data`,
+    execute: () => deleteUserAccount(service, ctx.userId, id),
+  })
 }

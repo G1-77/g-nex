@@ -17,6 +17,14 @@ const UP_COLOR = '#8DFF45'
 const DOWN_COLOR = '#FF5A5A'
 const NEUTRAL_COLOR = '#F59E0B'
 
+function formatRoi(value: number | null | undefined): { text: string; color: string } {
+  const roi = Number(value ?? 0)
+  return {
+    text: `${roi > 0 ? '+' : ''}${roi}%`,
+    color: roi < 0 ? 'text-rose-400' : 'text-emerald-400',
+  }
+}
+
 type IdeasMode = 'for-you' | 'picks'
 
 const MODES: { id: IdeasMode; label: string }[] = [
@@ -31,7 +39,56 @@ function signalColor(signal: SignalType | null | undefined): string {
 }
 
 async function fetchIdeaPosts(mode: IdeasMode, limit = 10): Promise<FeedPost[]> {
-  let query = supabase
+  if (mode === 'picks') {
+    // Editors' picks: real editorial_picks (curated by editors), not a ROI filter.
+    const { data, error } = await supabase
+      .from('editorial_picks')
+      .select(`
+        id,
+        post:posts (
+          id,
+          content,
+          created_at,
+          media_url,
+          likes_count,
+          comments_count,
+          shares_count,
+          assetSymbols,
+          signalType,
+          profiles!inner (
+            id,
+            username,
+            full_name,
+            avatar_url,
+            is_verified,
+            monthly_roi
+          ),
+          trade_tags (
+            asset_symbol,
+            signal_type,
+            price,
+            change,
+            direction
+          )
+        )
+      `)
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+      .limit(limit)
+
+    if (error) throw new Error(error.message)
+
+    const rows = ((data ?? []) as unknown as Array<{ post: FeedPost | null }>)
+      .map((pick) => pick.post)
+      .filter((p): p is FeedPost => Boolean(p))
+
+    return rows.map((row) => ({
+      ...row,
+      trade_tags: normalizeTradeTags(row.trade_tags),
+    })) as unknown as FeedPost[]
+  }
+
+  const query = supabase
     .from('posts')
     .select(`
       id,
@@ -59,10 +116,6 @@ async function fetchIdeaPosts(mode: IdeasMode, limit = 10): Promise<FeedPost[]> 
         direction
       )
     `)
-
-  if (mode === 'picks') {
-    query = query.gte('profiles.monthly_roi', 15)
-  }
 
   const { data, error } = await query
     .order('created_at', { ascending: false })
@@ -264,8 +317,8 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
                       {profile?.is_verified && (
                         <BadgeCheck className="h-3.5 w-3.5 shrink-0 fill-yellow-600 stroke-slate-950" />
                       )}
-                      <span className="ml-auto shrink-0 font-mono text-[10px] font-black text-emerald-400">
-                        +{profile?.monthly_roi || 0}%
+                      <span className={`ml-auto shrink-0 font-mono text-[10px] font-black ${formatRoi(profile?.monthly_roi).color}`}>
+                        {formatRoi(profile?.monthly_roi).text}
                       </span>
                     </div>
 

@@ -37,7 +37,7 @@ export default function ProfilePosts({ userId }: { userId: string }) {
   return (
     <div className="space-y-6">
       {posts.map((post) => (
-        <FeedPostCard key={post.id} post={post} />
+        <FeedPostCard key={post.id} post={post} variant="profile" />
       ))}
     </div>
   )

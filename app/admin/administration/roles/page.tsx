@@ -2,12 +2,16 @@
 
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { ShieldOff } from "lucide-react"
+
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { AdminButton, AdminPageHeader, AdminPanel, AdminSectionLabel, AdminSelect } from "@/components/admin/ui"
+import { UserSearchPicker, type PickedUser } from "@/components/admin/UserSearchPicker"
 import { formatTimestamp } from "@/lib/admin/format"
-import type { PermissionCode } from "@/lib/admin/permissions"
+import { ROLE_HIERARCHY, type PermissionCode } from "@/lib/admin/permissions"
+import type { AdminRoleType } from "@/lib/supabase/types"
 
 interface RolesData {
   staff: Array<{
@@ -25,51 +29,85 @@ interface RolesData {
   allPermissions: string[]
 }
 
-const ROLES = ["super_admin", "admin", "support", "editor"]
+const ALL_ROLES: AdminRoleType[] = ["super_admin", "admin", "support", "editor"]
+
+const rankOf = (role: string) => ROLE_HIERARCHY[role as AdminRoleType] ?? 0
 
 export default function AdminRolesPage() {
-  const [userId, setUserId] = useState("")
-  const [role, setRole] = useState("admin")
+  const [pickedUser, setPickedUser] = useState<PickedUser | null>(null)
+  const [role, setRole] = useState<AdminRoleType>("support")
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [editingSelections, setEditingSelections] = useState<PermissionCode[]>([])
   const queryClient = useQueryClient()
-  const { user, isSuperAdmin } = useAuth()
+  const { user, role: actorRole, isSuperAdmin, can } = useAuth()
 
   const url = "/api/admin/roles"
   const { data, isLoading, error } = useAdminQuery<RolesData>(url)
 
-  if (!isSuperAdmin) {
+  if (!can("admins.manage")) {
     return (
       <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-300">
-        Only super admins can manage admin roles and permissions.
+        You do not have permission to manage admin users.
       </div>
     )
   }
 
+  // Roles this viewer may grant or change someone into. Admins are scoped to
+  // the ranks below them; super_admins to everything.
+  const assignable: AdminRoleType[] =
+    actorRole === "super_admin" ? ALL_ROLES : actorRole === "admin" ? ["support", "editor"] : []
+  const effectiveRole = assignable.includes(role) ? role : assignable[0]
+
+  /** Whether this viewer may take any management action on the row. */
+  function canManageRow(s: RolesData["staff"][number]): boolean {
+    if (!actorRole || s.user_id === user?.id) return false
+    if (actorRole === "super_admin") return true
+    return rankOf(s.role) < ROLE_HIERARCHY[actorRole]
+  }
+
   async function assign() {
-    if (!userId.trim()) return
+    if (!pickedUser) {
+      alert("Search for and select a user first.")
+      return
+    }
     try {
-      await adminAction(url, "POST", { action: "assign", userId: userId.trim(), role })
-      setUserId("")
+      await adminAction(url, "POST", { action: "assign", userId: pickedUser.id, role: effectiveRole })
+      setPickedUser(null)
       await queryClient.invalidateQueries({ queryKey: [url] })
     } catch (e) {
       alert((e as Error).message)
     }
   }
 
-  async function revoke(id: string, targetUserId: string) {
-    if (!confirm("Revoke this user's admin access? This cannot be undone.")) return
+  async function removeAccess(s: RolesData["staff"][number]) {
+    if (
+      !confirm(
+        `Remove @${s.username ?? "this user"}'s admin access entirely?\n\nThey will become a regular user and lose all staff permissions. This cannot be undone.`
+      )
+    ) {
+      return
+    }
     try {
-      await adminAction(url, "POST", { action: "revoke", userId: targetUserId })
+      await adminAction(url, "POST", { action: "revoke", userId: s.user_id })
       await queryClient.invalidateQueries({ queryKey: [url] })
     } catch (e) {
       alert((e as Error).message)
     }
   }
 
-  async function changeRole(targetUserId: string, newRole: string) {
+  async function changeRole(s: RolesData["staff"][number], newRole: string) {
+    const oldRole = s.role
+    if (newRole === oldRole) return
+    const verb = rankOf(newRole) > rankOf(oldRole) ? "Promote" : "Demote"
+    if (
+      !confirm(
+        `${verb} @${s.username ?? "this user"} from ${oldRole.replace("_", " ")} to ${newRole.replace("_", " ")}?\n\nTheir permissions will be reset to the ${newRole.replace("_", " ")} defaults.`
+      )
+    ) {
+      return
+    }
     try {
-      await adminAction(url, "POST", { action: "update_role", userId: targetUserId, role: newRole })
+      await adminAction(url, "POST", { action: "update_role", userId: s.user_id, role: newRole })
       await queryClient.invalidateQueries({ queryKey: [url] })
     } catch (e) {
       alert((e as Error).message)
@@ -115,33 +153,43 @@ export default function AdminRolesPage() {
     {
       key: "role",
       label: "Role",
-      render: (s) => (
-        <AdminSelect
-          value={s.role}
-          onChange={(e) => changeRole(s.user_id, e.target.value)}
-          disabled={s.user_id === user?.id}
-          className="py-1! text-xs font-semibold capitalize disabled:opacity-50"
-        >
-          {ROLES.map((r) => (
-            <option key={r} value={r}>
-              {r.replace("_", " ")}
-            </option>
-          ))}
-        </AdminSelect>
-      ),
+      render: (s) => {
+        // Rows outside the viewer's scope stay readable but locked; their
+        // current role is always present as an option so the select renders.
+        const options = canManageRow(s)
+          ? assignable
+          : Array.from(new Set([s.role as AdminRoleType]))
+        return (
+          <AdminSelect
+            value={s.role}
+            onChange={(e) => changeRole(s, e.target.value)}
+            disabled={!canManageRow(s)}
+            title={canManageRow(s) ? "Change role" : "Read-only — above your management scope"}
+            className="py-1! text-xs font-semibold capitalize disabled:opacity-50"
+          >
+            {options.map((r) => (
+              <option key={r} value={r}>
+                {r.replace("_", " ")}
+              </option>
+            ))}
+          </AdminSelect>
+        )
+      },
     },
     {
       key: "permissions",
       label: "Permissions",
       render: (s) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <span className="text-[var(--admin-text-dim)]">{s.permissions.length} grants</span>
           {editingUserId === s.id ? (
             <span className="text-[var(--admin-green)]">editing…</span>
           ) : (
-            <AdminButton variant="subtle" onClick={() => startEditing(s.id, s.permissions)}>
-              Edit
-            </AdminButton>
+            isSuperAdmin && (
+              <AdminButton variant="subtle" onClick={() => startEditing(s.id, s.permissions)}>
+                Edit
+              </AdminButton>
+            )
           )}
         </div>
       ),
@@ -159,23 +207,25 @@ export default function AdminRolesPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Admin Users" subtitle="Grant roles and fine-grained permissions" />
+      <AdminPageHeader title="Admin Users" subtitle="Grant roles, promote, demote, and remove staff access" />
+
+      {!isSuperAdmin && (
+        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 text-xs text-[var(--admin-text-dim)]">
+          Scoped access — you can grant, promote, demote, and remove <strong className="text-slate-200">support</strong> and{" "}
+          <strong className="text-slate-200">editor</strong> staff only. Roles at or above your level are read-only.
+        </div>
+      )}
 
       <AdminPanel className="p-4">
         <AdminSectionLabel className="mb-3">Grant admin access</AdminSectionLabel>
-        <div className="flex flex-col gap-2 md:flex-row">
-          <input
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            placeholder="User ID (uuid)"
-            className="admin-input w-full font-mono md:max-w-xs"
-          />
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <UserSearchPicker value={pickedUser} onChange={setPickedUser} />
           <AdminSelect
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
+            value={effectiveRole}
+            onChange={(e) => setRole(e.target.value as AdminRoleType)}
             className="font-semibold capitalize"
           >
-            {ROLES.map((r) => (
+            {assignable.map((r) => (
               <option key={r} value={r}>
                 {r.replace("_", " ")}
               </option>
@@ -196,15 +246,18 @@ export default function AdminRolesPage() {
         rows={data?.staff}
         loading={isLoading}
         emptyMessage="No admin users yet"
-        actions={(s) => (
-          <div className="flex gap-1.5">
-            {s.user_id !== user?.id && (
-              <AdminButton variant="danger" onClick={() => revoke(s.id, s.user_id)}>
-                Revoke
+        actions={(s) =>
+          canManageRow(s) ? (
+            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+              <AdminButton variant="danger" onClick={() => removeAccess(s)}>
+                <ShieldOff className="h-3.5 w-3.5" />
+                Remove access
               </AdminButton>
-            )}
-          </div>
-        )}
+            </div>
+          ) : s.user_id === user?.id ? (
+            <span className="text-[10px] uppercase tracking-wide text-[var(--admin-text-faint)]">you</span>
+          ) : undefined
+        }
       />
 
       {editingUserId && (
@@ -253,7 +306,7 @@ export default function AdminRolesPage() {
       <AdminPanel className="p-4">
         <AdminSectionLabel className="mb-3">Role defaults (applied at grant time)</AdminSectionLabel>
         <div className="grid gap-3 md:grid-cols-2">
-          {ROLES.map((r) => (
+          {ALL_ROLES.map((r) => (
             <div key={r} className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)]/60 p-3">
               <p className="mb-2 text-xs font-bold capitalize text-slate-100">{r.replace("_", " ")}</p>
               <div className="flex flex-wrap gap-1">

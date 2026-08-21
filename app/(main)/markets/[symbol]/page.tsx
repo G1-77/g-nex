@@ -17,6 +17,7 @@ import ChartTypeToggle from '@/components/market/ChartTypeToggle'
 import MetricsGrid from '@/components/market/MetricsGrid'
 import SentimentBar from '@/components/market/SentimentBar'
 import InsufficientBalanceModal from '@/components/market/InsufficientBalanceModal'
+import ExecutionPanel from '@/components/market/asset/ExecutionPanel'
 import type { AssetSymbol } from '@/lib/supabase/types'
 import type { Timeframe } from '@/lib/market/ohlc'
 
@@ -203,54 +204,64 @@ export default function AssetDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="py-6 space-y-6 pb-16 md:pb-20">
-        {/* Price Display */}
-        <div className="space-y-2">
-          <div className="flex items-baseline gap-3">
-            <span className="text-4xl md:text-5xl font-black font-mono text-slate-100">
-              ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-            <span
-              className={`text-xl font-black font-mono ${
-                isPositive ? 'text-emerald-500' : 'text-rose-500'
-              }`}
-            >
-              {isPositive ? '+' : ''}{change24h.toFixed(2)}%
-            </span>
+      <div className="py-6 space-y-6 pb-16 md:pb-20 lg:flex lg:items-start lg:gap-6 lg:pr-96">
+        {/* Main chart column */}
+        <div className="space-y-6 flex-1 min-w-0">
+          {/* Price Display */}
+          <div className="space-y-2">
+            <div className="flex items-baseline gap-3">
+              <span className="text-4xl md:text-5xl font-black font-mono text-slate-100">
+                ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span
+                className={`text-xl font-black font-mono ${
+                  isPositive ? 'text-emerald-500' : 'text-rose-500'
+                }`}
+              >
+                {isPositive ? '+' : ''}{change24h.toFixed(2)}%
+              </span>
+            </div>
+            <p className="text-sm text-slate-500 font-mono">
+              ≈ KES {priceKes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
           </div>
-          <p className="text-sm text-slate-500 font-mono">
-            ≈ KES {priceKes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
+
+          {/* Chart Controls */}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <TimeframeSelector selected={timeframe} onChange={setTimeframe} />
+            <ChartTypeToggle chartType={chartType} onChange={setChartType} />
+          </div>
+
+          {/* Chart */}
+          <TradingViewChart
+            symbol={symbol}
+            timeframe={timeframe}
+            chartType={chartType}
+            currentPrice={currentPrice}
+          />
+
+          {/* Metrics Grid */}
+          <MetricsGrid
+            high24h={liveTicker?.high24h ?? priceData.high_24h}
+            low24h={liveTicker?.low24h ?? priceData.low_24h}
+            volume24h={priceData.total_volume}
+            marketCap={priceData.market_cap}
+          />
+
+          {/* Sentiment Bar */}
+          <SentimentBar symbol={symbol} />
         </div>
 
-        {/* Chart Controls */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <TimeframeSelector selected={timeframe} onChange={setTimeframe} />
-          <ChartTypeToggle chartType={chartType} onChange={setChartType} />
-        </div>
-
-        {/* Chart */}
-        <TradingViewChart
-          symbol={symbol}
-          timeframe={timeframe}
-          chartType={chartType}
-          currentPrice={currentPrice}
-        />
-
-        {/* Metrics Grid */}
-        <MetricsGrid
-          high24h={liveTicker?.high24h ?? priceData.high_24h}
-          low24h={liveTicker?.low24h ?? priceData.low_24h}
-          volume24h={priceData.total_volume}
-          marketCap={priceData.market_cap}
-        />
-
-        {/* Sentiment Bar */}
-        <SentimentBar symbol={symbol} />
+        {/* Desktop execution panel */}
+        <aside className="hidden lg:block w-96 shrink-0">
+          <div className="sticky top-20 rounded-xl border border-slate-900/60 bg-slate-900/20 p-4">
+            <ExecutionPanel symbol={symbol} />
+          </div>
+        </aside>
       </div>
 
-      {/* Fixed Action Bar */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-900 backdrop-blur-xl p-4">
+      {/* Fixed Action Bar (mobile/tablet) */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-900 backdrop-blur-xl p-4 lg:hidden">
         <div className="max-w-7xl mx-auto flex gap-3">
           <button
             onClick={handleBuy}

@@ -3,10 +3,11 @@
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/components/providers/AuthProvider"
-import { useAdminQuery, adminAction } from "@/components/admin/useAdminQuery"
+import { useAdminQuery, runAction } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
 import { AdminButton, AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
+import { DeleteButton, EditButton } from "@/components/admin/rowActions"
 import { formatKes, formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface WithdrawalsData {
@@ -34,6 +35,8 @@ export default function AdminWithdrawalsPage() {
   const queryClient = useQueryClient()
   const { can } = useAuth()
   const canProcess = can("withdrawals.process")
+  const canEdit = can("data.edit")
+  const canDelete = can("data.delete")
 
   const url = `/api/admin/finance/withdrawals?status=${status}`
   const { data, isLoading, error } = useAdminQuery<WithdrawalsData>(url)
@@ -41,8 +44,9 @@ export default function AdminWithdrawalsPage() {
   async function act(withdrawalId: string, action: string) {
     const note = window.prompt(`Note for ${action} (optional):`) ?? ""
     try {
-      await adminAction("/api/admin/finance/withdrawals", "POST", { withdrawalId, action, note })
+      await runAction("/api/admin/finance/withdrawals", "POST", { withdrawalId, action, note })
       await queryClient.invalidateQueries({ queryKey: [url] })
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/approvals"] })
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] })
     } catch (e) {
       alert((e as Error).message)
@@ -125,11 +129,9 @@ export default function AdminWithdrawalsPage() {
         rows={data?.withdrawals}
         loading={isLoading}
         emptyMessage="No withdrawals in this queue"
-        actions={
-          canProcess
-            ? (w) => (
-                <div className="flex gap-1.5">
-                  {(w.status === "pending" || w.status === "approved") && (
+        actions={(w) => (
+                <div className="flex items-center justify-end gap-1.5">
+                  {canProcess && (w.status === "pending" || w.status === "approved") && (
                     <>
                       <AdminButton variant="subtle" onClick={() => act(w.id, "process")}>
                         Process
@@ -139,10 +141,33 @@ export default function AdminWithdrawalsPage() {
                       </AdminButton>
                     </>
                   )}
+                  {canEdit && (
+                    <EditButton
+                      iconOnly
+                      url="/api/admin/finance/withdrawals"
+                      id={w.id}
+                      row={{ id: w.id, status: w.status, admin_notes: w.admin_notes ?? "", amount_kes: w.amount_kes }}
+                      fields={[
+                        {
+                          key: "status",
+                          label: "Status",
+                          type: "select",
+                          options: [
+                            { value: "pending", label: "pending" },
+                            { value: "approved", label: "approved" },
+                            { value: "processing", label: "processing" },
+                            { value: "sent", label: "sent" },
+                            { value: "rejected", label: "rejected" },
+                          ],
+                        },
+                        { key: "admin_notes", label: "Admin notes", type: "textarea" },
+                        { key: "amount_kes", label: "Amount (KES)", type: "number" },
+                      ]}
+                    />
+                  )}
+                  {canDelete && <DeleteButton iconOnly url="/api/admin/finance/withdrawals" id={w.id} />}
                 </div>
-              )
-            : undefined
-        }
+              )}
       />
     </div>
   )

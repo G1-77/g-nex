@@ -25,6 +25,9 @@ export const PERMISSIONS = [
   { code: "permissions.manage", name: "Administration — Permissions", description: "Modify the role/permission matrix." },
   { code: "settings.manage", name: "System — Settings", description: "Manage platform settings and maintenance mode." },
   { code: "audit.read", name: "System — Audit", description: "Read the append-only audit log." },
+  { code: "data.edit", name: "Data — Edit", description: "Edit platform records. Non super_admin edits require approval from a higher rank." },
+  { code: "data.delete", name: "Data — Delete", description: "Permanently delete financial records, content, and accounts. Non super_admin deletes require approval from a higher rank." },
+  { code: "approvals.review", name: "Approvals — Review", description: "Review and approve or reject requested admin actions from lower ranks." },
 ] as const
 
 export type Permission = (typeof PERMISSIONS)[number]
@@ -51,7 +54,11 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<AdminRoleType, PermissionCode[]> =
     "content.manage",
     "content.publish",
     "market.manage",
-    "audit.read"
+    "admins.manage",
+    "audit.read",
+    "data.edit",
+    "data.delete",
+    "approvals.review"
   ),
   support: asSet(
     "users.read",

@@ -5,6 +5,8 @@ import { useAdminQuery } from "@/components/admin/useAdminQuery"
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable"
 import { StatusBadge, StatusTone } from "@/components/admin/status"
 import { AdminPageHeader, AdminTab, AdminTabs } from "@/components/admin/ui"
+import { RowActions } from "@/components/admin/rowActions"
+import { useAuth } from "@/components/providers/AuthProvider"
 import { formatNumber, formatTimestamp, statusTone } from "@/lib/admin/format"
 
 interface OrdersData {
@@ -14,11 +16,13 @@ interface OrdersData {
     asset_symbol: string | null
     order_type: string
     side: string
+    mode: string
     quantity: number
     price: number | null
     filled_quantity: number
     status: string
     fee: number
+    margin_kes: number
     created_at: string
   }>
 }
@@ -29,6 +33,9 @@ const SIDE_FILTERS = ["all", "buy", "sell"] as const
 export default function AdminOrdersPage() {
   const [status, setStatus] = useState("all")
   const [side, setSide] = useState("all")
+  const { can } = useAuth()
+  const canEdit = can("data.edit")
+  const canDelete = can("data.delete")
 
   const url = `/api/admin/finance/orders?status=${status}&side=${side}`
   const { data, isLoading, error } = useAdminQuery<OrdersData>(url)
@@ -59,6 +66,24 @@ export default function AdminOrdersPage() {
       key: "side",
       label: "Side",
       render: (o) => <StatusBadge status={o.side} tone={sideTone[o.side] ?? "gray"} />,
+    },
+    {
+      key: "mode",
+      label: "Mode",
+      render: (o) => (
+        <span className={`font-mono text-[11px] font-bold uppercase ${o.mode === "margin" ? "text-amber-400" : "text-[var(--admin-text-dim)]"}`}>
+          {o.mode ?? "spot"}
+        </span>
+      ),
+      preview: false,
+    },
+    {
+      key: "margin",
+      label: "Margin",
+      render: (o) => (
+        <span className="font-mono text-[11px] text-amber-400/80">{o.margin_kes > 0 ? `KES ${formatNumber(o.margin_kes)}` : "—"}</span>
+      ),
+      preview: false,
     },
     {
       key: "quantity",
@@ -125,6 +150,34 @@ export default function AdminOrdersPage() {
         rows={data?.orders}
         loading={isLoading}
         emptyMessage="No orders match your filters"
+        actions={
+          canEdit || canDelete
+            ? (o) => (
+                <RowActions
+                  url="/api/admin/finance/orders"
+                  id={o.id}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  row={{ id: o.id, status: o.status, fee: o.fee, margin_kes: o.margin_kes }}
+                  fields={[
+                    {
+                      key: "status",
+                      label: "Status",
+                      type: "select",
+                      options: [
+                        { value: "open", label: "open" },
+                        { value: "filled", label: "filled" },
+                        { value: "partial", label: "partial" },
+                        { value: "cancelled", label: "cancelled" },
+                      ],
+                    },
+                    { key: "fee", label: "Fee (USD)", type: "number" },
+                    { key: "margin_kes", label: "Margin (KES)", type: "number" },
+                  ]}
+                />
+              )
+            : undefined
+        }
       />
     </div>
   )

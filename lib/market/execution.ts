@@ -1,0 +1,169 @@
+// lib/market/execution.ts
+// Server-only trade execution helpers. NEVER import this from a client
+// component — it reads authoritative prices / FX / fees and drives the
+// SECURITY DEFINER execute_trade / close_position RPCs through the service
+// role. The browser only ever sends intent (symbol, side, mode, USD amount,
+// leverage, idempotency key); the server decides price, fee and validity.
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { fetchCryptoPrices } from '@/lib/market/coingecko'
+import { fetchGoldPrice } from '@/lib/market/gold'
+import { fetchUsdKesRate } from '@/lib/market/fx'
+import type {
+  TradeMode,
+  TradeQuote,
+  TradeSide,
+} from '@/lib/supabase/market.types'
+
+export const SYMBOL_COINGECKO_ID: Record<string, string> = {
+  BTC: 'bitcoin',
+  ETH: 'ethereum',
+  SOL: 'solana',
+  XRP: 'ripple',
+  USDT: 'tether',
+}
+
+export const TRADABLE_SYMBOLS = ['BTC', 'ETH', 'SOL', 'XRP', 'USDT', 'XAU'] as const
+
+/** Authoritative USD price for a tradable symbol (server-side, CoinGecko + XAU feed). */
+export async function getSymbolPriceUsd(symbol: string): Promise<number> {
+  const s = symbol.toUpperCase()
+  if (s === 'XAU') {
+    const gold = await fetchGoldPrice()
+    if (!gold.price_usd || gold.price_usd <= 0) throw new Error('ASSET_PRICE_UNAVAILABLE')
+    return gold.price_usd
+  }
+  const id = SYMBOL_COINGECKO_ID[s]
+  if (!id) throw new Error('UNSUPPORTED_ASSET')
+  const prices = await fetchCryptoPrices([id])
+  const price = prices[0]
+  if (!price || !price.current_price || price.current_price <= 0) {
+    throw new Error('ASSET_PRICE_UNAVAILABLE')
+  }
+  return price.current_price
+}
+
+const TRADING_FEE_KEY = 'trading_fee_percent'
+const DEFAULT_TRADING_FEE_PERCENT = 0.5
+
+/** Platform trading fee percent from platform_settings (authoritative). */
+export async function getPlatformTradingFee(client: SupabaseClient): Promise<number> {
+  const { data } = await client
+    .from('platform_settings')
+    .select('value')
+    .eq('key', TRADING_FEE_KEY)
+    .maybeSingle()
+
+  if (data?.value && typeof data.value === 'number') return data.value
+  if (data?.value && typeof data.value === 'object') {
+    const rate = (data.value as { rate?: unknown }).rate
+    if (typeof rate === 'number') return rate
+  }
+  return DEFAULT_TRADING_FEE_PERCENT
+}
+
+export function roundTo(value: number, digits: number): number {
+  if (!Number.isFinite(value)) return 0
+  const factor = 10 ** digits
+  return Math.round(value * factor) / factor
+}
+
+export function computeQuantity(amountUsd: number, priceUsd: number): number {
+  return roundTo(amountUsd / priceUsd, 8)
+}
+
+/**
+ * Server-authoritative trade preview. Used by GET /api/orders/quote for the
+ * UI preview and re-derived inside the execution route (never trusts the client).
+ */
+export async function buildTradeQuote(
+  client: SupabaseClient,
+  input: {
+    symbol: string
+    side: TradeSide
+    mode: TradeMode
+    amountUsd: number
+    leverage?: number
+  }
+): Promise<TradeQuote> {
+  const symbol = input.symbol.toUpperCase() as TradeQuote['symbol']
+  const side = input.side === 'sell' ? 'sell' : 'buy'
+  const mode = input.mode === 'margin' ? 'margin' : 'spot'
+  const leverage = mode === 'margin' ? Math.max(1, Math.round(input.leverage ?? 1)) : null
+
+  const [priceUsd, fxRate, feePercent] = await Promise.all([
+    getSymbolPriceUsd(symbol),
+    fetchUsdKesRate(),
+    getPlatformTradingFee(client),
+  ])
+
+  const amountUsd = roundTo(input.amountUsd, 2)
+  const quantity = computeQuantity(amountUsd, priceUsd)
+  const feeUsd = roundTo(amountUsd * (feePercent / 100), 8)
+  const feeKes = roundTo(feeUsd * fxRate, 2)
+
+  if (mode === 'margin' && leverage !== null) {
+    const marginUsd = amountUsd / leverage
+    const marginKes = roundTo(marginUsd * fxRate, 2)
+    const liquidationPriceUsd =
+      side === 'buy'
+        ? roundTo(priceUsd * (1 - 1 / leverage), 4)
+        : roundTo(priceUsd * (1 + 1 / leverage), 4)
+    return {
+      symbol,
+      side,
+      mode,
+      amountUsd,
+      priceUsd: roundTo(priceUsd, 4),
+      fxRate,
+      feePercent,
+      quantity,
+      feeUsd,
+      feeKes,
+      amountKes: marginKes,
+      leverage,
+      marginKes,
+      liquidationPriceUsd,
+    }
+  }
+
+  const amountKes = side === 'buy'
+    ? roundTo(amountUsd * fxRate + feeKes, 2)
+    : roundTo(amountUsd * fxRate - feeKes, 2)
+
+  return {
+    symbol,
+    side,
+    mode: 'spot',
+    amountUsd,
+    priceUsd: roundTo(priceUsd, 4),
+    fxRate,
+    feePercent,
+    quantity,
+    feeUsd,
+    feeKes,
+    amountKes,
+    leverage: null,
+    marginKes: null,
+    liquidationPriceUsd: null,
+  }
+}
+
+const TRADE_ERROR_MESSAGES: Record<string, string> = {
+  INSUFFICIENT_FUNDS: 'Your available KES balance is too low for this trade.',
+  INSUFFICIENT_HOLDINGS: "You don't hold enough of this asset to sell.",
+  INVALID_LEVERAGE: 'Leverage must be between 1x and 100x.',
+  INVALID_PARAMS: 'The trade parameters are invalid.',
+  UNSUPPORTED_ASSET: 'This asset is not available for trading.',
+  ASSET_NOT_FOUND: 'This asset is not available for trading.',
+  ASSET_PRICE_UNAVAILABLE: 'We could not fetch a live price for this asset. Try again shortly.',
+  WALLET_NOT_FOUND: 'No wallet is linked to your account yet.',
+  POSITION_NOT_FOUND: 'Position not found, or it is already closed.',
+}
+
+export function mapTradeError(rawMessage: string): { status: number; message: string } {
+  const code = rawMessage.trim()
+  const known = TRADE_ERROR_MESSAGES[code]
+  if (known) return { status: 400, message: known }
+  return { status: 400, message: rawMessage || 'The trade could not be executed.' }
+}

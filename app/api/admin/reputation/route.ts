@@ -7,6 +7,7 @@ import { recordAudit } from "@/lib/admin/audit"
 export async function POST() {
   const supabase = await createServerClient()
   const ctx = await requireSuperAdmin(supabase)
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const { data, error } = await service.rpc("recompute_all_reputations")

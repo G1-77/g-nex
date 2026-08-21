@@ -14,9 +14,22 @@ export interface AdminAuditRow {
   created_at: string
 }
 
+interface AuditRowRaw {
+  id: string
+  admin_id: string | null
+  action: string
+  target_table: string | null
+  target_id: string | null
+  old_value: unknown
+  new_value: unknown
+  created_at: string
+  admin: { username: string | null; full_name: string | null } | null
+}
+
 export async function GET(req: Request) {
   const supabase = await createServerClient()
-  await requirePermission(supabase, "audit.read")
+  const ctx = await requirePermission(supabase, "audit.read")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const { searchParams } = new URL(req.url)
@@ -34,10 +47,10 @@ export async function GET(req: Request) {
   const { data, error } = await query
   if (error) return new Response(error.message, { status: 500 })
 
-  const rows: AdminAuditRow[] = (data ?? []).map((r) => ({
+  const rows: AdminAuditRow[] = ((data ?? []) as unknown as AuditRowRaw[]).map((r) => ({
     id: r.id,
     admin_id: r.admin_id,
-    admin_name: r.admin?.[0]?.full_name ?? r.admin?.[0]?.username ?? null,
+    admin_name: r.admin?.full_name ?? r.admin?.username ?? null,
     action: r.action,
     target_table: r.target_table,
     target_id: r.target_id,

@@ -2,6 +2,8 @@ import { createServerClient } from "@/lib/supabase/server"
 import { requirePermission } from "@/lib/admin/authorization"
 import { createServiceClient } from "@/lib/admin/service"
 import { recordAudit } from "@/lib/admin/audit"
+import { resolveAction } from "@/lib/admin/actions"
+import { deleteDeposit, editRecord } from "@/lib/admin/executors"
 
 export interface AdminDepositRow {
   id: string
@@ -23,7 +25,8 @@ export interface AdminDepositRow {
 
 export async function GET(req: Request) {
   const supabase = await createServerClient()
-  await requirePermission(supabase, "deposits.read")
+  const ctx = await requirePermission(supabase, "deposits.read")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const { searchParams } = new URL(req.url)
@@ -44,7 +47,7 @@ export async function GET(req: Request) {
   const rows: AdminDepositRow[] = (data ?? []).map((r) => ({
     id: r.id,
     user_id: r.user_id,
-    username: r.user?.[0]?.username ?? null,
+    username: r.user?.username ?? null,
     amount_kes: Number(r.amount_kes ?? 0),
     expected_amount: r.expected_amount === null ? null : Number(r.expected_amount),
     mobile_money_number: r.mobile_money_number,
@@ -65,6 +68,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const supabase = await createServerClient()
   const ctx = await requirePermission(supabase, "deposits.approve")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const body = await req.json()
@@ -108,4 +112,53 @@ export async function POST(req: Request) {
   })
 
   return Response.json({ success: true, result: rpcData })
+}
+
+/** Permanently delete a deposit request (data.delete; approval-gated below super_admin). */
+export async function DELETE(req: Request) {
+  const supabase = await createServerClient()
+  const ctx = await requirePermission(supabase, "data.delete")
+  if (ctx instanceof Response) return ctx
+  const service = createServiceClient()
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get("id") ?? ""
+
+  if (!id) return new Response("Missing id", { status: 400 })
+
+  return resolveAction(ctx, service, {
+    actionType: "delete",
+    targetTable: "deposit_requests",
+    targetId: id,
+    label: `Delete deposit ${id.slice(0, 8)}…`,
+    execute: () => deleteDeposit(service, ctx.userId, id),
+  })
+}
+
+/** Edit a deposit request's safe columns (data.edit; approval-gated below super_admin). */
+export async function PATCH(req: Request) {
+  const supabase = await createServerClient()
+  const ctx = await requirePermission(supabase, "data.edit")
+  if (ctx instanceof Response) return ctx
+  const service = createServiceClient()
+
+  const body = await req.json()
+  const id = String(body.id ?? "")
+  const changes = (body.changes ?? {}) as Record<string, unknown>
+
+  if (!id) return new Response("Missing id", { status: 400 })
+  const safe: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(changes)) {
+    if (["status", "admin_notes", "amount_kes"].includes(key)) safe[key] = value
+  }
+  if (Object.keys(safe).length === 0) return new Response("No editable columns provided", { status: 400 })
+
+  return resolveAction(ctx, service, {
+    actionType: "edit",
+    targetTable: "deposit_requests",
+    targetId: id,
+    label: `Edit deposit ${id.slice(0, 8)}… (${Object.keys(safe).join(", ")})`,
+    payload: { changes: safe },
+    execute: () => editRecord(service, ctx.userId, "deposit_requests", id, safe),
+  })
 }

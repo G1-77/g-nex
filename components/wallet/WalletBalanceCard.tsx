@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowDownLeft, ArrowUpRight, Sparkles, TrendingUp } from 'lucide-react'
-import PerformanceArea from './PerformanceArea'
+import PerformanceArea, { type PerformancePoint } from './PerformanceArea'
 import { allocationColor, formatKes, formatUsd } from '@/lib/market/wallet-utils'
 import type { AssetSymbol } from '@/lib/supabase/types'
 
@@ -27,6 +27,7 @@ interface WalletBalanceCardProps {
   growthPct: number | null
   usdKes: number
   allocation: AllocationSlice[]
+  performanceSeries?: PerformancePoint[]
   demoFunding?: boolean
   onDemoFund?: () => void
 }
@@ -125,6 +126,7 @@ export default function WalletBalanceCard({
   growthPct,
   usdKes,
   allocation,
+  performanceSeries,
   demoFunding,
   onDemoFund,
 }: WalletBalanceCardProps) {
@@ -230,12 +232,12 @@ export default function WalletBalanceCard({
           </p>
         </div>
         <div className="mt-3">
-          <PerformanceArea endValue={Math.max(1, totalKes)} seed="gnex-wallet" />
+          <PerformanceArea endValue={Math.max(1, totalKes)} data={performanceSeries} seed="gnex-wallet" />
         </div>
       </div>
 
       {/* BALANCE BREAKDOWN */}
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+      <div className="mt-4 grid grid-cols-4 gap-2 text-center">
         <div className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-2 py-2.5">
           <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500">Cash</p>
           <p className="mt-1 font-mono text-xs font-bold text-slate-200">{formatKes(cashKes)}</p>
@@ -247,6 +249,10 @@ export default function WalletBalanceCard({
         <div className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-2 py-2.5">
           <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500">Reserve</p>
           <p className="mt-1 font-mono text-xs font-bold text-slate-500">{formatKes(reserveKes)}</p>
+        </div>
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-2 py-2.5">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-emerald-500/70">Buying power</p>
+          <p className="mt-1 font-mono text-xs font-bold text-emerald-400">{formatUsd(cashKes / usdKes)}</p>
         </div>
       </div>
 

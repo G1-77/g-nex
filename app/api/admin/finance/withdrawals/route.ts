@@ -1,7 +1,12 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { requirePermission } from "@/lib/admin/authorization"
 import { createServiceClient } from "@/lib/admin/service"
-import { recordAudit } from "@/lib/admin/audit"
+import { resolveAction } from "@/lib/admin/actions"
+import {
+  deleteWithdrawal,
+  editRecord,
+  processWithdrawal,
+} from "@/lib/admin/executors"
 
 export interface AdminWithdrawalRow {
   id: string
@@ -23,7 +28,8 @@ export interface AdminWithdrawalRow {
 
 export async function GET(req: Request) {
   const supabase = await createServerClient()
-  await requirePermission(supabase, "withdrawals.read")
+  const ctx = await requirePermission(supabase, "withdrawals.read")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const { searchParams } = new URL(req.url)
@@ -44,13 +50,13 @@ export async function GET(req: Request) {
   const rows: AdminWithdrawalRow[] = (data ?? []).map((r) => ({
     id: r.id,
     user_id: r.user_id,
-    username: r.user?.[0]?.username ?? null,
+    username: r.user?.username ?? null,
     amount_kes: Number(r.amount_kes ?? r.amount ?? 0),
     amount: Number(r.amount ?? 0),
     fee_kes: Number(r.fee_kes ?? 0),
     mobile_money_number: r.mobile_money_number,
     mobile_money_provider: r.mobile_money_provider,
-    asset_symbol: r.asset?.[0]?.symbol ?? null,
+    asset_symbol: r.asset?.symbol ?? null,
     status: r.status,
     admin_notes: r.admin_notes,
     approved_by: r.approved_by,
@@ -65,45 +71,83 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const supabase = await createServerClient()
   const ctx = await requirePermission(supabase, "withdrawals.process")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const body = await req.json()
   const withdrawalId = String(body.withdrawalId ?? "")
-  const action = String(body.action ?? "") // process | reject
+  const rawAction = String(body.action ?? "") // process | reject
   const note = String(body.note ?? "").trim() || null
 
   if (!withdrawalId) return new Response("Missing withdrawalId", { status: 400 })
-  if (!["process", "reject"].includes(action)) return new Response("Invalid action", { status: 400 })
+  if (rawAction !== "process" && rawAction !== "reject") {
+    return new Response("Invalid action", { status: 400 })
+  }
+  const action: "process" | "reject" = rawAction
 
-  const { data: wd, error: findError } = await service
-    .from("withdrawal_requests")
-    .select("id, status, amount_kes, amount")
-    .eq("id", withdrawalId)
-    .maybeSingle()
-
-  if (findError || !wd) {
-    return new Response(findError?.message ?? "Withdrawal not found", { status: 404 })
+  // Money leaving the platform always needs a higher-rank sign-off; rejecting
+  // is conservative and stays direct.
+  if (action === "process") {
+    return resolveAction(ctx, service, {
+      actionType: "withdrawal_process",
+      targetTable: "withdrawal_requests",
+      targetId: withdrawalId,
+      label: `Process payout ${withdrawalId.slice(0, 8)}…`,
+      payload: { action, note },
+      execute: () => processWithdrawal(service, ctx.userId, withdrawalId, action, note),
+    })
   }
 
-  const { data: rpcData, error: rpcError } = await service.rpc(
-    action === "process" ? "admin_process_withdrawal" : "admin_reject_withdrawal",
-    { p_withdrawal_id: withdrawalId, p_admin: ctx.userId, p_note: note }
-  )
+  const result = await processWithdrawal(service, ctx.userId, withdrawalId, action, note)
+  if (!result.ok) return new Response(result.error, { status: result.status })
+  return Response.json({ success: true, result: result.result ?? null })
+}
 
-  if (rpcError) return new Response(rpcError.message, { status: 500 })
-  if (rpcData && rpcData.ok === false) {
-    return new Response(String(rpcData.error ?? "Operation failed"), { status: 400 })
-  }
+/** Permanently delete a withdrawal request and its ledger row (data.delete; approval-gated below super_admin). */
+export async function DELETE(req: Request) {
+  const supabase = await createServerClient()
+  const ctx = await requirePermission(supabase, "data.delete")
+  if (ctx instanceof Response) return ctx
+  const service = createServiceClient()
 
-  await recordAudit(service, {
-    adminId: ctx.userId,
-    action: `withdrawals.${action === "process" ? "process" : "reject"}`,
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get("id") ?? ""
+
+  if (!id) return new Response("Missing id", { status: 400 })
+
+  return resolveAction(ctx, service, {
+    actionType: "delete",
     targetTable: "withdrawal_requests",
-    targetId: withdrawalId,
-    oldValue: { status: wd.status },
-    newValue: { status: action === "process" ? "sent" : "rejected", ...rpcData },
-    metadata: { amount_kes: Number(wd.amount_kes ?? wd.amount ?? 0), note },
+    targetId: id,
+    label: `Delete withdrawal ${id.slice(0, 8)}…`,
+    execute: () => deleteWithdrawal(service, ctx.userId, id),
   })
+}
 
-  return Response.json({ success: true, result: rpcData })
+/** Edit a withdrawal request's safe columns (data.edit; approval-gated below super_admin). */
+export async function PATCH(req: Request) {
+  const supabase = await createServerClient()
+  const ctx = await requirePermission(supabase, "data.edit")
+  if (ctx instanceof Response) return ctx
+  const service = createServiceClient()
+
+  const body = await req.json()
+  const id = String(body.id ?? "")
+  const changes = (body.changes ?? {}) as Record<string, unknown>
+
+  if (!id) return new Response("Missing id", { status: 400 })
+  const safe: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(changes)) {
+    if (["status", "admin_notes", "amount_kes"].includes(key)) safe[key] = value
+  }
+  if (Object.keys(safe).length === 0) return new Response("No editable columns provided", { status: 400 })
+
+  return resolveAction(ctx, service, {
+    actionType: "edit",
+    targetTable: "withdrawal_requests",
+    targetId: id,
+    label: `Edit withdrawal ${id.slice(0, 8)}… (${Object.keys(safe).join(", ")})`,
+    payload: { changes: safe },
+    execute: () => editRecord(service, ctx.userId, "withdrawal_requests", id, safe),
+  })
 }

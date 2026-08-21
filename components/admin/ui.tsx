@@ -149,3 +149,28 @@ export function AdminButton({
     />
   )
 }
+
+/** Square icon-only button for dense table action cells. Pair with `title`. */
+export function AdminIconButton({
+  variant = "subtle",
+  className,
+  type = "button",
+  ...props
+}: AdminButtonProps) {
+  return (
+    <button
+      type={type}
+      className={cn(
+        "inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border text-[var(--admin-text-dim)] transition-all duration-150 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-50",
+        variant === "subtle" &&
+          "border-[var(--admin-border)] bg-[var(--admin-panel)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-panel-hover)]",
+        variant === "danger" &&
+          "border-rose-500/30 bg-rose-500/10 text-rose-300 hover:border-rose-500/60 hover:bg-rose-500/20 hover:text-rose-200",
+        variant === "primary" &&
+          "border-transparent bg-[rgba(141,255,69,0.15)] text-[var(--admin-green)] hover:bg-[rgba(141,255,69,0.25)]",
+        className
+      )}
+      {...props}
+    />
+  )
+}

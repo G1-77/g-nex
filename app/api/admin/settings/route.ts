@@ -27,7 +27,8 @@ const VALIDATORS: Record<SettingKey, (value: unknown) => boolean> = {
 
 export async function GET() {
   const supabase = await createServerClient()
-  await requirePermission(supabase, "settings.manage")
+  const ctx = await requirePermission(supabase, "settings.manage")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const stored = await getPlatformSettings(service)
@@ -44,6 +45,7 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const supabase = await createServerClient()
   const ctx = await requirePermission(supabase, "settings.manage")
+  if (ctx instanceof Response) return ctx
   const service = createServiceClient()
 
   const body = await req.json()

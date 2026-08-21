@@ -46,3 +46,26 @@ export async function adminAction<T = { success: boolean }>(
   }
   return res.json() as T
 }
+
+export interface ActionResult {
+  success: boolean
+  queued?: boolean
+}
+
+/**
+ * Run a mutation and translate the two success shapes for the operator:
+ * applied immediately, or filed into the approval queue (below super_admin).
+ */
+export async function runAction(
+  url: string,
+  method: "POST" | "PATCH" | "DELETE",
+  body?: unknown
+): Promise<ActionResult> {
+  const result = await adminAction<ActionResult>(url, method, body)
+  if (result.queued) {
+    window.alert(
+      "Sent for approval — a higher-ranked admin must review this action before it takes effect."
+    )
+  }
+  return result
+}

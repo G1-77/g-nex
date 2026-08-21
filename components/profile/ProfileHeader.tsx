@@ -22,6 +22,7 @@ interface ProfileHeaderProps {
   bio?: string | null
   isVerified?: boolean
   monthlyRoi?: number
+  realizedPnlKes?: number
   isOwnProfile?: boolean
   role?: AdminRoleType | null
   reputationStatus?: string | null
@@ -34,6 +35,7 @@ export default function ProfileHeader({
   bio,
   isVerified,
   monthlyRoi,
+  realizedPnlKes,
   isOwnProfile = true,
   // role,
   reputationStatus,
@@ -42,6 +44,16 @@ export default function ProfileHeader({
   const [openEditModal, setOpenEditModal] = useState(false)
   const { profile } = useUserIdentity()
   const { reputation } = useAuth()
+
+  const roiUnavailable = monthlyRoi === null || monthlyRoi === undefined
+  const roiValue = Number(monthlyRoi ?? 0)
+  const isLoss = roiValue < 0
+  const roiDisplay = roiUnavailable ? '—' : `${roiValue > 0 ? '+' : ''}${roiValue.toFixed(2)}%`
+  const roiColor = roiUnavailable
+    ? 'text-slate-500'
+    : isLoss
+      ? 'text-rose-400'
+      : 'text-emerald-400'
 
   // const effectiveStatus = reputationStatus ?? reputation?.status ?? null
   // const effectiveScore =
@@ -105,14 +117,21 @@ export default function ProfileHeader({
               </p>
 
               <div className="mt-0.5 flex items-baseline gap-1.5">
-                <span className="text-xl font-mono font-black text-emerald-400">
-                  +{monthlyRoi ?? 0}%
+                <span className={`text-xl font-mono font-black ${roiColor}`}>
+                  {roiDisplay}
                 </span>
 
                 <span className="text-[10px] text-slate-600 font-medium">
                   30d
                 </span>
               </div>
+
+              {typeof realizedPnlKes === 'number' && (
+                <p className="mt-0.5 font-mono text-[10px] text-slate-600">
+                  {realizedPnlKes >= 0 ? '+' : ''}
+                  {realizedPnlKes.toLocaleString(undefined, { maximumFractionDigits: 2 })} KES realized
+                </p>
+              )}
             </div>
 
             {/* EDIT BUTTON */}

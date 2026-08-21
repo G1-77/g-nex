@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bookmark, GraduationCap, LineChart, X } from 'lucide-react'
 
@@ -11,15 +12,18 @@ import TopTradersWidget from '@/components/feed/TopTradersWidget'
 const exploreItems = [
   {
     icon: Bookmark,
-    label: 'Saved Strategies'
+    label: 'Saved Strategies',
+    href: null
   },
   {
     icon: LineChart,
-    label: 'Leaderboards'
+    label: 'Leaderboards',
+    href: '/leaderboard'
   },
   {
     icon: GraduationCap,
-    label: 'GNEX Academy'
+    label: 'GNEX Academy',
+    href: null
   }
 ]
 
@@ -87,17 +91,31 @@ export default function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProp
                 {exploreItems.map((item) => {
                   const Icon = item.icon
 
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      className="group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-900/60 hover:text-slate-100"
-                    >
+                  const inner = (
+                    <>
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 transition-colors group-hover:bg-slate-800">
                         <Icon className="h-4 w-4 text-slate-400 transition-colors group-hover:text-yellow-600" />
                       </div>
 
                       {item.label}
+                    </>
+                  )
+
+                  const className =
+                    'group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-900/60 hover:text-slate-100'
+
+                  return item.href ? (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={onClose}
+                      className={className}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <button key={item.label} type="button" className={className}>
+                      {inner}
                     </button>
                   )
                 })}

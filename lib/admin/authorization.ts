@@ -6,7 +6,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { AdminRoleType } from "@/lib/supabase/types"
-import { ROLE_HIERARCHY, type PermissionCode } from "@/lib/admin/permissions"
+import { ROLE_HIERARCHY, isPermissionCode, type PermissionCode } from "@/lib/admin/permissions"
 
 export interface AdminContext {
   userId: string
@@ -22,8 +22,7 @@ export interface AdminContextRow {
 }
 
 function toPermissionCodes(raw: string[] | null | undefined): PermissionCode[] {
-  return (raw ?? [])
-    .filter((p): p is PermissionCode => (["users.read","users.manage","deposits.read","deposits.approve","withdrawals.read","withdrawals.process","transactions.read","orders.read","community.moderate","community.report_review","content.manage","content.publish","market.manage","admins.manage","permissions.manage","settings.manage","audit.read"] as string[]).includes(p))
+  return (raw ?? []).filter((p): p is PermissionCode => isPermissionCode(p))
 }
 
 /**
@@ -65,26 +64,24 @@ export function unauthorizedResponse(message = "Unauthorized"): Response {
   return new Response(message, { status: 401 })
 }
 
-/**
- * Require the acting user to hold a specific permission. Throws a Response
- * (catchable as `err instanceof Response` or via err.status) so callers can
- * `return` the result directly.
- */
+/** Require the acting user to hold a specific permission. Returns the admin
+ * context on success, or a 401/403 Response to return directly from a route. */
 export async function requirePermission(
   supabase: SupabaseClient,
   permission: PermissionCode
-): Promise<AdminContext> {
+): Promise<AdminContext | Response> {
   const ctx = await getAdminContext(supabase)
-  if (!ctx) throw unauthorizedResponse()
-  if (!ctx.permissions.includes(permission)) throw forbiddenResponse()
+  if (!ctx) return unauthorizedResponse()
+  if (!ctx.permissions.includes(permission)) return forbiddenResponse()
   return ctx
 }
 
-/** Require the acting user to be a super_admin. */
-export async function requireSuperAdmin(supabase: SupabaseClient): Promise<AdminContext> {
+/** Require the acting user to be a super_admin. Returns the admin context on
+ * success, or a 401/403 Response to return directly from a route. */
+export async function requireSuperAdmin(supabase: SupabaseClient): Promise<AdminContext | Response> {
   const ctx = await getAdminContext(supabase)
-  if (!ctx) throw unauthorizedResponse()
-  if (ctx.role !== "super_admin") throw forbiddenResponse("Super admin access required")
+  if (!ctx) return unauthorizedResponse()
+  if (ctx.role !== "super_admin") return forbiddenResponse("Super admin access required")
   return ctx
 }
 

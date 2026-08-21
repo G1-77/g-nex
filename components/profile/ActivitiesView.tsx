@@ -6,7 +6,8 @@ import { Loader2, TrendingUp, TrendingDown, Briefcase } from 'lucide-react'
 
 import FeedPostCard from '@/components/feed/FeedPostCard'
 import { useGetUserPostsQuery } from '@/lib/react-query/queries/feed.queries'
-import { useGetUserPositionsQuery, type UserPosition } from '@/lib/react-query/queries/positions.queries'
+import { useGetUserPositionsQuery } from '@/lib/react-query/queries/positions.queries'
+import type { PositionRow } from '@/lib/supabase/market.types'
 import { useAuth } from '@/components/providers/AuthProvider'
 
 interface ActivitiesViewProps {
@@ -23,13 +24,13 @@ const ASSET_META: Record<string, { symbol: string; name: string }> = {
   XAU: { symbol: 'XAU', name: 'Spot Gold' },
 }
 
-function PositionRow({ position }: { position: UserPosition }) {
-  const meta = ASSET_META[position.asset_symbol] ?? {
-    symbol: position.asset_symbol,
-    name: position.asset_symbol,
+function PositionRow({ position }: { position: PositionRow }) {
+  const meta = ASSET_META[position.assetSymbol] ?? {
+    symbol: position.assetSymbol,
+    name: position.assetSymbol,
   }
   const long = position.direction !== 'Short'
-  const logo = `/icons/${position.asset_symbol.toLowerCase()}.svg`
+  const logo = `/icons/${position.assetSymbol.toLowerCase()}.svg`
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-slate-900/60 bg-slate-900/20 p-4">
@@ -60,12 +61,12 @@ function PositionRow({ position }: { position: UserPosition }) {
         </div>
 
         <span className="mt-0.5 font-mono text-[10px] text-slate-500">
-          {position.units} units · KES {Number(position.margin_kes ?? 0).toLocaleString()} margin
+          {position.units} units · KES {Number(position.marginKes ?? 0).toLocaleString()} margin
         </span>
       </div>
 
       <Link
-        href={`/markets/${position.asset_symbol.toLowerCase()}`}
+        href={`/markets/${position.assetSymbol.toLowerCase()}`}
         className="shrink-0 rounded-lg border border-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 transition-colors hover:border-yellow-600/40 hover:text-yellow-600"
       >
         Market
@@ -145,7 +146,7 @@ export default function ActivitiesView({ userId, username }: ActivitiesViewProps
           ) : (
             <div className="space-y-6">
               {posts.map((post) => (
-                <FeedPostCard key={post.id} post={post} />
+                <FeedPostCard key={post.id} post={post} variant="profile" />
               ))}
             </div>
           )}
