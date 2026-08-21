@@ -122,7 +122,7 @@ function MobileSheet({
             >
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-4 w-4" />
-                Management Portal
+                Admin Portal
               </div>
               <ArrowUpRight className="h-4 w-4" />
             </Link>
