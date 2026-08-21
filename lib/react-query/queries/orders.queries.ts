@@ -4,8 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { marketKeys } from '@/lib/react-query/market/keys'
 import type {
+  CancelOrderResult,
   ClosePositionResult,
+  EngineTickResult,
+  OrderKind,
   OrderRow,
+  PlaceOrderResult,
+  ProductType,
   TradeExecutionResult,
   TradeMode,
   TradeQuote,
@@ -40,16 +45,23 @@ interface OrderRowRaw {
   id: string
   user_id: string
   asset_id: string | null
-  order_type: 'market' | 'limit' | 'stop_limit'
+  order_type: OrderKind
   side: TradeSide
   mode: TradeMode
+  product: ProductType
   quantity: number
   price: number | null
+  trigger_price: number | null
   filled_quantity: number
   average_fill_price: number | null
   fee: number
   margin_kes: number
-  status: 'open' | 'filled' | 'partial' | 'cancelled'
+  reserved_kes: number | null
+  reserved_units: number | null
+  realized_pnl_kes: number | null
+  expires_at: string | null
+  activated_at: string | null
+  status: OrderRow['status']
   idempotency_key: string | null
   created_at: string
   updated_at: string
@@ -77,15 +89,23 @@ function mapOrderRow(row: OrderRowRaw): OrderRow {
     id: row.id,
     userId: row.user_id,
     assetId: row.asset_id,
+    assetSymbol: null,
     orderType: row.order_type,
     side: row.side,
     mode: row.mode,
+    product: row.product ?? 'spot',
     quantity: Number(row.quantity),
     price: row.price === null ? null : Number(row.price),
+    triggerPrice: row.trigger_price === null ? null : Number(row.trigger_price),
     filledQuantity: Number(row.filled_quantity),
     averageFillPrice: row.average_fill_price === null ? null : Number(row.average_fill_price),
     fee: Number(row.fee),
     marginKes: Number(row.margin_kes),
+    reservedKes: row.reserved_kes === null || row.reserved_kes === undefined ? 0 : Number(row.reserved_kes),
+    reservedUnits: row.reserved_units === null || row.reserved_units === undefined ? 0 : Number(row.reserved_units),
+    realizedPnlKes: row.realized_pnl_kes === null || row.realized_pnl_kes === undefined ? null : Number(row.realized_pnl_kes),
+    expiresAt: row.expires_at ?? null,
+    activatedAt: row.activated_at ?? null,
     status: row.status,
     idempotencyKey: row.idempotency_key,
     createdAt: row.created_at,
@@ -124,6 +144,7 @@ export interface ExecuteTradeInput {
   amountUsd: number
   leverage?: number
   idempotencyKey?: string
+  product?: ProductType
 }
 
 async function executeTrade(input: ExecuteTradeInput): Promise<TradeExecutionResult> {
@@ -137,6 +158,7 @@ async function executeTrade(input: ExecuteTradeInput): Promise<TradeExecutionRes
       amountUsd: input.amountUsd,
       leverage: input.leverage ?? 1,
       idempotencyKey: input.idempotencyKey ?? null,
+      product: input.product ?? 'spot',
     }),
   })
 
@@ -155,6 +177,112 @@ export function useExecuteTradeMutation() {
     onSuccess: (_data, variables) => {
       invalidateFinancialChannels(queryClient, variables.userId)
     },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// CONDITIONAL ORDERS (limit / stop / take-profit)
+// ---------------------------------------------------------------------------
+
+export interface PlaceOrderInput {
+  userId: string
+  symbol: AssetSymbol
+  side: TradeSide
+  orderType: Exclude<OrderKind, 'market'>
+  amountUsd: number
+  limitPrice?: number
+  triggerPrice?: number
+  expiresAt?: string
+  idempotencyKey?: string
+  product?: ProductType
+}
+
+async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
+  const res = await fetch('/api/orders/place', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      symbol: input.symbol,
+      side: input.side,
+      orderType: input.orderType,
+      amountUsd: input.amountUsd,
+      limitPrice: input.limitPrice ?? null,
+      triggerPrice: input.triggerPrice ?? null,
+      expiresAt: input.expiresAt ?? null,
+      idempotencyKey: input.idempotencyKey ?? null,
+      product: input.product ?? 'spot',
+    }),
+  })
+
+  if (!res.ok) {
+    const message = await res.text()
+    throw new Error(message || 'Order failed')
+  }
+
+  return (await res.json()) as PlaceOrderResult
+}
+
+export function usePlaceOrderMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: placeOrder,
+    onSuccess: (_data, variables) => {
+      invalidateFinancialChannels(queryClient, variables.userId)
+    },
+  })
+}
+
+export interface CancelOrderInput {
+  userId: string
+  orderId: string
+}
+
+async function cancelOrder(input: CancelOrderInput): Promise<CancelOrderResult> {
+  const res = await fetch('/api/orders/cancel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId: input.orderId }),
+  })
+
+  if (!res.ok) {
+    const message = await res.text()
+    throw new Error(message || 'Cancel failed')
+  }
+
+  return (await res.json()) as CancelOrderResult
+}
+
+export function useCancelOrderMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: cancelOrder,
+    onSuccess: (_data, variables) => {
+      invalidateFinancialChannels(queryClient, variables.userId)
+    },
+  })
+}
+
+/**
+ * Engine heartbeat. Runs while trading surfaces are open; the server resolves
+ * authoritative prices and fills/triggers/expires resting orders. Harmless
+ * when there is nothing to do.
+ */
+export function useEngineTickQuery(userId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['orders', 'engine-tick', userId] as const,
+    queryFn: async (): Promise<EngineTickResult> => {
+      const res = await fetch('/api/orders/engine', { method: 'POST' })
+      if (!res.ok) {
+        const message = await res.text()
+        throw new Error(message || 'Engine tick failed')
+      }
+      return (await res.json()) as EngineTickResult
+    },
+    enabled: Boolean(userId) && enabled,
+    refetchInterval: 8000,
+    refetchIntervalInBackground: false,
+    retry: false,
+    staleTime: 0,
   })
 }
 
@@ -202,6 +330,7 @@ export interface TradeQuoteInput {
   mode: TradeMode
   amountUsd: number
   leverage?: number
+  product?: ProductType
 }
 
 async function fetchTradeQuote(input: TradeQuoteInput): Promise<TradeQuote> {
@@ -210,6 +339,7 @@ async function fetchTradeQuote(input: TradeQuoteInput): Promise<TradeQuote> {
     side: input.side,
     mode: input.mode,
     amount: String(input.amountUsd),
+    product: input.product ?? 'spot',
   })
   if (input.mode === 'margin' && input.leverage) {
     params.set('leverage', String(input.leverage))
@@ -224,7 +354,7 @@ async function fetchTradeQuote(input: TradeQuoteInput): Promise<TradeQuote> {
 
 export function useTradeQuoteQuery(input: TradeQuoteInput | null) {
   return useQuery({
-    queryKey: ['orders', 'quote', input?.symbol, input?.side, input?.mode, input?.amountUsd, input?.leverage] as const,
+    queryKey: ['orders', 'quote', input?.symbol, input?.side, input?.mode, input?.amountUsd, input?.leverage, input?.product] as const,
     queryFn: () => fetchTradeQuote(input as TradeQuoteInput),
     enabled: Boolean(
       input &&
@@ -244,12 +374,16 @@ async function fetchUserOrders(userId: string | null): Promise<OrderRow[]> {
   if (!userId) return []
   const { data, error } = await supabase
     .from('orders')
-    .select('id, user_id, asset_id, order_type, side, mode, quantity, price, filled_quantity, average_fill_price, fee, margin_kes, status, idempotency_key, created_at, updated_at')
+    .select('id, user_id, asset_id, order_type, side, mode, product, quantity, price, trigger_price, filled_quantity, average_fill_price, fee, margin_kes, reserved_kes, reserved_units, realized_pnl_kes, expires_at, activated_at, status, idempotency_key, created_at, updated_at, assets(symbol)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(100)
   if (error) throw new Error(error.message)
-  return ((data ?? []) as unknown as OrderRowRaw[]).map(mapOrderRow)
+  return ((data ?? []) as unknown as (OrderRowRaw & { assets?: { symbol: string } | null })[]).map((row) => {
+    const mapped = mapOrderRow(row)
+    mapped.assetSymbol = (row.assets?.symbol as AssetSymbol | undefined) ?? null
+    return mapped
+  })
 }
 
 export function useGetUserOrdersQuery(userId: string | null) {

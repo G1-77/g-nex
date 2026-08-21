@@ -153,3 +153,49 @@
 ---
 
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
+---
+
+## Phase 7 — Trading Ecosystem (Quick Trade · Spot Pro · FTT scaffold)
+
+**Status:** ✅ Implemented (code + migration validated; migration push pending CI)
+
+### Delivered
+- **Security hardening:** `execute_trade`/`close_position` and all legacy
+  financial RPCs revoked from `public`/`anon`/`authenticated` (service-role only);
+  `audit_logs.metadata` column added so admin audit writes persist; conditional-order
+  engine RPCs (`place_order`, `cancel_order`, `process_conditional_orders`) are
+  SECURITY DEFINER, service-role-only, with internal ownership/authz checks.
+- **Conditional orders:** limit / stop-market / stop-limit / take-profit on Spot.
+  Real balance reservations (KES for buys, units for sells), trigger-side sanity
+  rules, expiry with reservation release, SKIP LOCKED concurrency safety,
+  auto-liquidation of crossed margin positions, notification triggers on fills.
+- **Server-authoritative config layer** (`lib/market/trading-config.ts`):
+  trading master switch, per-product switches, min/max trade USD, max leverage,
+  tradable symbols from the `assets` table — enforced in market/quote/close/
+  place/cancel/engine routes. Admin UI toggles + limits added to system settings.
+- **Price integrity:** removed the random gold price fallback (stale real price
+  or explicit failure only); chart mock candle generator deleted — XAU now has a
+  real OHLC feed (`fetchGoldOHLC`); staleness guard (`lib/market/freshness.ts`,
+  90s ceiling) blocks execution when provenance is missing/expired;
+  `lastUpdatedAt` provenance stamped through the ticker pipeline.
+- **Fee control restored:** engine reads `trading_fee_pct` (the key the admin UI
+  writes) — previously dead due to key mismatch.
+- **New surfaces:** `/trade` hub, `/trade/quick` (one-tap execution),
+  `/trade/spot` (full terminal: pair selector, chart, Market/Limit/Stop/TP form,
+  open-orders cancel, order history with realized PnL); nav updated (Feed ·
+  Markets · Trade · Wallet). FTT card present but disabled ("Soon").
+- **Engine heartbeat:** `POST /api/orders/engine` resolves authoritative prices
+  server-side and processes resting orders; clients tick every 8s while trading
+  surfaces are open.
+
+### Key Files
+`supabase/migrations/20260822000000_trading_ecosystem.sql`, `lib/market/trading-config.ts`,
+`lib/market/freshness.ts`, `lib/market/gold.ts`, `lib/market/ohlc.ts`, `lib/market/execution.ts`,
+`app/api/orders/{place,cancel,engine}/route.ts`, `components/trade/{QuickTradePanel,SpotTerminal}.tsx`,
+`app/(main)/trade/**`, `lib/react-query/queries/orders.queries.ts`,
+`lib/supabase/market.types.ts`, `app/admin/system/settings/page.tsx`
+
+### Verification
+- Migration executed statement-by-statement against the remote DB inside a
+  rolled-back transaction: 12 ALTER / 7 CREATE / 4 REVOKE / 3 GRANT / seed INSERT — zero errors.
+- `tsc --noEmit` ✅ · `eslint` (new code) ✅ 0 errors · `next build` ✅ all routes compile.

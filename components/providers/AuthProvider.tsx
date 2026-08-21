@@ -29,6 +29,7 @@ const KNOWN_PERMISSIONS: string[] = [
   "withdrawals.process","transactions.read","orders.read","community.moderate",
   "community.report_review","content.manage","content.publish","market.manage",
   "admins.manage","permissions.manage","settings.manage","audit.read","data.delete",
+  "data.edit","approvals.review",
 ]
 
 function normalizePermissions(raw: unknown): PermissionCode[] {

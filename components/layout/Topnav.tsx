@@ -26,8 +26,8 @@ const navItems = [
     href: '/markets'
   },
   {
-    label: 'Groups',
-    href: '/groups'
+    label: 'Trade',
+    href: '/trade'
   }
 ]
 

@@ -13,6 +13,13 @@ export const SETTING_KEYS = {
   MAINTENANCE_MODE: "maintenance_mode",
   PAYMENT_PROVIDERS: "payment_providers",
   SUPPORTED_ASSETS: "supported_assets",
+  TRADING_ENABLED: "trading_enabled",
+  QUICK_TRADE_ENABLED: "quick_trade_enabled",
+  SPOT_ENABLED: "spot_enabled",
+  FTT_ENABLED: "ftt_enabled",
+  MIN_TRADE_USD: "min_trade_usd",
+  MAX_TRADE_USD: "max_trade_usd",
+  MAX_LEVERAGE: "max_leverage",
 } as const
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS]
@@ -27,6 +34,13 @@ export const SETTING_DEFAULTS: Record<SettingKey, unknown> = {
   maintenance_mode: false,
   payment_providers: ["mpesa", "airtel"],
   supported_assets: ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"],
+  trading_enabled: true,
+  quick_trade_enabled: true,
+  spot_enabled: true,
+  ftt_enabled: false,
+  min_trade_usd: 1,
+  max_trade_usd: 50_000,
+  max_leverage: 100,
 }
 
 /**

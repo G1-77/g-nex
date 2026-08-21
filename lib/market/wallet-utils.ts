@@ -29,6 +29,12 @@ export function statusLabel(status: string): string {
     credited: 'Credited',
     rejected: 'Rejected',
     reversed: 'Reversed',
+    open: 'Open',
+    triggered: 'Triggered',
+    filled: 'Filled',
+    partial: 'Partial',
+    cancelled: 'Cancelled',
+    expired: 'Expired',
   }
   return map[normalized] ?? status
 }

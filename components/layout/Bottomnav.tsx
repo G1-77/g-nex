@@ -9,7 +9,7 @@ import {
   Briefcase,
   BarChart2,
   Home,
-  Users
+  Zap
 } from 'lucide-react'
 
 import MarketTradeBar from '@/components/layout/MarketTradeBar'
@@ -21,14 +21,14 @@ const navItems = [
     icon: Home
   },
   {
-    label: 'Trade',
+    label: 'Markets',
     href: '/markets',
     icon: BarChart2
   },
   {
-    label: 'Groups',
-    href: '/groups',
-    icon: Users
+    label: 'Trade',
+    href: '/trade',
+    icon: Zap
   },
   {
     label: 'Wallet',
@@ -44,6 +44,9 @@ export default function Bottomnav() {
   const isActive = (href: string) => {
     if (href === '/markets') {
       return pathname === '/markets' || pathname.startsWith('/markets/')
+    }
+    if (href === '/trade') {
+      return pathname === '/trade' || pathname.startsWith('/trade/')
     }
     return pathname === href
   }

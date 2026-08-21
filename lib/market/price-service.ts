@@ -24,9 +24,13 @@ export async function getMarketPrices(
 
   const ids = cryptoAssets.map(a => a.coingecko_id)
 
-  const [cryptoData, goldData, usdKes] = await Promise.all([
+  const [cryptoData, goldResult, usdKes] = await Promise.all([
     fetchCryptoPrices(ids),
-    fetchGoldPrice(),
+    fetchGoldPrice().catch((err) => {
+      // A gold provider outage degrades the gold row, never the whole market.
+      console.error('Gold price unavailable for market snapshot:', err)
+      return null
+    }),
     fetchUsdKesRate()
   ])
 
@@ -34,12 +38,14 @@ export async function getMarketPrices(
     normalizeCrypto(c, usdKes)
   )
 
+  if (!goldResult) return cryptoPrices
+
   const gold: MarketPrice = {
     symbol: 'XAU',
-    price_usd: goldData.price_usd,
-    price_kes: goldData.price_usd * usdKes,
-    change_24h: goldData.change_24h,
-    last_updated: goldData.last_updated
+    price_usd: goldResult.price_usd,
+    price_kes: goldResult.price_usd * usdKes,
+    change_24h: goldResult.change_24h,
+    last_updated: goldResult.last_updated
   }
 
   return [...cryptoPrices, gold]

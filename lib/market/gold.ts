@@ -19,22 +19,6 @@ interface XausHistory {
 
 let cache: { data: GoldPrice; fetchedAt: number } | null = null
 
-function simulatedFallback(): GoldPrice {
-  const base = 3300
-  const variation = Math.random() * 20 - 10
-  const price = base + variation
-
-  return {
-    symbol: 'XAU',
-    price_usd: price,
-    change_24h: (variation / base) * 130,
-    high_usd: price * 1.005,
-    low_usd: price * 0.995,
-    market_cap_usd: null,
-    last_updated: new Date().toISOString(),
-  }
-}
-
 async function fetchJson(url: string): Promise<Response> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
@@ -45,6 +29,12 @@ async function fetchJson(url: string): Promise<Response> {
   }
 }
 
+/**
+ * Fetch the live gold spot price. On upstream failure the last known REAL
+ * price is served (clearly stale) — a fabricated/random price must never
+ * become the authoritative execution price for XAU trades. When no real
+ * price has ever been observed this throws and callers degrade gracefully.
+ */
 export async function fetchGoldPrice(): Promise<GoldPrice> {
   const now = Date.now()
   if (cache && now - cache.fetchedAt < CACHE_TTL_MS) return cache.data
@@ -93,10 +83,9 @@ export async function fetchGoldPrice(): Promise<GoldPrice> {
     cache = { data, fetchedAt: now }
     return data
   } catch (err) {
-    // Serve the last known real price when we have one, otherwise degrade
-    // to the simulated baseline so the gold surface never breaks.
+    // Serve the last known real price when we have one; otherwise fail loudly.
     if (cache) return cache.data
-    console.error('Gold fetch failed, using simulated fallback:', err)
-    return simulatedFallback()
+    console.error('Gold price unavailable:', err)
+    throw new Error('GOLD_PRICE_UNAVAILABLE')
   }
 }

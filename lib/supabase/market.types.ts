@@ -26,6 +26,8 @@ export interface MarketTicker {
   volume24h?: number
   high24h?: number
   low24h?: number
+  /** Epoch ms of the last authoritative update — drives staleness guards. */
+  lastUpdatedAt?: number
 }
 
 /** Section 3: Group sentiment consensus metrics format */
@@ -126,28 +128,45 @@ export interface ActivePositionNode {
 // ============================================================================
 // CORE BROKERAGE — ORDER / LEDGER / POSITION TYPES
 // Mirrors the recovered production schema (see supabase/migrations
-// 20260820100000_brokerage_baseline.sql and 20260820110000_brokerage_execution.sql).
+// 20260820100000_brokerage_baseline.sql and 20260820110000_brokerage_execution.sql)
+// plus the conditional-order engine (20260822000000_trading_ecosystem.sql).
 // ============================================================================
 
 export type TradeSide = 'buy' | 'sell'
 export type TradeMode = 'spot' | 'margin'
 export type PositionDirection = 'Long' | 'Short'
 export type PositionStatus = 'OPEN' | 'CLOSED'
-export type OrderRowStatus = 'open' | 'filled' | 'partial' | 'cancelled'
+export type ProductType = 'quick_trade' | 'spot' | 'ftt'
+export type OrderKind = 'market' | 'limit' | 'stop_market' | 'stop_limit' | 'take_profit'
+export type OrderRowStatus =
+  | 'open'
+  | 'triggered'
+  | 'filled'
+  | 'partial'
+  | 'cancelled'
+  | 'expired'
 
 export interface OrderRow {
   id: string
   userId: string
   assetId: string | null
-  orderType: 'market' | 'limit' | 'stop_limit'
+  assetSymbol: AssetSymbol | null
+  orderType: OrderKind
   side: TradeSide
   mode: TradeMode
+  product: ProductType
   quantity: number
   price: number | null
+  triggerPrice: number | null
   filledQuantity: number
   averageFillPrice: number | null
   fee: number
   marginKes: number
+  reservedKes: number
+  reservedUnits: number
+  realizedPnlKes: number | null
+  expiresAt: string | null
+  activatedAt: string | null
   status: OrderRowStatus
   idempotencyKey: string | null
   createdAt: string
@@ -222,6 +241,35 @@ export interface TradeExecutionResult {
   leverage: number | null
   liquidationPriceUsd: number | null
   wallet: { balanceKes: number; lockedKes: number }
+}
+
+export interface PlaceOrderResult {
+  ok: boolean
+  duplicate: boolean
+  orderId: string
+  orderType: OrderKind
+  side: TradeSide
+  symbol: AssetSymbol
+  quantity: number
+  limitPrice: number | null
+  triggerPrice: number | null
+  reservedKes: number
+  expiresAt: string | null
+  wallet: { balanceKes: number; lockedKes: number }
+}
+
+export interface CancelOrderResult {
+  ok: boolean
+  orderId: string
+  status: string
+}
+
+export interface EngineTickResult {
+  ok: boolean
+  filled: number
+  triggered: number
+  expired: number
+  liquidated: number
 }
 
 export interface ClosePositionResult {

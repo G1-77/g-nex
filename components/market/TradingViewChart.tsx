@@ -11,7 +11,7 @@ import {
   type ISeriesApi,
   type UTCTimestamp,
 } from 'lightweight-charts'
-import { fetchOHLCData, generateMockIntradayData, getIntervalMs } from '@/lib/market/ohlc'
+import { fetchOHLCData, fetchGoldOHLC, getIntervalMs } from '@/lib/market/ohlc'
 import type { OHLCData, Timeframe } from '@/lib/market/ohlc'
 import type { AssetSymbol } from '@/lib/supabase/types'
 
@@ -22,20 +22,18 @@ interface TradingViewChartProps {
   currentPrice: number
 }
 
-const SUPPORTED_SYMBOLS: AssetSymbol[] = ['BTC', 'ETH', 'SOL', 'XRP', 'USDT']
-
 const VISIBLE_BARS = 80
 
-async function loadOHLC(symbol: AssetSymbol, timeframe: Timeframe, currentPrice: number): Promise<OHLCData[]> {
-  if (SUPPORTED_SYMBOLS.includes(symbol)) {
-    try {
-      const data = await fetchOHLCData(symbol, timeframe)
-      if (data.length > 0) return data
-    } catch {
-      // fall through to mock generator
-    }
+/**
+ * Loads real OHLC candles only. There is deliberately no synthetic fallback:
+ * when a provider fails the chart renders an explicit unavailable state
+ * rather than fabricated price history.
+ */
+async function loadOHLC(symbol: AssetSymbol, timeframe: Timeframe): Promise<OHLCData[]> {
+  if (symbol === 'XAU') {
+    return fetchGoldOHLC(timeframe)
   }
-  return generateMockIntradayData(currentPrice, timeframe)
+  return fetchOHLCData(symbol, timeframe)
 }
 
 export default function TradingViewChart({ symbol, timeframe, chartType, currentPrice }: TradingViewChartProps) {
@@ -44,10 +42,11 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
   const seriesRef = useRef<ISeriesApi<'Line'> | ISeriesApi<'Candlestick'> | null>(null)
   const lastCandleRef = useRef<{ time: number; open: number; high: number; low: number; close: number } | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['ohlc', symbol, timeframe],
-    queryFn: () => loadOHLC(symbol, timeframe, currentPrice),
+    queryFn: () => loadOHLC(symbol, timeframe),
     staleTime: 1000 * 30,
+    retry: 1,
     refetchInterval: 1000 * 60, // slow baseline refresh; live ticks stream below
   })
 
@@ -202,6 +201,16 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
             <div className="text-center space-y-3">
               <div className="h-10 w-10 border-4 border-slate-800 border-t-yellow-600 rounded-full animate-spin mx-auto" />
               <p className="text-xs text-slate-500 font-mono">Loading chart data...</p>
+            </div>
+          </div>
+        )}
+        {isError && !isLoading && (
+          <div className="absolute inset-0 z-10 bg-slate-950/80 flex items-center justify-center">
+            <div className="text-center space-y-2 px-6">
+              <p className="text-sm font-semibold text-slate-300">Chart data unavailable</p>
+              <p className="text-xs text-slate-500 font-mono">
+                Live {symbol} history could not be loaded. Price quotes remain active.
+              </p>
             </div>
           </div>
         )}

@@ -11,9 +11,10 @@ import type { AssetSymbol } from '@/lib/supabase/types'
 
 // Convert API price data to MarketTicker format
 function convertToMarketTickers(priceData: MarketPrice[], watchlist: AssetSymbol[] = []): MarketTicker[] {
+  const fetchedAt = Date.now()
   return priceData.map((price) => {
     const asset = MARKET_ASSETS[price.symbol as AssetSymbol]
-    
+
     // Generate simple sparkline from price changes (mock for now)
     const currentPrice = price.price_usd
     const change = price.change_24h
@@ -30,6 +31,11 @@ function convertToMarketTickers(priceData: MarketPrice[], watchlist: AssetSymbol
     // Calculate bullish sentiment (simplified - based on positive change)
     const bullishPercent = change >= 0 ? Math.min(70 + change * 2, 90) : Math.max(30 + change * 2, 10)
 
+    // Provenance: prefer the provider timestamp; fall back to fetch time so
+    // staleness guards always have something honest to evaluate.
+    const providerTs = Date.parse(price.last_updated)
+    const lastUpdatedAt = Number.isFinite(providerTs) && providerTs > 0 ? providerTs : fetchedAt
+
     return {
       symbol: price.symbol as AssetSymbol,
       name: asset?.name || price.symbol,
@@ -43,7 +49,8 @@ function convertToMarketTickers(priceData: MarketPrice[], watchlist: AssetSymbol
       marketCap: price.market_cap,
       volume24h: price.volume_24h,
       high24h: price.high_24h,
-      low24h: price.low_24h
+      low24h: price.low_24h,
+      lastUpdatedAt
     }
   })
 }

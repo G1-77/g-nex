@@ -23,6 +23,14 @@ const VALIDATORS: Record<SettingKey, (value: unknown) => boolean> = {
   supported_assets: (v) =>
     Array.isArray(v) && v.every((a) => typeof a === "string") &&
     (v as string[]).every((a) => ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"].includes(a)),
+  trading_enabled: (v) => typeof v === "boolean",
+  quick_trade_enabled: (v) => typeof v === "boolean",
+  spot_enabled: (v) => typeof v === "boolean",
+  ftt_enabled: (v) => typeof v === "boolean",
+  min_trade_usd: (v) => typeof v === "number" && Number.isFinite(v) && v >= 0,
+  max_trade_usd: (v) => typeof v === "number" && Number.isFinite(v) && v > 0,
+  max_leverage: (v) =>
+    typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 100,
 }
 
 export async function GET() {

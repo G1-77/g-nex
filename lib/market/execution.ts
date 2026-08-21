@@ -43,7 +43,9 @@ export async function getSymbolPriceUsd(symbol: string): Promise<number> {
   return price.current_price
 }
 
-const TRADING_FEE_KEY = 'trading_fee_percent'
+// The admin settings UI writes `trading_fee_pct` (see lib/admin/settings.ts);
+// reading any other key here would silently orphan the admin fee control.
+const TRADING_FEE_KEY = 'trading_fee_pct'
 const DEFAULT_TRADING_FEE_PERCENT = 0.5
 
 /** Platform trading fee percent from platform_settings (authoritative). */
@@ -159,6 +161,18 @@ const TRADE_ERROR_MESSAGES: Record<string, string> = {
   ASSET_PRICE_UNAVAILABLE: 'We could not fetch a live price for this asset. Try again shortly.',
   WALLET_NOT_FOUND: 'No wallet is linked to your account yet.',
   POSITION_NOT_FOUND: 'Position not found, or it is already closed.',
+  TRADING_DISABLED: 'Trading is currently disabled. Please try again later.',
+  PRODUCT_DISABLED: 'This trading product is currently unavailable.',
+  TRADE_AMOUNT_TOO_SMALL: 'The trade amount is below the platform minimum.',
+  TRADE_AMOUNT_TOO_LARGE: 'The trade amount exceeds the platform maximum.',
+  LEVERAGE_LIMIT_EXCEEDED: 'The selected leverage exceeds the platform limit.',
+  INVALID_ORDER_TYPE: 'Unsupported order type.',
+  INVALID_LIMIT_PRICE: 'Enter a valid limit price.',
+  INVALID_TRIGGER_PRICE: 'Enter a valid trigger price.',
+  TRIGGER_PRICE_INVALID: 'That trigger price is on the wrong side of the current market.',
+  ORDER_NOT_FOUND: 'Order not found.',
+  ORDER_NOT_CANCELLABLE: 'This order can no longer be cancelled.',
+  PRODUCT_UNAVAILABLE: 'This product is not available yet.',
 }
 
 export function mapTradeError(rawMessage: string): { status: number; message: string } {

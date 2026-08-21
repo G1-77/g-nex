@@ -1,6 +1,11 @@
 import { createServiceClient } from '@/lib/admin/service'
-import { buildTradeQuote, TRADABLE_SYMBOLS } from '@/lib/market/execution'
-import type { TradeMode, TradeSide } from '@/lib/supabase/market.types'
+import { buildTradeQuote } from '@/lib/market/execution'
+import {
+  getTradingConfig,
+  isSymbolTradable,
+  productAllowed,
+} from '@/lib/market/trading-config'
+import type { ProductType, TradeMode, TradeSide } from '@/lib/supabase/market.types'
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -9,10 +14,10 @@ export async function GET(req: Request) {
   const mode = (url.searchParams.get('mode') ?? '').toLowerCase() as TradeMode
   const amountUsd = Number(url.searchParams.get('amount'))
   const leverage = Number(url.searchParams.get('leverage'))
+  const productRaw = url.searchParams.get('product')
+  const product: ProductType =
+    productRaw === 'quick_trade' || productRaw === 'ftt' ? productRaw : 'spot'
 
-  if (!TRADABLE_SYMBOLS.includes(symbol as (typeof TRADABLE_SYMBOLS)[number])) {
-    return new Response('This asset is not available for trading', { status: 400 })
-  }
   if (side !== 'buy' && side !== 'sell') {
     return new Response('Invalid side', { status: 400 })
   }
@@ -23,8 +28,22 @@ export async function GET(req: Request) {
     return new Response('Enter a valid USD amount', { status: 400 })
   }
 
+  const service = createServiceClient()
+
+  // Quotes respect the same admin gates as execution so the preview can never
+  // offer a trade the engine would reject.
+  const config = await getTradingConfig(service)
+  if (!productAllowed(config, product)) {
+    return new Response(
+      config.tradingEnabled ? 'This trading product is currently unavailable.' : 'Trading is currently disabled.',
+      { status: 503 }
+    )
+  }
+  if (!(await isSymbolTradable(service, symbol))) {
+    return new Response('This asset is not available for trading', { status: 400 })
+  }
+
   try {
-    const service = createServiceClient()
     const quote = await buildTradeQuote(service, {
       symbol,
       side,

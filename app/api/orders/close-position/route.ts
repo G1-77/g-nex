@@ -6,6 +6,7 @@ import {
   mapTradeError,
 } from '@/lib/market/execution'
 import { fetchUsdKesRate } from '@/lib/market/fx'
+import { getTradingConfig } from '@/lib/market/trading-config'
 import type { ClosePositionResult } from '@/lib/supabase/market.types'
 
 export async function POST(req: Request) {
@@ -30,6 +31,12 @@ export async function POST(req: Request) {
   }
 
   const service = createServiceClient()
+
+  // Closing a position is a financial mutation — the trading kill-switch gates it.
+  const config = await getTradingConfig(service)
+  if (!config.tradingEnabled) {
+    return new Response(mapTradeError('TRADING_DISABLED').message, { status: 503 })
+  }
 
   // Resolve the position's asset for the authoritative exit price.
   const { data: position, error: posError } = await service

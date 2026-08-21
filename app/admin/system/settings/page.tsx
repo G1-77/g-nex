@@ -18,6 +18,13 @@ const SETTING_LABELS: Record<string, string> = {
   deposit_min_kes: "Minimum deposit (KES)",
   deposit_max_kes: "Maximum deposit (KES)",
   maintenance_mode: "Maintenance mode",
+  trading_enabled: "Trading master switch",
+  quick_trade_enabled: "Quick Trade product",
+  spot_enabled: "Spot Pro product",
+  ftt_enabled: "FTT product",
+  min_trade_usd: "Minimum trade (USD)",
+  max_trade_usd: "Maximum trade (USD)",
+  max_leverage: "Max leverage (x)",
 }
 
 const PROVIDERS = ["mpesa", "airtel"]
@@ -179,6 +186,81 @@ export default function AdminSettingsPage() {
           Enforced in the edge proxy; staff keep access while it is on.
         </p>
       </AdminPanel>
+
+      <AdminPanel className="p-4">
+        <span className="text-xs font-semibold text-[var(--admin-text-dim)]">Trading availability</span>
+        <div className="mt-3 space-y-3">
+          {(
+            [
+              ["trading_enabled", SETTING_KEYS.TRADING_ENABLED],
+              ["quick_trade_enabled", SETTING_KEYS.QUICK_TRADE_ENABLED],
+              ["spot_enabled", SETTING_KEYS.SPOT_ENABLED],
+              ["ftt_enabled", SETTING_KEYS.FTT_ENABLED],
+            ] as const
+          ).map(([key, settingKey]) => (
+            <div key={key} className="flex items-center gap-3">
+              <button
+                onClick={() => setField(settingKey, !Boolean(settings[key]))}
+                className={`relative h-6 w-11 cursor-pointer rounded-full transition-colors ${
+                  settings[key] ? "bg-[var(--admin-green)]" : "bg-white/10"
+                }`}
+                aria-pressed={Boolean(settings[key])}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                    settings[key] ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+              <span className="text-sm text-slate-200">{SETTING_LABELS[key]}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-[10px] text-[var(--admin-text-dim)]">
+          Enforced server-side on every order route: master switch gates all execution;
+          product switches gate Quick Trade, Spot Pro and FTT independently.
+        </p>
+      </AdminPanel>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <AdminPanel className="p-4">
+          <span className="text-xs font-semibold text-[var(--admin-text-dim)]">{SETTING_LABELS.min_trade_usd}</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={num("min_trade_usd")}
+            onChange={(e) => setField(SETTING_KEYS.MIN_TRADE_USD, Number(e.target.value))}
+            className="admin-input mt-2 w-full font-mono text-sm"
+          />
+        </AdminPanel>
+
+        <AdminPanel className="p-4">
+          <span className="text-xs font-semibold text-[var(--admin-text-dim)]">{SETTING_LABELS.max_trade_usd}</span>
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={num("max_trade_usd")}
+            onChange={(e) => setField(SETTING_KEYS.MAX_TRADE_USD, Number(e.target.value))}
+            className="admin-input mt-2 w-full font-mono text-sm"
+          />
+        </AdminPanel>
+
+        <AdminPanel className="p-4">
+          <span className="text-xs font-semibold text-[var(--admin-text-dim)]">{SETTING_LABELS.max_leverage}</span>
+          <input
+            type="number"
+            step="1"
+            min="1"
+            max="100"
+            value={num("max_leverage")}
+            onChange={(e) => setField(SETTING_KEYS.MAX_LEVERAGE, Math.floor(Number(e.target.value)))}
+            className="admin-input mt-2 w-full font-mono text-sm"
+          />
+          <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">Hard ceiling 100x.</p>
+        </AdminPanel>
+      </div>
 
       <div className="grid gap-3 md:grid-cols-2">
         <AdminPanel className="p-4">

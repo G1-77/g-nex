@@ -8,8 +8,19 @@ import {
   roundTo,
 } from '@/lib/market/execution'
 import { fetchUsdKesRate } from '@/lib/market/fx'
-import { TRADABLE_SYMBOLS } from '@/lib/market/execution'
-import type { TradeExecutionResult, TradeMode, TradeSide } from '@/lib/supabase/market.types'
+import {
+  getTradingConfig,
+  isSymbolTradable,
+  productAllowed,
+} from '@/lib/market/trading-config'
+import type {
+  ProductType,
+  TradeExecutionResult,
+  TradeMode,
+  TradeSide,
+} from '@/lib/supabase/market.types'
+
+const PRODUCTS: ProductType[] = ['quick_trade', 'spot', 'ftt']
 
 export async function POST(req: Request) {
   const supabase = await createServerClient()
@@ -27,6 +38,7 @@ export async function POST(req: Request) {
     amountUsd?: unknown
     leverage?: unknown
     idempotencyKey?: unknown
+    product?: unknown
   }
   try {
     body = await req.json()
@@ -43,10 +55,11 @@ export async function POST(req: Request) {
     typeof body.idempotencyKey === 'string' && body.idempotencyKey.length > 0
       ? body.idempotencyKey
       : null
+  const product =
+    typeof body.product === 'string' && PRODUCTS.includes(body.product as ProductType)
+      ? (body.product as ProductType)
+      : 'spot'
 
-  if (!TRADABLE_SYMBOLS.includes(symbol as (typeof TRADABLE_SYMBOLS)[number])) {
-    return new Response('This asset is not available for trading', { status: 400 })
-  }
   if (side !== 'buy' && side !== 'sell') {
     return new Response('Invalid side', { status: 400 })
   }
@@ -57,16 +70,38 @@ export async function POST(req: Request) {
     return new Response('Enter a valid USD amount', { status: 400 })
   }
 
+  // ---- Authoritative configuration: admin controls gate every execution.
+  const service = createServiceClient()
+  const config = await getTradingConfig(service)
+
+  if (!productAllowed(config, product)) {
+    return new Response(
+      config.tradingEnabled ? 'This trading product is currently unavailable.' : mapTradeError('TRADING_DISABLED').message,
+      { status: 503 }
+    )
+  }
+  if (!(await isSymbolTradable(service, symbol))) {
+    return new Response('This asset is not available for trading', { status: 400 })
+  }
+  if (amountUsd < config.minTradeUsd) {
+    return new Response(mapTradeError('TRADE_AMOUNT_TOO_SMALL').message, { status: 400 })
+  }
+  if (amountUsd > config.maxTradeUsd) {
+    return new Response(mapTradeError('TRADE_AMOUNT_TOO_LARGE').message, { status: 400 })
+  }
+
   let leverage: number | null = null
   if (mode === 'margin') {
     leverage = Math.round(leverageRaw)
-    if (!Number.isFinite(leverage) || leverage < 1 || leverage > 100) {
-      return new Response('Leverage must be between 1x and 100x', { status: 400 })
+    if (!Number.isFinite(leverage) || leverage < 1) {
+      return new Response('Leverage must be between 1x and the platform limit', { status: 400 })
+    }
+    if (leverage > config.maxLeverage) {
+      return new Response(`Leverage is capped at ${config.maxLeverage}x`, { status: 400 })
     }
   }
 
   // ---- Authoritative execution inputs: the browser never sends price/fx/fee.
-  const service = createServiceClient()
   const [priceUsd, fxRate, feePercent] = await Promise.all([
     getSymbolPriceUsd(symbol),
     fetchUsdKesRate(),
@@ -91,6 +126,7 @@ export async function POST(req: Request) {
     p_fee_percent: feePercent,
     p_leverage: leverage ?? 1,
     p_idempotency_key: idempotencyKey,
+    p_product: product,
   })
 
   if (error) {
