@@ -9,17 +9,22 @@ export interface BinanceTicker {
   change24h: number
   high24h: number
   low24h: number
+  /** Exchange event time — can be skewed vs the local clock. */
   lastUpdated: number
+  /** Local receipt time — the skew-proof freshness signal. */
+  receivedAt: number
 }
 
 const WS_URL = 'wss://stream.binance.com:9443/stream?streams='
 
+// Only pairs where the quote asset is genuinely USD-pegged. USDT itself has no
+// honest Binance USD pair (usdcusdt is a different instrument), so it stays on
+// the REST baseline instead of being overlaid with a wrong-asset price.
 const PAIR_MAP: Partial<Record<AssetSymbol, string>> = {
   BTC: 'btcusdt',
   ETH: 'ethusdt',
   SOL: 'solusdt',
   XRP: 'xrpusdt',
-  USDT: 'usdcusdt',
 }
 
 const STREAM_SYMBOL_MAP: Record<string, AssetSymbol> = {
@@ -27,7 +32,6 @@ const STREAM_SYMBOL_MAP: Record<string, AssetSymbol> = {
   ethusdt: 'ETH',
   solusdt: 'SOL',
   xrpusdt: 'XRP',
-  usdcusdt: 'USDT',
 }
 
 const LIVE_SYMBOLS = Object.keys(PAIR_MAP) as AssetSymbol[]
@@ -99,6 +103,7 @@ function connect() {
         high24h: parseFloat(data.h ?? '0'),
         low24h: parseFloat(data.l ?? '0'),
         lastUpdated: data.E ?? Date.now(),
+        receivedAt: Date.now(),
       }
 
       // Create a new Map reference so useSyncExternalStore detects the change

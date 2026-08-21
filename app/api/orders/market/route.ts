@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/admin/service'
 import {
   buildTradeQuote,
   getSymbolPriceUsd,
-  getPlatformTradingFee,
+  getTradingFeeRate,
   mapTradeError,
   roundTo,
 } from '@/lib/market/execution'
@@ -102,10 +102,10 @@ export async function POST(req: Request) {
   }
 
   // ---- Authoritative execution inputs: the browser never sends price/fx/fee.
-  const [priceUsd, fxRate, feePercent] = await Promise.all([
+  const [priceUsd, fxRate, feeRate] = await Promise.all([
     getSymbolPriceUsd(symbol),
     fetchUsdKesRate(),
-    getPlatformTradingFee(service),
+    getTradingFeeRate(service),
   ])
 
   if (!Number.isFinite(priceUsd) || priceUsd <= 0) {
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
     p_amount_usd: amountUsd,
     p_price_usd: priceUsd,
     p_fx_rate: fxRate,
-    p_fee_percent: feePercent,
+    p_fee_rate: feeRate,
     p_leverage: leverage ?? 1,
     p_idempotency_key: idempotencyKey,
     p_product: product,

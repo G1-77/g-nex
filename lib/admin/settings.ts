@@ -24,11 +24,25 @@ export const SETTING_KEYS = {
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS]
 
-/** Defaults mirror the code constants so the platform behaves the same with no rows. */
+/** Public display/bounds config served by GET /api/platform/config. */
+export interface PlatformConfig {
+  /** Trading fee as a fraction of notional (0.02 = 2%). */
+  tradingFeeRate: number
+  /** Withdrawal fee as a fraction of the withdrawn amount (0.03 = 3%). */
+  withdrawalFeeRate: number
+  minTradeUsd: number
+  maxTradeUsd: number
+}
+
+/**
+ * Defaults mirror the code constants so the platform behaves the same with no
+ * rows. Fee convention (unified): every fee/rate is stored as a FRACTION —
+ * trading_fee_pct 0.02 = 2%, withdrawal_fee_rate 0.03 = 3%.
+ */
 export const SETTING_DEFAULTS: Record<SettingKey, unknown> = {
-  trading_fee_pct: 0.5,
+  trading_fee_pct: 0.02,
   max_withdraw_pct: 0.7,
-  withdrawal_fee_rate: 0.02,
+  withdrawal_fee_rate: 0.03,
   deposit_min_kes: 100,
   deposit_max_kes: 500_000,
   maintenance_mode: false,

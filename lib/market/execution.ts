@@ -45,23 +45,32 @@ export async function getSymbolPriceUsd(symbol: string): Promise<number> {
 
 // The admin settings UI writes `trading_fee_pct` (see lib/admin/settings.ts);
 // reading any other key here would silently orphan the admin fee control.
+// Fee convention (unified): platform_settings stores FRACTIONS — 0.02 = 2%.
 const TRADING_FEE_KEY = 'trading_fee_pct'
-const DEFAULT_TRADING_FEE_PERCENT = 0.5
+export const DEFAULT_TRADING_FEE_RATE = 0.02
 
-/** Platform trading fee percent from platform_settings (authoritative). */
-export async function getPlatformTradingFee(client: SupabaseClient): Promise<number> {
+/**
+ * Platform trading fee RATE (fraction of notional, e.g. 0.02 = 2%) from
+ * platform_settings. Legacy whole-percent rows (e.g. 2 for 2%) written before
+ * the fraction migration are normalized so a stale row can never 100x a fee.
+ */
+export async function getTradingFeeRate(client: SupabaseClient): Promise<number> {
   const { data } = await client
     .from('platform_settings')
     .select('value')
     .eq('key', TRADING_FEE_KEY)
     .maybeSingle()
 
-  if (data?.value && typeof data.value === 'number') return data.value
-  if (data?.value && typeof data.value === 'object') {
-    const rate = (data.value as { rate?: unknown }).rate
-    if (typeof rate === 'number') return rate
+  let rate: number | undefined
+  if (data?.value && typeof data.value === 'number') rate = data.value
+  else if (data?.value && typeof data.value === 'object') {
+    const nested = (data.value as { rate?: unknown }).rate
+    if (typeof nested === 'number') rate = nested
   }
-  return DEFAULT_TRADING_FEE_PERCENT
+  if (rate === undefined || !Number.isFinite(rate) || rate < 0) return DEFAULT_TRADING_FEE_RATE
+  // Whole-number rows from the legacy percent convention (>1 means "2" = 2%).
+  if (rate > 1) return rate / 100
+  return rate
 }
 
 export function roundTo(value: number, digits: number): number {
@@ -93,15 +102,15 @@ export async function buildTradeQuote(
   const mode = input.mode === 'margin' ? 'margin' : 'spot'
   const leverage = mode === 'margin' ? Math.max(1, Math.round(input.leverage ?? 1)) : null
 
-  const [priceUsd, fxRate, feePercent] = await Promise.all([
+  const [priceUsd, fxRate, feeRate] = await Promise.all([
     getSymbolPriceUsd(symbol),
     fetchUsdKesRate(),
-    getPlatformTradingFee(client),
+    getTradingFeeRate(client),
   ])
 
   const amountUsd = roundTo(input.amountUsd, 2)
   const quantity = computeQuantity(amountUsd, priceUsd)
-  const feeUsd = roundTo(amountUsd * (feePercent / 100), 8)
+  const feeUsd = roundTo(amountUsd * feeRate, 8)
   const feeKes = roundTo(feeUsd * fxRate, 2)
 
   if (mode === 'margin' && leverage !== null) {
@@ -118,7 +127,7 @@ export async function buildTradeQuote(
       amountUsd,
       priceUsd: roundTo(priceUsd, 4),
       fxRate,
-      feePercent,
+      feeRate,
       quantity,
       feeUsd,
       feeKes,
@@ -140,7 +149,7 @@ export async function buildTradeQuote(
     amountUsd,
     priceUsd: roundTo(priceUsd, 4),
     fxRate,
-    feePercent,
+    feeRate,
     quantity,
     feeUsd,
     feeKes,

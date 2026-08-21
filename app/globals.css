@@ -25,6 +25,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Tailwind v4 dropped the UA "pointer" cursor for buttons — restore it so
+   every clickable control reads as clickable without per-component classes. */
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
 /* Remove native white window scrollbar (scrolling still works) */
 html, body {
   scrollbar-width: none;      /* Firefox */

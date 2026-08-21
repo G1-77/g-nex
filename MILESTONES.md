@@ -199,3 +199,90 @@
 - Migration executed statement-by-statement against the remote DB inside a
   rolled-back transaction: 12 ALTER / 7 CREATE / 4 REVOKE / 3 GRANT / seed INSERT — zero errors.
 - `tsc --noEmit` ✅ · `eslint` (new code) ✅ 0 errors · `next build` ✅ all routes compile.
+
+---
+
+## Phase 8 — Trading UX + Market Data Correction & Stabilization
+
+**Status:** ✅ Implemented, migrations applied to remote, end-to-end verified
+
+### Issues Found → Root Causes
+1. **Fees wrong (0.5% trading / 2% withdrawal):** `platform_settings` was never
+   seeded, so silent fallback defaults applied; fee semantics were split between
+   whole-percent (`p_fee_percent`) and fraction conventions across RPCs, routes
+   and UI. Withdraw page even hardcoded "Processing fee · 2%".
+2. **"Price feed delayed" froze XAU/USDT permanently:** `isPriceStale` compared
+   provider event-time against the device clock (skew-sensitive), and gold's
+   >90s upstream cadence exceeded a crypto-tuned single ceiling.
+3. **Browser-side provider pipeline:** pages called CoinGecko/xaus directly
+   (`next:{revalidate}` inert client-side) — rate-limit/CORS exposure; six
+   duplicated symbol maps; asset page hardcoded `KES_TO_USD_RATE = 130`.
+4. **Charts destroyed/recreated on every 60s refetch**, no persistent current-price
+   marker, `fitContent()` zoom-outs hid live movement.
+5. **Quick Trade SELL ignored holdings** — could attempt to sell unheld assets;
+   server errors surfaced raw with no pre-validation or reason line.
+6. **Engine fills didn't refresh the UI:** invalidation used bare
+   `['wallet']/['holdings']/['orders']` keys that matched nothing (real channels
+   are `marketKeys.*` = `['market', channel, userId]`).
+7. **Timeframes missing in Spot Terminal:** local list stripped to
+   `1H/4H/1D/1W`; CoinGecko free OHLC is too coarse for real 1m–15m candles.
+8. **Withdrawals broken for every user (production bug found by smoke test):**
+   `withdrawal_requests` RLS had SELECT-only policies — no INSERT policy
+   (deposits got the equivalent fix in `20260819080443`, withdrawals never did),
+   so `POST /api/withdrawals` always failed RLS with "new row violates
+   row-level security policy".
+9. **Buttons showed default cursor:** Tailwind v4 removed the UA
+   `button { cursor: pointer }` rule.
+10. **Crash risk on non-HTTPS origins:** `crypto.randomUUID()` throws on
+    insecure contexts, silently killing trade submission.
+
+### Fixes
+- Fees unified as **fractions end-to-end** (`trading_fee_pct=0.02`,
+  `withdrawal_fee_rate=0.03` force-seeded; RPCs recreated with `p_fee_rate`;
+  routes/hooks/UI read one source; admin settings validated 0–0.2 with clear labels).
+- Server-authoritative pricing: new `GET /api/market/prices` and
+  `GET /api/market/ohlc` wrap the existing services; browsers never contact
+  providers; shared FX everywhere (hardcoded rate deleted).
+- Honest freshness model: provenance-based (`lastUpdatedAt` + `receivedAt`,
+  optimistic min-age), per-source ceilings (WS 90s / REST baseline 120s / gold
+  300s); LIVE/DELAYED/UNAVAILABLE pills; execution still pauses only on
+  delayed/unavailable.
+- Charts created once per mount and mutated in place (`setData`/`update`),
+  persistent current-price line via `createPriceLine`, `autoSize`, real Binance
+  klines for crypto 1m–1M; gold honestly restricted to 1D/1W/1M (xaus serves
+  daily bars only); USDT removed from the WS overlay (no honest USD pair).
+- Quick Trade repaired: BUY/SELL bounds vs balance/holdings, MIN/25/50/75/MAX
+  chips, quote tracking (5s stale / 8s poll), disabled-button reason lines,
+  UUID fallback, engine-tick keys fixed, Spot Terminal timeframes restored via
+  shared `TimeframeSelector`; global pointer cursor restored.
+
+### Database Changes
+- `20260822100000_fee_fraction_semantics.sql`: settings seed + recreate
+  `execute_trade`/`place_order`/`process_conditional_orders`/`close_position`
+  with fraction fees (DROP+CREATE — Postgres forbids renaming a parameter via
+  CREATE OR REPLACE). Legacy dormant fee RPCs intentionally left untouched.
+- `20260822110000_withdrawal_insert_policy.sql`: INSERT policy for
+  `withdrawal_requests` (owner-bound, statuses pending/approved only).
+- Both pushed to remote and recorded in migration history.
+
+### Verification (executed live against remote)
+- `tsc --noEmit` ✅ · ESLint ✅ · production build compiles ✅ (build-worker
+  type-check segfaults under local memory pressure; standalone tsc is the same check)
+- `GET /api/platform/config` → `{tradingFeeRate:0.02, withdrawalFeeRate:0.03}` ✅
+- Quote $50 BTC → fee $1.00 (**exactly 2%**); BUY executed with
+  fee_kes 129.44 = 2% of gross; SELL net = gross − 2% ✅
+- Limit order reserved funds incl. fee; cancel released them ✅ · engine tick OK ✅
+- Withdrawal request persisted with fee_kes 30 = **3% of KES 1000**, auto-approved ✅
+- OHLC endpoints return real Binance klines (1m/4H) and gold daily; XAU intraday
+  honestly rejected 400 ✅
+- Settings rows confirmed remotely: `trading_fee_pct=0.02`, `withdrawal_fee_rate=0.03` ✅
+
+### Key Files
+`supabase/migrations/202608221{00000,10000}_*.sql`, `lib/market/{execution,freshness,ohlc,price-service,binance-realtime}.ts`,
+`app/api/market/{prices,ohlc}/route.ts`, `app/api/platform/config/route.ts`,
+`app/api/orders/*`, `lib/react-query/market/{queries.prices,queries.config}.ts`, `lib/hooks/useNow.ts`,
+`components/trade/{QuickTradePanel,SpotTerminal}.tsx`, `components/market/{TradingViewChart,TimeframeSelector}.tsx`,
+`app/(main)/markets/[symbol]/page.tsx`, `app/(main)/wallet/withdraw/page.tsx`, `app/globals.css`
+
+### Known Follow-ups
+- Visual/manual QA of chart interactions + narrow viewports recommended.

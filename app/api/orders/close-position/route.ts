@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/admin/service'
 import {
   getSymbolPriceUsd,
-  getPlatformTradingFee,
+  getTradingFeeRate,
   mapTradeError,
 } from '@/lib/market/execution'
 import { fetchUsdKesRate } from '@/lib/market/fx'
@@ -52,10 +52,10 @@ export async function POST(req: Request) {
     return new Response('Position not found, or it is already closed', { status: 404 })
   }
 
-  const [closePriceUsd, fxRate, feePercent] = await Promise.all([
+  const [closePriceUsd, fxRate, feeRate] = await Promise.all([
     getSymbolPriceUsd(position.asset_symbol),
     fetchUsdKesRate(),
-    getPlatformTradingFee(service),
+    getTradingFeeRate(service),
   ])
 
   if (!Number.isFinite(closePriceUsd) || closePriceUsd <= 0) {
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     p_position_id: positionId,
     p_close_price_usd: closePriceUsd,
     p_fx_rate: fxRate,
-    p_fee_percent: feePercent,
+    p_fee_rate: feeRate,
   })
 
   if (error) {

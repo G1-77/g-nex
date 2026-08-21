@@ -11,7 +11,8 @@ import {
   usePortfolioSummary,
 } from '@/lib/react-query/market/queries.market'
 import { formatKes } from '@/lib/market/wallet-utils'
-import { WALLET_CONFIG, withdrawalFee, DEMO_MODE } from '@/lib/constants/wallet'
+import { WALLET_CONFIG, WITHDRAWAL_FEE_RATE, DEMO_MODE } from '@/lib/constants/wallet'
+import { usePlatformConfigQuery } from '@/lib/react-query/market/queries.config'
 import { useDemoSimulation } from '@/lib/hooks/useDemoSimulation'
 
 export default function WithdrawPage() {
@@ -22,6 +23,11 @@ export default function WithdrawPage() {
   const { data: requests = [] } = useGetUserRequestsQuery(userId)
   const { data: profile } = useGetUserProfileQuery(userId)
   const createWithdrawal = useCreateWithdrawalMutation()
+  const { data: config } = usePlatformConfigQuery()
+
+  // Display rate mirrors the server-side withdrawal gate (platform_settings,
+  // fallback to the shared constant). The payout route re-derives the fee.
+  const feeRate = config?.withdrawalFeeRate ?? WITHDRAWAL_FEE_RATE
 
   const [amount, setAmount] = useState('')
   const [provider, setProvider] = useState<'M-Pesa' | 'Airtel Money'>(profile?.mobileMoneyProvider === 'Airtel' ? 'Airtel Money' : 'M-Pesa')
@@ -56,7 +62,7 @@ export default function WithdrawPage() {
     Math.min(capLimit, balanceKes - reserved.pendingOut - reserved.unverified)
   )
   const amountNum = Number(amount)
-  const fee = withdrawalFee(amountNum)
+  const fee = amountNum > 0 ? amountNum * feeRate : 0
   const valid = amountNum > fee && amountNum <= available && phone.trim().length > 0
   const receive = Math.max(0, amountNum - fee)
 
@@ -224,7 +230,7 @@ export default function WithdrawPage() {
               <span className="text-slate-200">KES {formatKes(amountNum)}</span>
             </div>
             <div className="mt-1 flex justify-between text-slate-500">
-              <span>Processing fee · 2%</span>
+              <span>Processing fee · {(feeRate * 100).toFixed(1).replace(/\.0$/, '')}%</span>
               <span>KES {formatKes(fee)}</span>
             </div>
             <div className="mt-2 flex justify-between border-t border-slate-800/80 pt-2 font-bold text-slate-200">
@@ -237,7 +243,7 @@ export default function WithdrawPage() {
         <button
           type="submit"
           disabled={!valid || createWithdrawal.isPending}
-          className="mt-6 w-full rounded-xl bg-yellow-600 px-4 py-3.5 text-sm font-bold text-slate-950 transition-colors hover:bg-yellow-500 disabled:opacity-50"
+          className="mt-6 w-full rounded-xl bg-yellow-600 px-4 py-3.5 text-sm font-bold text-slate-950 transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {createWithdrawal.isPending ? 'Submitting…' : `Withdraw KES ${amountNum > 0 ? formatKes(amountNum) : '—'}`}
         </button>

@@ -11,9 +11,11 @@ import {
 } from "@/lib/admin/settings"
 
 const VALIDATORS: Record<SettingKey, (value: unknown) => boolean> = {
-  trading_fee_pct: (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 100,
+  // Fee convention (unified): fractions — 0.02 = 2%, 0.03 = 3%. Hard ceiling
+  // 20% keeps a fat-fingered "20" from becoming a 2000% fee.
+  trading_fee_pct: (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 0.2,
   max_withdraw_pct: (v) => typeof v === "number" && Number.isFinite(v) && v > 0 && v <= 1,
-  withdrawal_fee_rate: (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1,
+  withdrawal_fee_rate: (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 0.2,
   deposit_min_kes: (v) => typeof v === "number" && Number.isFinite(v) && v >= 0,
   deposit_max_kes: (v) => typeof v === "number" && Number.isFinite(v) && v > 0,
   maintenance_mode: (v) => typeof v === "boolean",

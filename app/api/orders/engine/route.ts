@@ -1,6 +1,6 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/admin/service'
-import { getSymbolPriceUsd, getPlatformTradingFee } from '@/lib/market/execution'
+import { getSymbolPriceUsd, getTradingFeeRate } from '@/lib/market/execution'
 import { fetchUsdKesRate } from '@/lib/market/fx'
 import { getTradingConfig } from '@/lib/market/trading-config'
 
@@ -60,7 +60,7 @@ export async function POST() {
     return Response.json({ ok: true, filled: 0, triggered: 0, expired: 0, liquidated: 0 })
   }
 
-  const [prices, fxRate, feePercent] = await Promise.all([
+  const [prices, fxRate, feeRate] = await Promise.all([
     Promise.all(
       [...symbols].map(async (symbol) => {
         try {
@@ -72,7 +72,7 @@ export async function POST() {
       })
     ),
     fetchUsdKesRate(),
-    getPlatformTradingFee(service),
+    getTradingFeeRate(service),
   ])
 
   const priceMap: Record<string, number> = {}
@@ -89,7 +89,7 @@ export async function POST() {
   const { data, error } = await service.rpc('process_conditional_orders', {
     p_prices: priceMap,
     p_fx_rate: fxRate,
-    p_fee_percent: feePercent,
+    p_fee_rate: feeRate,
   })
 
   if (error) {

@@ -9,8 +9,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import TradingViewChart from '@/components/market/TradingViewChart'
+import TimeframeSelector from '@/components/market/TimeframeSelector'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useNow } from '@/lib/hooks/useNow'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
+import { usePlatformConfigQuery } from '@/lib/react-query/market/queries.config'
 import { useBinanceRealtime } from '@/lib/market/binance-realtime'
 import {
   useCancelOrderMutation,
@@ -19,19 +22,19 @@ import {
   useGetUserOrdersQuery,
   usePlaceOrderMutation,
 } from '@/lib/react-query/queries/orders.queries'
-import { useGetUserWalletQuery } from '@/lib/react-query/market/queries.market'
+import { useGetUserWalletQuery, useGetUserHoldingsQuery } from '@/lib/react-query/market/queries.market'
+import { marketKeys } from '@/lib/react-query/market/keys'
 import { MARKET_ASSETS_LIST } from '@/lib/constants/market-assets'
-import { isPriceStale } from '@/lib/market/freshness'
-import { formatKes, statusLabel } from '@/lib/market/wallet-utils'
+import { getPriceStatus, PRICE_STALE_MS, baselineCeilingFor } from '@/lib/market/freshness'
+import { timeframesForSymbol } from '@/lib/market/ohlc'
+import { formatKes, formatUnits, statusLabel } from '@/lib/market/wallet-utils'
 import type { AssetSymbol } from '@/lib/supabase/types'
 import type { MarketTicker, OrderRow } from '@/lib/supabase/market.types'
 import type { BinanceTicker } from '@/lib/market/binance-realtime'
 import type { Timeframe } from '@/lib/market/ohlc'
-import { cn } from '@/lib/utils'
+import { cn, safeRandomUUID } from '@/lib/utils'
 
 type FormTab = 'market' | 'limit' | 'stop' | 'tp'
-
-const TIMEFRAMES: Timeframe[] = ['1H', '4H', '1D', '1W']
 
 export default function SpotTerminal() {
   const { user } = useAuth()
@@ -48,21 +51,28 @@ export default function SpotTerminal() {
   const [feedback, setFeedback] = useState<{ tone: 'ok' | 'err'; message: string } | null>(null)
 
   const { data: wallet } = useGetUserWalletQuery(userId)
+  const { data: holdings = [] } = useGetUserHoldingsQuery(userId)
+  const { data: config } = usePlatformConfigQuery()
   const { data: baseline = [] } = useMarketPrices([symbol])
   const realtime = useBinanceRealtime()
   const { data: orders = [], isLoading: ordersLoading } = useGetUserOrdersQuery(userId)
 
   // Engine heartbeat: resolves authoritative prices server-side and fills
-  // resting conditional orders while this terminal is open.
+  // resting conditional orders while this terminal is open. Invalidation MUST
+  // target the real marketKeys.* channels — the bare ['wallet']-style keys
+  // match nothing and silently skipped reconciliation.
   const engineTick = useEngineTickQuery(userId, true)
   useEffect(() => {
-    if (engineTick.data && (engineTick.data.filled > 0 || engineTick.data.expired > 0)) {
-      void queryClient.invalidateQueries({ queryKey: ['orders'] })
-      void queryClient.invalidateQueries({ queryKey: ['wallet'] })
-      void queryClient.invalidateQueries({ queryKey: ['holdings'] })
+    if (engineTick.data && (engineTick.data.filled > 0 || engineTick.data.expired > 0) && userId) {
+      void queryClient.invalidateQueries({ queryKey: marketKeys.wallet(userId) })
+      void queryClient.invalidateQueries({ queryKey: marketKeys.holdings(userId) })
+      void queryClient.invalidateQueries({ queryKey: marketKeys.orders(userId) })
     }
-  }, [engineTick.data, queryClient])
+  }, [engineTick.data, queryClient, userId])
 
+  // Live price: Binance WS overlay on the server snapshot baseline, with
+  // provenance-based staleness (receipt time first) instead of raw event-time
+  // vs device-clock comparisons that permanently flagged slow feeds as stale.
   const ticker: MarketTicker | undefined = useMemo(() => {
     const base = baseline.find((t) => t.symbol === symbol)
     const live: BinanceTicker | undefined = realtime.get(symbol)
@@ -71,19 +81,48 @@ export default function SpotTerminal() {
     return {
       ...(base ?? ({} as MarketTicker)),
       symbol,
+      name: base?.name ?? symbol,
+      logo: base?.logo ?? '',
       priceUsd: live.priceUsd,
       change24h: live.change24h,
+      high24h: live.high24h || base?.high24h,
+      low24h: live.low24h || base?.low24h,
       lastUpdatedAt: live.lastUpdated,
+      receivedAt: live.receivedAt,
+      provider: 'binance',
     }
   }, [baseline, realtime, symbol])
 
-  const priceStale = isPriceStale(ticker?.lastUpdatedAt)
+  const isStreamed = ticker?.provider === 'binance'
+  const now = useNow(5000)
+  const priceStatus = !ticker
+    ? 'unavailable'
+    : now <= 0
+      ? 'live'
+      : getPriceStatus(ticker, now, isStreamed ? PRICE_STALE_MS : baselineCeilingFor(symbol))
+  const priceStale = priceStatus !== 'live'
   const currentPrice = ticker?.priceUsd ?? 0
+
+  // ---- Client-side pre-validation mirroring the server gates. The server
+  // re-checks everything at execution time; this exists to explain rejections
+  // before submission instead of after.
+  const minTradeUsd = config?.minTradeUsd ?? 1
+  const maxTradeUsd = config?.maxTradeUsd ?? 50_000
 
   const amountUsd = Number(amountInput)
   const validAmount = Number.isFinite(amountUsd) && amountUsd > 0
   const limitPrice = Number(limitPriceInput)
   const triggerPrice = Number(triggerPriceInput)
+
+  const heldUnits = holdings.find((h) => h.assetSymbol === symbol)?.units ?? 0
+  const maxSellUsd = heldUnits * currentPrice
+
+  let validationError: string | null = null
+  if (!userId) validationError = 'Sign in to trade'
+  else if (validAmount && amountUsd < minTradeUsd) validationError = `Minimum order is $${minTradeUsd}`
+  else if (validAmount && amountUsd > maxTradeUsd) validationError = `Maximum order is $${maxTradeUsd.toLocaleString()}`
+  else if (validAmount && side === 'sell' && tab === 'market' && amountUsd > maxSellUsd)
+    validationError = `You hold ${formatUnits(symbol, heldUnits)} ${symbol}`
 
   const openOrders = orders.filter((o) => o.status === 'open' || o.status === 'triggered')
   const historyOrders = orders.filter((o) => !['open', 'triggered'].includes(o.status))
@@ -101,7 +140,7 @@ export default function SpotTerminal() {
   }
 
   async function handleSubmit() {
-    if (!userId || !validAmount || priceStale) return
+    if (!userId || !validAmount || priceStale || validationError) return
     setFeedback(null)
     try {
       if (tab === 'market') {
@@ -111,7 +150,7 @@ export default function SpotTerminal() {
           side,
           mode: 'spot',
           amountUsd,
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: safeRandomUUID(),
           product: 'spot',
         })
         setFeedback({ tone: 'ok', message: `Market ${side} executed.` })
@@ -125,7 +164,7 @@ export default function SpotTerminal() {
           amountUsd,
           limitPrice: tab === 'limit' ? limitPrice : undefined,
           triggerPrice: tab === 'limit' ? undefined : triggerPrice,
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: safeRandomUUID(),
           product: 'spot',
         })
         setFeedback({
@@ -149,6 +188,7 @@ export default function SpotTerminal() {
     Boolean(userId) &&
     validAmount &&
     !priceStale &&
+    !validationError &&
     !busy &&
     (tab === 'market' ||
       (tab === 'limit' && Number.isFinite(limitPrice) && limitPrice > 0) ||
@@ -173,6 +213,13 @@ export default function SpotTerminal() {
     { key: 'tp', label: 'Take Profit' },
   ]
 
+  const statusPillClass =
+    priceStatus === 'live'
+      ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+      : priceStatus === 'delayed'
+        ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+        : 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+
   return (
     <div className="space-y-4">
       {/* Pair selector */}
@@ -186,7 +233,7 @@ export default function SpotTerminal() {
               setFeedback(null)
             }}
             className={cn(
-              'flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
+              'flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
               symbol === asset.symbol
                 ? 'border-yellow-600/60 bg-yellow-600/10 text-yellow-500'
                 : 'border-slate-800 text-slate-400 hover:border-slate-700'
@@ -202,11 +249,21 @@ export default function SpotTerminal() {
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         {/* Chart column */}
         <div className="space-y-3">
-          <div className="flex items-baseline justify-between px-1">
+          <div className="flex items-baseline justify-between gap-2 px-1">
             <div>
-              <p className="font-mono text-xs uppercase tracking-wider text-slate-500">
-                {symbol}/USD · Spot
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="font-mono text-xs uppercase tracking-wider text-slate-500">
+                  {symbol}/USD · Spot
+                </p>
+                <span
+                  className={cn(
+                    'rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide',
+                    statusPillClass
+                  )}
+                >
+                  {priceStatus.toUpperCase()}
+                </span>
+              </div>
               <p className="font-mono text-2xl font-bold text-slate-100">
                 {currentPrice ? `$${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '—'}
                 <span
@@ -220,29 +277,15 @@ export default function SpotTerminal() {
                 </span>
               </p>
             </div>
-            <div className="flex gap-1">
-              {TIMEFRAMES.map((tf) => (
-                <button
-                  key={tf}
-                  type="button"
-                  onClick={() => setTimeframe(tf)}
-                  className={cn(
-                    'rounded-lg px-2.5 py-1 font-mono text-xs transition-colors',
-                    timeframe === tf
-                      ? 'bg-slate-800 text-yellow-500'
-                      : 'text-slate-500 hover:text-slate-300'
-                  )}
-                >
-                  {tf}
-                </button>
-              ))}
-            </div>
+            <TimeframeSelector selected={timeframe} onChange={setTimeframe} timeframes={timeframesForSymbol(symbol)} />
           </div>
 
           {priceStale && (
             <p className="flex items-center gap-1.5 px-1 text-xs text-amber-400">
               <AlertTriangle className="h-3.5 w-3.5" />
-              Price feed delayed — new orders are paused until the feed recovers.
+              {priceStatus === 'delayed'
+                ? 'Price feed delayed — new orders are paused until the feed recovers.'
+                : 'No price data available for this asset.'}
             </p>
           )}
 
@@ -262,7 +305,7 @@ export default function SpotTerminal() {
                 type="button"
                 onClick={() => setSide('buy')}
                 className={cn(
-                  'rounded-xl border py-2 text-sm font-bold transition-colors',
+                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors',
                   side === 'buy'
                     ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-400'
                     : 'border-slate-800 text-slate-400'
@@ -274,7 +317,7 @@ export default function SpotTerminal() {
                 type="button"
                 onClick={() => setSide('sell')}
                 className={cn(
-                  'rounded-xl border py-2 text-sm font-bold transition-colors',
+                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors',
                   side === 'sell'
                     ? 'border-rose-500/60 bg-rose-500/15 text-rose-400'
                     : 'border-slate-800 text-slate-400'
@@ -291,7 +334,7 @@ export default function SpotTerminal() {
                   type="button"
                   onClick={() => setTab(t.key)}
                   className={cn(
-                    'rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors',
+                    'cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors',
                     tab === t.key ? 'bg-slate-800 text-slate-100' : 'text-slate-500 hover:text-slate-300'
                   )}
                 >
@@ -341,6 +384,10 @@ export default function SpotTerminal() {
                 <span className="font-mono">{formatKes(wallet?.balanceKes ?? 0)}</span>
               </p>
 
+              {validationError && (
+                <p className="text-[11px] font-medium text-rose-400">{validationError}</p>
+              )}
+
               <button
                 type="button"
                 disabled={!canSubmit}
@@ -350,7 +397,7 @@ export default function SpotTerminal() {
                   side === 'buy'
                     ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
                     : 'bg-rose-500 text-slate-950 hover:bg-rose-400',
-                  !canSubmit && 'cursor-not-allowed opacity-40'
+                  canSubmit ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'
                 )}
               >
                 {busy
@@ -359,6 +406,21 @@ export default function SpotTerminal() {
                     ? `${side === 'buy' ? 'Buy' : 'Sell'} ${symbol}`
                     : `Place ${tabs.find((t) => t.key === tab)?.label} Order`}
               </button>
+              {!canSubmit && !busy && !validationError && (
+                <p className="text-center text-[11px] text-slate-500">
+                  {!userId
+                    ? 'Sign in to trade'
+                    : priceStale
+                      ? priceStatus === 'delayed'
+                        ? 'Price feed delayed — orders paused for safety'
+                        : 'Price unavailable'
+                      : tab === 'limit'
+                        ? 'Enter a limit price to continue'
+                        : tab !== 'market'
+                          ? 'Enter a trigger price to continue'
+                          : 'Enter an amount to continue'}
+                </p>
+              )}
             </div>
           </div>
 
@@ -402,7 +464,7 @@ export default function SpotTerminal() {
                       type="button"
                       onClick={() => handleCancel(order)}
                       disabled={cancelMutation.isPending}
-                      className="shrink-0 rounded-lg border border-slate-700 p-1.5 text-slate-400 hover:border-rose-500/50 hover:text-rose-400 disabled:opacity-40"
+                      className="shrink-0 cursor-pointer rounded-lg border border-slate-700 p-1.5 text-slate-400 hover:border-rose-500/50 hover:text-rose-400 disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label="Cancel order"
                     >
                       <X className="h-3.5 w-3.5" />

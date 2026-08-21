@@ -3,14 +3,14 @@
 import { useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Star } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { fetchCryptoPrices } from '@/lib/market/coingecko'
-import { fetchGoldPrice } from '@/lib/market/gold'
-import { useBinanceRealtime } from '@/lib/market/binance-realtime'
 import { MARKET_ASSETS } from '@/lib/constants/market-assets'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useNow } from '@/lib/hooks/useNow'
 import { useGetUserWatchlistQuery, useToggleWatchlistMutation } from '@/lib/react-query/market/queries.market'
-import { useGetUserWalletQuery } from '@/lib/react-query/market/queries.market'
+import { useGetUserWalletQuery, useUsdKesRate } from '@/lib/react-query/market/queries.market'
+import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
+import { getPriceStatus, PRICE_STALE_MS, baselineCeilingFor } from '@/lib/market/freshness'
+import { timeframesForSymbol } from '@/lib/market/ohlc'
 import TradingViewChart from '@/components/market/TradingViewChart'
 import TimeframeSelector from '@/components/market/TimeframeSelector'
 import ChartTypeToggle from '@/components/market/ChartTypeToggle'
@@ -25,79 +25,30 @@ interface PageProps {
   params: Promise<{ symbol: string }>
 }
 
-const COINGECKO_ID_MAP: Record<string, string> = {
-  BTC: 'bitcoin',
-  ETH: 'ethereum',
-  SOL: 'solana',
-  XRP: 'ripple',
-  USDT: 'tether'
-}
-
-interface AssetPriceData {
-  current_price: number
-  price_change_percentage_24h: number
-  high_24h: number | null
-  low_24h: number | null
-  total_volume: number | null
-  market_cap: number | null
-}
-
-const KES_TO_USD_RATE = 130
-
 export default function AssetDetailPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const symbol = resolvedParams.symbol.toUpperCase() as AssetSymbol
   const router = useRouter()
   const { user } = useAuth()
-  
+
   const [timeframe, setTimeframe] = useState<Timeframe>('1D')
   const [chartType, setChartType] = useState<'line' | 'candlestick'>('candlestick')
   const [showInsufficientModal, setShowInsufficientModal] = useState(false)
   const [tradeAmount, setTradeAmount] = useState<number>(0)
-
-  const liveTickers = useBinanceRealtime()
-  const liveTicker = liveTickers.get(symbol)
+  const now = useNow(5000)
 
   const asset = MARKET_ASSETS[symbol]
   const toggleWatchlistMutation = useToggleWatchlistMutation()
-  
+
   const { data: watchlistSymbols = [] } = useGetUserWatchlistQuery(user?.id || null)
   const { data: wallet } = useGetUserWalletQuery(user?.id || null)
+  const { data: usdKesRate = 130 } = useUsdKesRate()
   const isWatching = watchlistSymbols.includes(symbol)
 
-  // Fetch live price data
-  const { data: priceData, isLoading } = useQuery({
-    queryKey: ['asset-price', symbol],
-    queryFn: async (): Promise<AssetPriceData> => {
-      // Gold is fetched from the XAUS API (spot + daily history) instead of CoinGecko
-      if (symbol === 'XAU') {
-        const gold = await fetchGoldPrice()
-        return {
-          current_price: gold.price_usd,
-          price_change_percentage_24h: gold.change_24h,
-          high_24h: gold.high_usd ?? null,
-          low_24h: gold.low_usd ?? null,
-          total_volume: null,
-          market_cap: gold.market_cap_usd ?? null,
-        }
-      }
-
-      const coinId = COINGECKO_ID_MAP[symbol]
-      if (!coinId) throw new Error('Unsupported asset')
-
-      const data = await fetchCryptoPrices([coinId])
-      const price = data[0]
-      return {
-        current_price: price.current_price,
-        price_change_percentage_24h: price.price_change_percentage_24h,
-        high_24h: price.high_24h,
-        low_24h: price.low_24h,
-        total_volume: price.total_volume,
-        market_cap: price.market_cap,
-      }
-    },
-    refetchInterval: 30000, // fallback baseline; Binance WS drives live updates
-  })
+  // Authoritative price via the shared server snapshot + Binance WS overlay.
+  // The browser never contacts CoinGecko/xaus directly on this page.
+  const { data: tickers = [], isLoading } = useMarketPrices([symbol])
+  const ticker = tickers.find((t) => t.symbol === symbol)
 
   const handleWatchlistToggle = () => {
     if (!user) {
@@ -113,8 +64,8 @@ export default function AssetDetailPage({ params }: PageProps) {
       return
     }
 
-    // Example: User wants to buy $100 worth
-    const requiredKes = 100 * KES_TO_USD_RATE
+    // Example: User wants to buy $100 worth (live FX rate, not a hardcoded one)
+    const requiredKes = 100 * usdKesRate
     const availableBalance = wallet?.balanceKes || 0
 
     if (availableBalance < requiredKes) {
@@ -146,7 +97,7 @@ export default function AssetDetailPage({ params }: PageProps) {
     )
   }
 
-  if (!priceData || !asset) {
+  if (!ticker || !asset) {
     return (
       <div className="h-screen w-full bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-3">
@@ -162,10 +113,18 @@ export default function AssetDetailPage({ params }: PageProps) {
     )
   }
 
-  const currentPrice = liveTicker?.priceUsd ?? priceData.current_price
-  const change24h = liveTicker?.change24h ?? priceData.price_change_percentage_24h
+  const currentPrice = ticker.priceUsd
+  const change24h = ticker.change24h
   const isPositive = change24h >= 0
-  const priceKes = currentPrice * KES_TO_USD_RATE
+  const priceKes = currentPrice * usdKesRate
+
+  // Honest freshness status for this asset's feed. Pre-mount renders
+  // optimistically as live; the clock settles on the first effect pass.
+  const isStreamed = ticker.provider === 'binance'
+  const priceStatus =
+    now <= 0
+      ? 'live'
+      : getPriceStatus(ticker, now, isStreamed ? PRICE_STALE_MS : baselineCeilingFor(symbol))
 
   return (
     <div className="min-h-screen w-full bg-slate-950 text-slate-100">
@@ -220,6 +179,17 @@ export default function AssetDetailPage({ params }: PageProps) {
               >
                 {isPositive ? '+' : ''}{change24h.toFixed(2)}%
               </span>
+              <span
+                className={`rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide ${
+                  priceStatus === 'live'
+                    ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                    : priceStatus === 'delayed'
+                      ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                      : 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+                }`}
+              >
+                {priceStatus.toUpperCase()}
+              </span>
             </div>
             <p className="text-sm text-slate-500 font-mono">
               ≈ KES {priceKes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -228,7 +198,11 @@ export default function AssetDetailPage({ params }: PageProps) {
 
           {/* Chart Controls */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <TimeframeSelector selected={timeframe} onChange={setTimeframe} />
+            <TimeframeSelector
+              selected={timeframe}
+              onChange={setTimeframe}
+              timeframes={timeframesForSymbol(symbol)}
+            />
             <ChartTypeToggle chartType={chartType} onChange={setChartType} />
           </div>
 
@@ -242,10 +216,10 @@ export default function AssetDetailPage({ params }: PageProps) {
 
           {/* Metrics Grid */}
           <MetricsGrid
-            high24h={liveTicker?.high24h ?? priceData.high_24h}
-            low24h={liveTicker?.low24h ?? priceData.low_24h}
-            volume24h={priceData.total_volume}
-            marketCap={priceData.market_cap}
+            high24h={ticker.high24h ?? null}
+            low24h={ticker.low24h ?? null}
+            volume24h={ticker.volume24h ?? null}
+            marketCap={ticker.marketCap ?? null}
           />
 
           {/* Sentiment Bar */}

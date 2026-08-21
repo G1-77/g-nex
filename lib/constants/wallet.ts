@@ -19,8 +19,10 @@ export const WALLET_CONFIG = {
 
 export const QUICK_DEPOSIT_AMOUNTS = [500, 1000, 5000, 10000]
 
-// Withdrawal charge: flat 2% of the withdrawn amount (no min / max floor).
-export const WITHDRAWAL_FEE_RATE = 0.02
+// Withdrawal charge: flat 3% of the withdrawn amount (no min / max floor).
+// Withdrawals are the ONLY thing this fee touches — trades use trading_fee_pct
+// from platform_settings and the two systems never overlap.
+export const WITHDRAWAL_FEE_RATE = 0.03
 
 export function withdrawalFee(amountKes: number, rate: number = WITHDRAWAL_FEE_RATE): number {
   if (!Number.isFinite(amountKes) || amountKes <= 0) return 0

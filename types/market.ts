@@ -65,3 +65,39 @@ export type FxResponse = {
     KES: number
   }
 }
+
+// ---------------------------------------------------------------------------
+// Authoritative market-price snapshot (server → client via /api/market/prices)
+// Every tradable asset carries full provenance: provider, provider symbol,
+// currency, timestamps and freshness inputs.
+// ---------------------------------------------------------------------------
+
+export type PriceProvider = 'binance' | 'coingecko' | 'xaus' | 'exchangerate-api'
+
+export interface MarketPriceQuote {
+  symbol: string
+  /** Data source for this quote. */
+  provider: PriceProvider
+  /** Provider-native symbol/id, e.g. 'bitcoin', 'btcusdt', 'XAU'. */
+  providerSymbol: string
+  /** Quote currency of `priceUsd`. */
+  currency: 'USD'
+  priceUsd: number
+  /** Derived server-side with the authoritative USD/KES rate. */
+  priceKes: number
+  change24h: number
+  high24h?: number
+  low24h?: number
+  volume24h?: number
+  marketCap?: number
+  /** Provider epoch ms — freshness signal #1. */
+  lastUpdatedAt: number
+}
+
+export interface MarketPriceSnapshot {
+  quotes: MarketPriceQuote[]
+  usdKes: number
+  fxProvider: PriceProvider
+  /** Server epoch ms when this snapshot was assembled. */
+  generatedAt: number
+}

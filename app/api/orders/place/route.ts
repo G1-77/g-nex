@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/admin/service'
 import {
   getSymbolPriceUsd,
-  getPlatformTradingFee,
+  getTradingFeeRate,
   mapTradeError,
   roundTo,
 } from '@/lib/market/execution'
@@ -123,10 +123,10 @@ export async function POST(req: Request) {
 
   // ---- Authoritative inputs resolved server-side. The reference price drives
   // trigger-side validation so obviously wrong triggers are rejected up front.
-  const [referencePrice, fxRate, feePercent] = await Promise.all([
+  const [referencePrice, fxRate, feeRate] = await Promise.all([
     getSymbolPriceUsd(symbol),
     fetchUsdKesRate(),
-    getPlatformTradingFee(service),
+    getTradingFeeRate(service),
   ])
 
   if (!Number.isFinite(referencePrice) || referencePrice <= 0) {
@@ -146,7 +146,7 @@ export async function POST(req: Request) {
     p_trigger_price: triggerPrice,
     p_reference_price: referencePrice,
     p_fx_rate: fxRate,
-    p_fee_percent: feePercent,
+    p_fee_rate: feeRate,
     p_product: product,
     p_expires_at: expiresAt,
     p_idempotency_key: idempotencyKey,

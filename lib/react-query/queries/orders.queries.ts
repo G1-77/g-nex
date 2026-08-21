@@ -361,7 +361,10 @@ export function useTradeQuoteQuery(input: TradeQuoteInput | null) {
         Number.isFinite(input.amountUsd) &&
         input.amountUsd > 0
     ),
-    staleTime: 1000 * 30,
+    // The quote must track the live market while the panel is open — a stale
+    // preview would misrepresent the economics the server will execute.
+    staleTime: 1000 * 5,
+    refetchInterval: 1000 * 8,
     retry: 1,
   })
 }

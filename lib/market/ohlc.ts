@@ -30,19 +30,90 @@ const symbolToCoinGeckoId: Record<string, string> = {
   USDT: 'tether'
 }
 
+// Real intraday candles come from Binance klines (same provider as the live
+// WS stream). CoinGecko's free OHLC endpoint is far too coarse for 1m–15m.
+const symbolToBinancePair: Record<string, string> = {
+  BTC: 'BTCUSDT',
+  ETH: 'ETHUSDT',
+  SOL: 'SOLUSDT',
+  XRP: 'XRPUSDT'
+}
+
+const timeframeToBinanceInterval: Record<Timeframe, string> = {
+  '1m': '1m',
+  '5m': '5m',
+  '15m': '15m',
+  '1H': '1h',
+  '4H': '4h',
+  '1D': '1d',
+  '1W': '1w',
+  '1M': '1M'
+}
+
+interface BinanceKline {
+  0: number
+  1: string
+  2: string
+  3: string
+  4: string
+  5: string
+}
+
+export async function fetchBinanceKlines(
+  symbol: string,
+  timeframe: Timeframe,
+  limit = 300
+): Promise<OHLCData[]> {
+  const pair = symbolToBinancePair[symbol]
+  if (!pair) throw new Error('Unsupported asset: ' + symbol)
+
+  const url =
+    'https://api.binance.com/api/v3/klines' +
+    `?symbol=${pair}&interval=${timeframeToBinanceInterval[timeframe]}&limit=${limit}`
+
+  const response = await fetch(url, { next: { revalidate: 20 } })
+  if (!response.ok) throw new Error('Binance klines error')
+
+  const data: unknown = await response.json()
+  if (!Array.isArray(data)) throw new Error('Invalid Binance klines response')
+
+  return (data as BinanceKline[]).map((k) => ({
+    time: Math.floor(k[0] / 1000),
+    open: Number(k[1]),
+    high: Number(k[2]),
+    low: Number(k[3]),
+    close: Number(k[4]),
+    volume: Number(k[5])
+  }))
+}
+
+/**
+ * Crypto OHLC. Primary source is Binance klines (true 1m–1M candles); the
+ * CoinGecko daily-granularity endpoint remains as an outage fallback so a
+ * single provider hiccup degrades granularity instead of killing the chart.
+ */
 export async function fetchOHLCData(
   symbol: string,
   timeframe: Timeframe = '1D'
 ): Promise<OHLCData[]> {
+  if (symbolToBinancePair[symbol]) {
+    try {
+      const klines = await fetchBinanceKlines(symbol, timeframe)
+      if (klines.length > 0) return klines
+    } catch {
+      // fall through to CoinGecko
+    }
+  }
+
   const coinId = symbolToCoinGeckoId[symbol]
   if (!coinId) throw new Error('Unsupported asset: ' + symbol)
 
   const days = timeframeToDays[timeframe]
   const url = 'https://api.coingecko.com/api/v3/coins/' + coinId + '/ohlc?vs_currency=usd&days=' + days
-  
+
   const response = await fetch(url, { next: { revalidate: 300 } })
   if (!response.ok) throw new Error('CoinGecko API error')
-  
+
   const data: number[][] = await response.json()
   return data.map((c) => ({
     time: Math.floor(c[0] / 1000),
@@ -138,4 +209,17 @@ export function getIntervalMs(timeframe: Timeframe): number {
     '1M': 2592000000
   }
   return intervals[timeframe]
+}
+
+// ---------------------------------------------------------------------------
+// Honest timeframe sets per asset class. Binance serves true 1m–1M candles;
+// the gold history endpoint only publishes daily bars, so intraday options
+// are deliberately NOT offered for XAU instead of mislabeling daily data.
+// ---------------------------------------------------------------------------
+
+export const CRYPTO_TIMEFRAMES: Timeframe[] = ['1m', '5m', '15m', '1H', '4H', '1D', '1W', '1M']
+export const GOLD_TIMEFRAMES: Timeframe[] = ['1D', '1W', '1M']
+
+export function timeframesForSymbol(symbol: string): Timeframe[] {
+  return symbol.toUpperCase() === 'XAU' ? GOLD_TIMEFRAMES : CRYPTO_TIMEFRAMES
 }

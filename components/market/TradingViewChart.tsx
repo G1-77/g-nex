@@ -1,5 +1,12 @@
 'use client'
 
+// components/market/TradingViewChart.tsx
+// Real-OHLC candlestick/line chart. The chart instance is created ONCE per
+// mount and mutated in place: setData on timeframe/asset changes, series.update
+// for live ticks, and a persistent current-price line kept in sync via
+// applyOptions. No synthetic fallback — provider failure renders an explicit
+// unavailable state.
+
 import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -7,54 +14,68 @@ import {
   LineSeries,
   CandlestickSeries,
   ColorType,
+  LineStyle,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type UTCTimestamp,
 } from 'lightweight-charts'
-import { fetchOHLCData, fetchGoldOHLC, getIntervalMs } from '@/lib/market/ohlc'
-import type { OHLCData, Timeframe } from '@/lib/market/ohlc'
-import type { AssetSymbol } from '@/lib/supabase/types'
+
+export interface OHLCData {
+  time: number
+  open: number
+  high: number
+  low: number
+  close: number
+  volume?: number
+}
 
 interface TradingViewChartProps {
-  symbol: AssetSymbol
-  timeframe: Timeframe
+  symbol: string
+  timeframe: string
   chartType: 'line' | 'candlestick'
   currentPrice: number
 }
 
 const VISIBLE_BARS = 80
 
-/**
- * Loads real OHLC candles only. There is deliberately no synthetic fallback:
- * when a provider fails the chart renders an explicit unavailable state
- * rather than fabricated price history.
- */
-async function loadOHLC(symbol: AssetSymbol, timeframe: Timeframe): Promise<OHLCData[]> {
-  if (symbol === 'XAU') {
-    return fetchGoldOHLC(timeframe)
+interface OhlcResponse {
+  candles: OHLCData[]
+}
+
+async function loadOHLC(symbol: string, timeframe: string): Promise<OHLCData[]> {
+  const res = await fetch(`/api/market/ohlc?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`)
+  if (!res.ok) {
+    const message = await res.text()
+    throw new Error(message || 'Chart data unavailable')
   }
-  return fetchOHLCData(symbol, timeframe)
+  const payload = (await res.json()) as OhlcResponse
+  return payload.candles
 }
 
 export default function TradingViewChart({ symbol, timeframe, chartType, currentPrice }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Line'> | ISeriesApi<'Candlestick'> | null>(null)
+  const priceLineRef = useRef<IPriceLine | null>(null)
   const lastCandleRef = useRef<{ time: number; open: number; high: number; low: number; close: number } | null>(null)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ohlc', symbol, timeframe],
     queryFn: () => loadOHLC(symbol, timeframe),
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 20,
     retry: 1,
     refetchInterval: 1000 * 60, // slow baseline refresh; live ticks stream below
   })
 
+  // ---- Chart lifecycle: create once per mount, dispose cleanly. autoSize
+  // binds the canvas to the container so ResizeObserver handling is built in.
   useEffect(() => {
-    if (!containerRef.current || !data || data.length === 0) return
-
     const container = containerRef.current
+    if (!container) return
+
     const chart = createChart(container, {
+      autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#94a3b8',
@@ -70,7 +91,7 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
       timeScale: {
         borderColor: 'rgba(30, 41, 59, 0.6)',
         timeVisible: true,
-        secondsVisible: true,
+        secondsVisible: false,
         rightOffset: 5,
         fixLeftEdge: true,
         fixRightEdge: true,
@@ -80,6 +101,28 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
         horzLine: { color: 'rgba(148, 163, 184, 0.4)', labelBackgroundColor: '#1e293b' },
       },
     })
+
+    chartRef.current = chart
+
+    return () => {
+      priceLineRef.current = null
+      seriesRef.current = null
+      lastCandleRef.current = null
+      chartRef.current = null
+      chart.remove()
+    }
+  }, [])
+
+  // ---- Series lifecycle: swap the series only when the chart type changes.
+  useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return
+
+    if (seriesRef.current) {
+      priceLineRef.current = null
+      chart.removeSeries(seriesRef.current)
+      seriesRef.current = null
+    }
 
     const series =
       chartType === 'candlestick'
@@ -96,6 +139,14 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
             lineWidth: 2,
           })
 
+    seriesRef.current = series
+  }, [chartType])
+
+  // ---- Data lifecycle: push fetched candles into the existing series.
+  useEffect(() => {
+    const series = seriesRef.current
+    if (!series || !data || data.length === 0) return
+
     series.setData(
       chartType === 'candlestick'
         ? data.map((c) => ({
@@ -109,40 +160,48 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
     )
 
     const last = data[data.length - 1]
-    if (last) {
-      lastCandleRef.current = { time: last.time, open: last.open, high: last.high, low: last.low, close: last.close }
-    }
+    lastCandleRef.current = last
+      ? { time: last.time, open: last.open, high: last.high, low: last.low, close: last.close }
+      : null
 
     // Pin to the right edge showing only recent bars (like Binance/TradingView).
     // fitContent() would zoom out to all history and hide live movement.
-    chart.timeScale().setVisibleLogicalRange({
+    chartRef.current?.timeScale().setVisibleLogicalRange({
       from: Math.max(0, data.length - VISIBLE_BARS),
       to: data.length + 5,
     })
+  }, [data, chartType])
 
-    chartRef.current = chart
-    seriesRef.current = series
-
-    const resizeObserver = new ResizeObserver(() => {
-      chart.applyOptions({ width: container.clientWidth, height: container.clientHeight })
-    })
-    resizeObserver.observe(container)
-
-    return () => {
-      resizeObserver.disconnect()
-      chartRef.current = null
-      seriesRef.current = null
-      chart.remove()
-    }
-  }, [data, chartType, symbol])
-
-  // Live streaming: push the current price into the series on every tick
+  // ---- Current-price marker: persistent line + axis label, updated in place.
   useEffect(() => {
-    const chart = chartRef.current
     const series = seriesRef.current
-    if (!chart || !series || !data || data.length === 0) return
+    if (!series || !Number.isFinite(currentPrice) || currentPrice <= 0) return
 
-    const intervalSec = getIntervalMs(timeframe) / 1000
+    if (!priceLineRef.current) {
+      priceLineRef.current = series.createPriceLine({
+        price: currentPrice,
+        color: '#f59e0b',
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: '',
+      })
+    } else {
+      priceLineRef.current.applyOptions({ price: currentPrice })
+    }
+  }, [currentPrice, data, chartType])
+
+  // ---- Live streaming: fold the current price into the forming candle.
+  useEffect(() => {
+    const series = seriesRef.current
+    if (!series || !data || data.length === 0) return
+    if (!Number.isFinite(currentPrice) || currentPrice <= 0) return
+
+    const intervalSecMap: Record<string, number> = {
+      '1m': 60, '5m': 300, '15m': 900, '1H': 3600,
+      '4H': 14400, '1D': 86400, '1W': 604800, '1M': 2592000,
+    }
+    const intervalSec = intervalSecMap[timeframe] ?? 86400
     const nowSec = Math.floor(Date.now() / 1000)
     const candleTime = Math.floor(nowSec / intervalSec) * intervalSec
 
@@ -155,8 +214,8 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
       const candleSeries = series as ISeriesApi<'Candlestick'>
       const last = lastCandleRef.current
 
-      if (last && last.time === candleTime) {
-        // Same forming candle: high/low/close move in place
+      if (last && candleTime <= last.time) {
+        // Same forming candle (or out-of-order data): move in place.
         candleSeries.update({
           time: last.time as UTCTimestamp,
           open: last.open,
@@ -164,19 +223,14 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
           low: Math.min(last.low, currentPrice),
           close: currentPrice,
         })
-      } else if (last && candleTime < last.time) {
-        // Data inconsistency (mock rows end at "now"): never go backwards,
-        // update the existing candle in place instead.
-        candleSeries.update({
-          time: last.time as UTCTimestamp,
-          open: last.open,
+        lastCandleRef.current = {
+          ...last,
           high: Math.max(last.high, currentPrice),
           low: Math.min(last.low, currentPrice),
           close: currentPrice,
-        })
+        }
       } else {
         // New candle period: roll a fresh candle, open = previous close.
-        // Ensure the new time is strictly ahead of the last data point.
         const open = last ? last.close : currentPrice
         const newTime = last ? Math.max(candleTime, last.time + intervalSec) : candleTime
         candleSeries.update({
@@ -186,16 +240,16 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
           low: Math.min(open, currentPrice),
           close: currentPrice,
         })
-        lastCandleRef.current = { time: newTime, open, high: currentPrice, low: currentPrice, close: currentPrice }
+        lastCandleRef.current = { time: newTime, open, high: Math.max(open, currentPrice), low: Math.min(open, currentPrice), close: currentPrice }
       }
     }
 
-    chart.timeScale().scrollToRealTime()
+    chartRef.current?.timeScale().scrollToRealTime()
   }, [currentPrice, chartType, timeframe, data])
 
   return (
     <div className="rounded-3xl border border-slate-900/60 bg-slate-900/20 backdrop-blur-xl overflow-hidden select-none">
-      <div ref={containerRef} className="relative w-full h-[300px] sm:h-[380px] md:h-[480px]">
+      <div ref={containerRef} className="relative h-[280px] w-full sm:h-[380px] md:h-[480px]">
         {isLoading && (
           <div className="absolute inset-0 z-10 bg-slate-950/80 flex items-center justify-center">
             <div className="text-center space-y-3">

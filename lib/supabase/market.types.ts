@@ -28,6 +28,10 @@ export interface MarketTicker {
   low24h?: number
   /** Epoch ms of the last authoritative update — drives staleness guards. */
   lastUpdatedAt?: number
+  /** Epoch ms when WE observed the update locally (skew-proof freshness). */
+  receivedAt?: number
+  /** Data source of the current price. */
+  provider?: 'binance' | 'coingecko' | 'xaus' | 'exchangerate-api'
 }
 
 /** Section 3: Group sentiment consensus metrics format */
@@ -216,7 +220,8 @@ export interface TradeQuote {
   amountUsd: number
   priceUsd: number
   fxRate: number
-  feePercent: number
+  /** Trading fee RATE (fraction of notional) — 0.02 renders as 2%. */
+  feeRate: number
   quantity: number
   feeUsd: number
   feeKes: number

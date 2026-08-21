@@ -12,9 +12,9 @@ interface SettingsData {
 }
 
 const SETTING_LABELS: Record<string, string> = {
-  trading_fee_pct: "Trading fee (%)",
+  trading_fee_pct: "Trading fee (fraction — 0.02 = 2%)",
   max_withdraw_pct: "Max withdrawal cap (fraction of account)",
-  withdrawal_fee_rate: "Withdrawal fee rate (fraction)",
+  withdrawal_fee_rate: "Withdrawal fee (fraction — 0.03 = 3%)",
   deposit_min_kes: "Minimum deposit (KES)",
   deposit_max_kes: "Maximum deposit (KES)",
   maintenance_mode: "Maintenance mode",
@@ -95,13 +95,15 @@ export default function AdminSettingsPage() {
           <span className="text-xs font-semibold text-[var(--admin-text-dim)]">{SETTING_LABELS.trading_fee_pct}</span>
           <input
             type="number"
-            step="0.01"
+            step="0.001"
+            min="0"
+            max="0.2"
             value={num("trading_fee_pct")}
             onChange={(e) => setField(SETTING_KEYS.TRADING_FEE_PCT, Number(e.target.value))}
             className="admin-input mt-2 w-full font-mono text-sm"
           />
           <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">
-            Consumed by the market order execution engine (default 0.5).
+            Fraction of notional, charged on every BUY/SELL (default 0.02 = 2%).
           </p>
         </AdminPanel>
 
@@ -127,13 +129,13 @@ export default function AdminSettingsPage() {
             type="number"
             step="0.001"
             min="0"
-            max="1"
+            max="0.2"
             value={num("withdrawal_fee_rate")}
             onChange={(e) => setField(SETTING_KEYS.WITHDRAWAL_FEE_RATE, Number(e.target.value))}
             className="admin-input mt-2 w-full font-mono text-sm"
           />
           <p className="mt-1 text-[10px] text-[var(--admin-text-dim)]">
-            Consumed by the withdrawal fee calculation (default 0.02).
+            Fraction of the withdrawn amount, KES cash-outs only (default 0.03 = 3%). Never applied to trades.
           </p>
         </AdminPanel>
 
