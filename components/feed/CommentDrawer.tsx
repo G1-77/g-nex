@@ -47,18 +47,18 @@ function CommentAvatar({ comment }: { comment: Comment }) {
 
   return (
     <Link href={`/user/${cleanUsername}`} className="shrink-0 block select-none">
-      <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-900 bg-slate-900">
+      <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
         {hasAvatar ? (
           <Image
             src={comment.profiles?.avatar_url as string}
             alt={comment.profiles?.username ?? 'Commenter'}
             fill
-            sizes="32px"
+            sizes="36px"
             className="rounded-full object-cover"
             loading="lazy"
           />
         ) : (
-          <span className="text-[10px] font-black text-slate-400 font-mono">
+          <span className="text-xs font-black text-text-muted font-mono">
             {initials}
           </span>
         )}

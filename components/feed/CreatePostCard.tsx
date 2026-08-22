@@ -51,29 +51,23 @@ export default function CreatePostCard() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse rounded-2xl border border-slate-900/80 bg-slate-950/60 p-4 backdrop-blur-xl">
-        <div className="h-12 w-full rounded-xl bg-slate-900/60" />
+      <div className="animate-pulse rounded-2xl border border-border bg-surface p-4">
+        <div className="h-12 w-full rounded-xl bg-surface/40" />
       </div>
     )
   }
 
   if (!user) {
     return (
-      <div className="rounded-2xl border border-dashed border-yellow-600/20 bg-slate-950/95 p-5 backdrop-blur-xl">
+      <div className="gnex-card p-5">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-yellow-600/20 bg-yellow-600/5">
-            <ShieldAlert className="h-4 w-4 text-yellow-500" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-brand-bg">
+            <ShieldAlert className="h-4 w-4 text-brand" />
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-slate-200">
-              Authentication Required
-            </h3>
-
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              Please sign in to
-              broadcast trading intelligence.
-            </p>
+            <h3 className="text-sm font-semibold text-text-primary">Authentication Required</h3>
+            <p className="mt-1 text-body-sm text-text-muted">Please sign in to broadcast trading intelligence.</p>
           </div>
         </div>
       </div>
@@ -85,9 +79,9 @@ export default function CreatePostCard() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group flex w-full items-center gap-3 rounded-2xl cursor-pointer border border-slate-900/80 bg-slate-950/95 p-4 backdrop-blur-xl transition-all duration-200 hover:bg-slate-900/40"
+        className="group flex w-full items-center gap-3 rounded-2xl cursor-pointer border border-border bg-surface p-4 transition-all duration-200 hover:bg-surface-hover"
       >
-        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-900/80 bg-slate-900">
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
           {profile?.avatar_url ? (
             <Image
               src={profile?.avatar_url}
@@ -101,20 +95,15 @@ export default function CreatePostCard() {
               className="object-cover"
             />
           ) : (
-            <span className="text-xs font-black text-slate-200">
-              {initials}
-            </span>
+            <span className="text-xs font-black text-text-secondary">{initials}</span>
           )}
         </div>
 
-        <div className="flex-1 rounded-full border border-slate-900/80 bg-slate-950/40 px-4 py-2 text-left transition-colors group-hover:bg-slate-900/40">
-          <span className="text-xs font-medium text-slate-500">
-            Share your trading
-            intelligence...
-          </span>
+        <div className="flex-1 rounded-full border border-border bg-surface/40 px-4 py-2 text-left transition-colors group-hover:bg-surface/60">
+          <span className="text-body-sm font-medium text-text-muted">Share your trading intelligence...</span>
         </div>
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-900/80 bg-slate-950/40 text-slate-500 transition-colors group-hover:border-yellow-600/20 group-hover:text-yellow-500">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/40 text-text-muted transition-colors group-hover:border-brand/20 group-hover:text-brand">
           <Camera className="h-4 w-4" />
         </div>
       </button>
@@ -125,5 +114,4 @@ export default function CreatePostCard() {
       />
     </>
   )
-
 }

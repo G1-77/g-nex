@@ -6,15 +6,7 @@ import Image from 'next/image'
 import EditProfileModal from './EditProfileModal'
 import { useUserIdentity } from '@/lib/hooks/useUserIdentity'
 import { useAuth } from '@/components/providers/AuthProvider'
-// import { ReputationBadge } from '@/components/reputation/ReputationBadge'
 import type { AdminRoleType } from '@/lib/supabase/types'
-
-// const ROLE_LABELS: Record<AdminRoleType, string> = {
-//   super_admin: 'Super Admin',
-//   admin: 'Admin',
-//   support: 'Support',
-//   editor: 'Editor',
-// }
 
 interface ProfileHeaderProps {
   username: string
@@ -37,7 +29,6 @@ export default function ProfileHeader({
   monthlyRoi,
   realizedPnlKes,
   isOwnProfile = true,
-  // role,
   reputationStatus,
   reputationScore,
 }: ProfileHeaderProps) {
@@ -50,21 +41,17 @@ export default function ProfileHeader({
   const isLoss = roiValue < 0
   const roiDisplay = roiUnavailable ? '—' : `${roiValue > 0 ? '+' : ''}${roiValue.toFixed(2)}%`
   const roiColor = roiUnavailable
-    ? 'text-slate-500'
+    ? 'text-text-muted'
     : isLoss
-      ? 'text-rose-400'
-      : 'text-emerald-400'
-
-  // const effectiveStatus = reputationStatus ?? reputation?.status ?? null
-  // const effectiveScore =
-  //   reputationScore ?? (typeof reputation?.score === "number" ? reputation.score : null)
+      ? 'text-danger'
+      : 'text-success'
 
   return (
     <>
-      <div className="relative px-2 sm:px-4 pt-16 md:pt-4">
+      <div className="relative px-page pt-16 md:pt-4">
         
         {/* FLOATING AVATAR */}
-        <div className="absolute -top-12 left-4 md:left-6 overflow-hidden rounded-full ring-4 ring-slate-950 bg-slate-900 shadow-xl">
+        <div className="absolute -top-12 left-4 md:left-6 overflow-hidden rounded-full ring-4 ring-background bg-surface shadow-xl">
           <Image
             src={
               avatarUrl ??
@@ -75,7 +62,7 @@ export default function ProfileHeader({
             height={100}
             priority
             style={{ width: '100px', height: '100px' }}
-            className="object-cover "
+            className="object-cover"
           />
         </div>
 
@@ -85,24 +72,16 @@ export default function ProfileHeader({
           {/* USER INFO */}
           <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-100 truncate mt-2">
+              <h1 className="text-h1 font-black tracking-tight text-text-primary truncate mt-2">
                 @{username}
               </h1>
 
               {isVerified && (
-                <BadgeCheck className="h-5 w-5 fill-yellow-600 stroke-slate-950 shrink-0" />
+                <BadgeCheck className="h-5 w-5 fill-brand stroke-background shrink-0" aria-label="Verified trader" />
               )}
-
-              {/* {role && (
-                <span className="rounded-md border border-slate-800 bg-slate-900/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  {ROLE_LABELS[role]}
-                </span>
-              )} */}
-
-              {/* <ReputationBadge status={effectiveStatus} score={effectiveScore} /> */}
             </div>
 
-            <p className="max-w-md text-sm text-slate-400 leading-relaxed">
+            <p className="max-w-md text-body text-text-secondary leading-relaxed">
               {bio || 'No bio added yet.'}
             </p>
           </div>
@@ -111,23 +90,23 @@ export default function ProfileHeader({
           <div className="flex items-center gap-3">
             
             {/* ROI CARD */}
-            <div className="rounded-xl cursor-pointer border border-emerald-500/10 bg-emerald-500/5 px-4 py-2.5 backdrop-blur-md">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="gnex-card-elevated p-4 cursor-pointer">
+              <p className="text-caption font-bold uppercase tracking-wider text-text-muted">
                 Monthly ROI
               </p>
 
               <div className="mt-0.5 flex items-baseline gap-1.5">
-                <span className={`text-xl font-mono font-black ${roiColor}`}>
+                <span className={`text-mono-lg font-mono font-black ${roiColor}`}>
                   {roiDisplay}
                 </span>
 
-                <span className="text-[10px] text-slate-600 font-medium">
+                <span className="text-caption text-text-muted font-medium">
                   30d
                 </span>
               </div>
 
               {typeof realizedPnlKes === 'number' && (
-                <p className="mt-0.5 font-mono text-[10px] text-slate-600">
+                <p className="mt-0.5 font-mono text-caption text-text-muted">
                   {realizedPnlKes >= 0 ? '+' : ''}
                   {realizedPnlKes.toLocaleString(undefined, { maximumFractionDigits: 2 })} KES realized
                 </p>
@@ -138,7 +117,7 @@ export default function ProfileHeader({
             {isOwnProfile && (
               <button
                 onClick={() => setOpenEditModal(true)}
-                className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-yellow-600/30 hover:text-yellow-600 cursor-pointer"
+                className="gnex-btn gnex-btn-secondary px-4 py-2 text-body-sm"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Edit Profile

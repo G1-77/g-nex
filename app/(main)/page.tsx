@@ -1,9 +1,7 @@
 import {
   Bookmark,
-  // Camera,
   GraduationCap,
   LineChart,
-  // Sparkles,
 } from 'lucide-react'
 import Link from 'next/link'
 import FeedList from '@/components/feed/FeedList'
@@ -15,10 +13,10 @@ import TopTradersWidget from '@/components/feed/TopTradersWidget'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-slate-950 pb-16 text-slate-100 antialiased selection:bg-yellow-600/20 md:pb-0">
+    <div className="min-h-screen bg-background text-foreground antialiased selection:bg-brand/20 md:pb-0">
       <TickerStrip />
 
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-page py-8">
         <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-4">
           
           {/* LEFT SIDEBAR */}
@@ -26,7 +24,7 @@ export default function HomePage() {
             
             {/* QUICK ACCESS */}
             <div className="space-y-1">
-              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <p className="mb-2 px-3 text-caption font-bold uppercase tracking-wider text-muted">
                 Explore
               </p>
 
@@ -51,8 +49,8 @@ export default function HomePage() {
 
                 const inner = (
                   <>
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 transition-colors group-hover:bg-slate-800">
-                      <Icon className="h-4 w-4 text-slate-400 transition-colors group-hover:text-yellow-600" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface transition-colors group-hover:bg-surface-hover">
+                      <Icon className="h-4 w-4 text-text-secondary transition-colors group-hover:text-brand" />
                     </div>
 
                     {item.label}
@@ -60,7 +58,7 @@ export default function HomePage() {
                 )
 
                 const className =
-                  'group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-900/60 hover:text-slate-100'
+                  'group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition hover:bg-surface-hover hover:text-text-primary'
 
                 return item.href ? (
                   <Link key={item.label} href={item.href} className={className}>

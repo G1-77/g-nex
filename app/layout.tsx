@@ -39,7 +39,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen bg-slate-950 text-slate-100">
+      <body className="min-h-screen bg-background text-foreground">
         <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript }} />
         <ThemeProvider>
           <ReactQueryProvider>

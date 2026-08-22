@@ -82,8 +82,6 @@ export default function QuickTradePanel() {
 
   const isStreamed = ticker?.provider === 'binance'
   const now = useNow(1000)
-  // Pre-mount (now === 0) renders optimistically as live; the clock hook
-  // settles on its first effect pass and any real staleness shows instantly.
   const status: PriceStatus = !ticker
     ? 'unavailable'
     : now <= 0
@@ -106,7 +104,7 @@ export default function QuickTradePanel() {
 
   let validationError: string | null = null
   if (!userId) validationError = 'Sign in to trade'
-  else if (amountInput.trim() === '' || parsedAmount <= 0) validationError = null // neutral, not an error state
+  else if (amountInput.trim() === '' || parsedAmount <= 0) validationError = null
   else if (parsedAmount < minTradeUsd) validationError = `Minimum trade is $${minTradeUsd}`
   else if (parsedAmount > maxTradeUsd) validationError = `Maximum trade is $${maxTradeUsd.toLocaleString()}`
   else if (side === 'buy' && parsedAmount > maxBuyUsd) validationError = 'Insufficient KES balance for this amount'
@@ -176,9 +174,9 @@ export default function QuickTradePanel() {
   }
 
   const statusPill: Record<PriceStatus, { label: string; className: string }> = {
-    live: { label: 'LIVE', className: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
-    delayed: { label: 'DELAYED', className: 'text-amber-400 border-amber-500/30 bg-amber-500/10' },
-    unavailable: { label: 'UNAVAILABLE', className: 'text-rose-400 border-rose-500/30 bg-rose-500/10' },
+    live: { label: 'LIVE', className: 'text-success border-success-border bg-success-bg' },
+    delayed: { label: 'DELAYED', className: 'text-warning border-warning-border bg-warning-bg' },
+    unavailable: { label: 'UNAVAILABLE', className: 'text-danger border-danger-border bg-danger-bg' },
   }
 
   return (
@@ -194,29 +192,28 @@ export default function QuickTradePanel() {
               setFeedback(null)
             }}
             className={cn(
-              'flex cursor-pointer items-center gap-2 rounded-2xl border px-3 py-2.5 text-left transition-colors',
+              'flex cursor-pointer items-center gap-2 rounded-2xl border px-3 py-2.5 text-left transition-colors gnex-touch-target',
               symbol === asset.symbol
-                ? 'border-yellow-600/60 bg-yellow-600/10'
-                : 'border-slate-800 bg-slate-900/40 hover:border-slate-700'
+                ? 'border-brand/60 bg-brand-bg'
+                : 'border-border bg-surface/40 hover:border-border-strong'
             )}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={asset.logo} alt="" className="h-5 w-5 rounded-full" />
-            <span className="text-xs font-bold text-slate-200">{asset.symbol}</span>
+            <span className="text-body-sm font-bold text-text-primary">{asset.symbol}</span>
           </button>
         ))}
       </div>
 
       {/* Live price header */}
-      <div className="rounded-3xl border border-slate-900/60 bg-slate-900/20 p-4 backdrop-blur-xl">
+      <div className="gnex-card-elevated p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs uppercase tracking-wider text-slate-500">
+            <span className="font-mono text-caption uppercase tracking-wider text-text-muted">
               {symbol}/USD
             </span>
             <span
               className={cn(
-                'rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide',
+                'rounded-full border px-2 py-0.5 font-mono text-caption font-bold tracking-wide',
                 statusPill[status].className
               )}
             >
@@ -225,32 +222,32 @@ export default function QuickTradePanel() {
           </div>
           <span
             className={cn(
-              'font-mono text-sm font-semibold',
-              (ticker?.change24h ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              'font-mono text-body-sm font-semibold',
+              (ticker?.change24h ?? 0) >= 0 ? 'text-success' : 'text-danger'
             )}
           >
             {(ticker?.change24h ?? 0) >= 0 ? '+' : ''}
             {(ticker?.change24h ?? 0).toFixed(2)}%
           </span>
         </div>
-        <p className="mt-1 font-mono text-2xl font-bold text-slate-100">
+        <p className="mt-1 font-mono text-mono-lg font-bold text-text-primary">
           {ticker ? `$${ticker.priceUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '—'}
         </p>
-        <p className="mt-1 font-mono text-[11px] text-slate-500">
+        <p className="mt-1 font-mono text-caption text-text-muted">
           ≈ KES {ticker ? (ticker.priceUsd * usdKesRate).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}
           {status === 'live' && ageSeconds !== null && (
-            <span className="ml-2 text-slate-600">· updated {ageSeconds}s ago</span>
+            <span className="ml-2 text-text-muted">· updated {ageSeconds}s ago</span>
           )}
           {status === 'delayed' && (
-            <span className="ml-2 text-amber-400/80">· trading paused for safety</span>
+            <span className="ml-2 text-warning/80">· trading paused for safety</span>
           )}
           {status === 'unavailable' && (
-            <span className="ml-2 text-rose-400/80">· no price data</span>
+            <span className="ml-2 text-danger/80">· no price data</span>
           )}
         </p>
         {priceStale && (
-          <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-400">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <p className="mt-2 flex items-start gap-1.5 text-body-sm text-warning">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             {status === 'delayed'
               ? 'The price feed has not refreshed recently. Orders are paused until it recovers.'
               : 'No live price is available for this asset right now.'}
@@ -267,10 +264,10 @@ export default function QuickTradePanel() {
             setFeedback(null)
           }}
           className={cn(
-            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-bold transition-colors',
+            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-bold transition-colors gnex-touch-target',
             side === 'buy'
-              ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-400'
-              : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700'
+              ? 'border-success-border bg-success-bg text-success'
+              : 'border-border bg-surface/40 text-text-secondary hover:border-border-strong hover:text-text-primary'
           )}
         >
           <ArrowUpRight className="h-4 w-4" />
@@ -283,10 +280,10 @@ export default function QuickTradePanel() {
             setFeedback(null)
           }}
           className={cn(
-            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-bold transition-colors',
+            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-bold transition-colors gnex-touch-target',
             side === 'sell'
-              ? 'border-rose-500/60 bg-rose-500/15 text-rose-400'
-              : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700'
+              ? 'border-danger-border bg-danger-bg text-danger'
+              : 'border-border bg-surface/40 text-text-secondary hover:border-border-strong hover:text-text-primary'
           )}
         >
           <ArrowDownRight className="h-4 w-4" />
@@ -295,8 +292,8 @@ export default function QuickTradePanel() {
       </div>
 
       {/* Amount */}
-      <div className="rounded-3xl border border-slate-900/60 bg-slate-900/20 p-4 backdrop-blur-xl">
-        <label htmlFor="quick-trade-amount" className="font-mono text-xs uppercase tracking-wider text-slate-500">
+      <div className="gnex-card-elevated p-4">
+        <label htmlFor="quick-trade-amount" className="gnex-label">
           Amount (USD)
         </label>
         <input
@@ -314,15 +311,15 @@ export default function QuickTradePanel() {
           placeholder="0.00"
           aria-invalid={Boolean(validationError)}
           className={cn(
-            'mt-1 w-full bg-transparent font-mono text-2xl font-bold outline-none placeholder:text-slate-700',
-            validationError ? 'text-rose-300' : 'text-slate-100'
+            'gnex-input gnex-input-mono text-mono-xl',
+            validationError ? 'text-danger' : ''
           )}
         />
         <div className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-0.5 scrollbar-none">
           <button
             type="button"
             onClick={() => applyFraction(0)}
-            className="shrink-0 cursor-pointer rounded-full border border-slate-800 px-3 py-1 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-600"
+            className="shrink-0 cursor-pointer rounded-full border border-border px-3 py-1 text-caption font-semibold text-text-secondary transition-colors hover:border-border-strong"
           >
             MIN
           </button>
@@ -333,7 +330,7 @@ export default function QuickTradePanel() {
               onClick={() => applyFraction(fraction)}
               disabled={sideCapUsd <= 0}
               className={cn(
-                'shrink-0 rounded-full border border-slate-800 px-3 py-1 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-600',
+                'shrink-0 rounded-full border border-border px-3 py-1 text-caption font-semibold text-text-secondary transition-colors hover:border-border-strong',
                 sideCapUsd > 0 && 'cursor-pointer',
                 sideCapUsd <= 0 && 'cursor-not-allowed opacity-40'
               )}
@@ -343,20 +340,20 @@ export default function QuickTradePanel() {
           ))}
         </div>
         {validationError ? (
-          <p className="mt-2 text-xs font-medium text-rose-400">{validationError}</p>
+          <p className="mt-2 text-body-sm font-medium text-danger">{validationError}</p>
         ) : (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-body-sm text-text-muted">
             {side === 'buy' ? (
               <>
-                Available <span className="font-mono text-slate-300">{formatKes(balanceKes)} KES</span>
+                Available <span className="font-mono text-text-secondary">{formatKes(balanceKes)} KES</span>
               </>
             ) : (
               <>
                 You hold{' '}
-                <span className="font-mono text-slate-300">
+                <span className="font-mono text-text-secondary">
                   {formatUnits(symbol, heldUnits)} {symbol}
                 </span>{' '}
-                <span className="text-slate-600">(≈ ${maxSellUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })})</span>
+                <span className="text-text-muted">(≈ ${maxSellUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })})</span>
               </>
             )}
           </p>
@@ -365,50 +362,50 @@ export default function QuickTradePanel() {
 
       {/* Quote preview */}
       {quote && (
-        <div className="space-y-1.5 rounded-3xl border border-slate-900/60 bg-slate-900/20 p-4 text-xs backdrop-blur-xl">
-          <div className="flex justify-between text-slate-400">
+        <div className="space-y-1.5 gnex-card-elevated p-4 text-body-sm">
+          <div className="flex justify-between text-text-secondary">
             <span>Price</span>
-            <span className="font-mono text-slate-200">${quote.priceUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            <span className="font-mono text-text-primary">${quote.priceUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
           </div>
-          <div className="flex justify-between text-slate-400">
+          <div className="flex justify-between text-text-secondary">
             <span>Rate</span>
-            <span className="font-mono text-slate-200">{formatKes(quote.priceUsd * quote.fxRate)} KES/{symbol}</span>
+            <span className="font-mono text-text-primary">{formatKes(quote.priceUsd * quote.fxRate)} KES/{symbol}</span>
           </div>
-          <div className="flex justify-between text-slate-400">
+          <div className="flex justify-between text-text-secondary">
             <span>Trading fee ({(quote.feeRate * 100).toFixed(2).replace(/\.00$/, '')}%)</span>
-            <span className="font-mono text-slate-200">{formatKes(quote.feeKes)}</span>
+            <span className="font-mono text-text-primary">{formatKes(quote.feeKes)}</span>
           </div>
           {side === 'buy' ? (
             <>
-              <div className="flex justify-between border-t border-slate-800 pt-1.5 font-semibold text-slate-200">
+              <div className="flex justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
                 <span>Total cost</span>
                 <span className="font-mono">{formatKes(quote.amountKes)}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-text-secondary">
                 <span>You receive</span>
-                <span className="font-mono text-slate-200">{formatUnits(symbol, quote.quantity)} {symbol}</span>
+                <span className="font-mono text-text-primary">{formatUnits(symbol, quote.quantity)} {symbol}</span>
               </div>
             </>
           ) : (
             <>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-text-secondary">
                 <span>Gross proceeds</span>
-                <span className="font-mono text-slate-200">{formatKes(parsedAmount * quote.fxRate)}</span>
+                <span className="font-mono text-text-primary">{formatKes(parsedAmount * quote.fxRate)}</span>
               </div>
-              <div className="flex justify-between border-t border-slate-800 pt-1.5 font-semibold text-slate-200">
+              <div className="flex justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
                 <span>Net proceeds</span>
                 <span className="font-mono">{formatKes(quote.amountKes)}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-text-secondary">
                 <span>You sell</span>
-                <span className="font-mono text-slate-200">{formatUnits(symbol, quote.quantity)} {symbol}</span>
+                <span className="font-mono text-text-primary">{formatUnits(symbol, quote.quantity)} {symbol}</span>
               </div>
             </>
           )}
         </div>
       )}
       {validAmount && quoteLoading && !quote && (
-        <p className="text-center font-mono text-xs text-slate-600">Fetching quote…</p>
+        <p className="text-center font-mono text-caption text-text-muted">Fetching quote…</p>
       )}
 
       {/* Execute */}
@@ -417,11 +414,11 @@ export default function QuickTradePanel() {
         disabled={!canExecute}
         onClick={handleExecute}
         className={cn(
-          'w-full rounded-2xl py-4 text-base font-bold transition-all',
+          'gnex-btn w-full py-4 text-base font-bold',
           side === 'buy'
-            ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
-            : 'bg-rose-500 text-slate-950 hover:bg-rose-400',
-          canExecute ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'
+            ? 'gnex-btn-success'
+            : 'gnex-btn-danger',
+          canExecute ? '' : 'cursor-not-allowed opacity-40'
         )}
       >
         {executeMutation.isPending
@@ -429,19 +426,19 @@ export default function QuickTradePanel() {
           : `${side === 'buy' ? 'Buy' : 'Sell'} ${symbol}`}
       </button>
       {!canExecute && !executeMutation.isPending && blockedReason && (
-        <p className="text-center text-xs text-slate-500">{blockedReason}</p>
+        <p className="text-center text-body-sm text-text-muted">{blockedReason}</p>
       )}
 
       {feedback && (
         <div
           className={cn(
-            'flex items-start gap-2 rounded-2xl border px-4 py-3 text-xs',
+            'flex items-start gap-2 rounded-2xl border px-4 py-3 text-body-sm',
             feedback.tone === 'ok'
-              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-              : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+              ? 'border-success-border bg-success-bg text-success'
+              : 'border-danger-border bg-danger-bg text-danger'
           )}
         >
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
           {feedback.message}
         </div>
       )}

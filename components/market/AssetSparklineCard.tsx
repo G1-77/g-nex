@@ -50,11 +50,11 @@ export default function AssetSparklineCard({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onOpen(ticker.symbol)
       }}
-      className="group flex cursor-pointer flex-col rounded-xl border border-slate-900/60 bg-slate-900/20 p-3 transition-all duration-200 hover:border-slate-700/60 hover:bg-slate-900/40"
+      className="group gnex-card gnex-card-hover p-4 flex flex-col"
     >
       {/* Asset identity */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           <Image
             src={ticker.logo}
             alt={ticker.name}
@@ -63,8 +63,8 @@ export default function AssetSparklineCard({
             className="h-7 w-7 shrink-0"
           />
           <div className="min-w-0">
-            <p className="truncate text-xs font-bold text-slate-100">{ticker.name}</p>
-            <p className="font-mono text-[9px] font-black uppercase tracking-wider text-slate-500">
+            <p className="truncate text-h3 text-text-primary">{ticker.name}</p>
+            <p className="font-mono text-caption font-black uppercase tracking-wider text-text-muted">
               {ticker.symbol}
             </p>
           </div>
@@ -77,21 +77,19 @@ export default function AssetSparklineCard({
             e.stopPropagation()
             onToggleWatchlist(ticker.symbol)
           }}
-          className={`cursor-pointer rounded-md p-1 transition-colors hover:bg-slate-800/60 ${
-            ticker.isWatching ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'
-          }`}
+          className="cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-hover gnex-touch-target"
         >
-          <Star className={`h-3.5 w-3.5 ${ticker.isWatching ? 'fill-amber-400' : ''}`} />
+          <Star className={`h-4 w-4 ${ticker.isWatching ? 'fill-amber-400 text-amber-400' : 'text-text-muted'}`} />
         </button>
       </div>
 
       {/* Primary metric + change badge */}
-      <div className="mt-3 flex items-end justify-between gap-2">
-        <span className="font-mono text-sm font-black tabular-nums tracking-tight text-slate-50">
+      <div className="mt-4 flex items-end justify-between gap-2">
+        <span className="font-mono text-mono-lg tabular-nums tracking-tight text-text-primary">
           ${formatPrice(ticker.priceUsd)}
         </span>
         <span
-          className="shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-black tabular-nums"
+          className="shrink-0 rounded-md border px-2 py-0.5 font-mono text-caption font-black tabular-nums"
           style={{
             color,
             borderColor: `${color}33`,
@@ -104,7 +102,7 @@ export default function AssetSparklineCard({
       </div>
 
       {/* Bottom-aligned area sparkline */}
-      <div className="mt-2 h-8 w-full">
+      <div className="mt-3 h-8 w-full">
         <SparklineArea
           data={ticker.sparkline}
           color={color}

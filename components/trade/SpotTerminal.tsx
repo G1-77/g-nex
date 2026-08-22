@@ -36,6 +36,12 @@ import { cn, safeRandomUUID } from '@/lib/utils'
 
 type FormTab = 'market' | 'limit' | 'stop' | 'tp'
 
+const statusPillClasses: Record<string, string> = {
+  live: 'text-success border-success-border bg-success-bg',
+  delayed: 'text-warning border-warning-border bg-warning-bg',
+  unavailable: 'text-danger border-danger-border bg-danger-bg',
+}
+
 export default function SpotTerminal() {
   const { user } = useAuth()
   const userId = user?.id ?? null
@@ -213,13 +219,6 @@ export default function SpotTerminal() {
     { key: 'tp', label: 'Take Profit' },
   ]
 
-  const statusPillClass =
-    priceStatus === 'live'
-      ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-      : priceStatus === 'delayed'
-        ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
-        : 'text-rose-400 border-rose-500/30 bg-rose-500/10'
-
   return (
     <div className="space-y-4">
       {/* Pair selector */}
@@ -233,13 +232,12 @@ export default function SpotTerminal() {
               setFeedback(null)
             }}
             className={cn(
-              'flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
+              'flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-caption font-bold transition-colors gnex-touch-target',
               symbol === asset.symbol
-                ? 'border-yellow-600/60 bg-yellow-600/10 text-yellow-500'
-                : 'border-slate-800 text-slate-400 hover:border-slate-700'
+                ? 'border-brand/60 bg-brand-bg text-brand'
+                : 'border-border text-text-secondary hover:border-border-strong hover:text-text-primary'
             )}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={asset.logo} alt="" className="h-4 w-4 rounded-full" />
             {asset.symbol}
           </button>
@@ -252,24 +250,24 @@ export default function SpotTerminal() {
           <div className="flex items-baseline justify-between gap-2 px-1">
             <div>
               <div className="flex items-center gap-2">
-                <p className="font-mono text-xs uppercase tracking-wider text-slate-500">
+                <p className="font-mono text-caption uppercase tracking-wider text-text-muted">
                   {symbol}/USD · Spot
                 </p>
                 <span
                   className={cn(
-                    'rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide',
-                    statusPillClass
+                    'rounded-full border px-2 py-0.5 font-mono text-caption font-bold tracking-wide',
+                    statusPillClasses[priceStatus]
                   )}
                 >
                   {priceStatus.toUpperCase()}
                 </span>
               </div>
-              <p className="font-mono text-2xl font-bold text-slate-100">
+              <p className="font-mono text-mono-lg font-bold text-text-primary">
                 {currentPrice ? `$${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '—'}
                 <span
                   className={cn(
-                    'ml-2 text-sm',
-                    (ticker?.change24h ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                    'ml-2 text-body-sm',
+                    (ticker?.change24h ?? 0) >= 0 ? 'text-success' : 'text-danger'
                   )}
                 >
                   {(ticker?.change24h ?? 0) >= 0 ? '+' : ''}
@@ -281,7 +279,7 @@ export default function SpotTerminal() {
           </div>
 
           {priceStale && (
-            <p className="flex items-center gap-1.5 px-1 text-xs text-amber-400">
+            <p className="flex items-center gap-1.5 px-1 text-body-sm text-warning">
               <AlertTriangle className="h-3.5 w-3.5" />
               {priceStatus === 'delayed'
                 ? 'Price feed delayed — new orders are paused until the feed recovers.'
@@ -299,16 +297,16 @@ export default function SpotTerminal() {
 
         {/* Order form + books column */}
         <div className="space-y-4">
-          <div className="rounded-3xl border border-slate-900/60 bg-slate-900/20 p-4 backdrop-blur-xl">
+          <div className="gnex-card-elevated p-4">
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setSide('buy')}
                 className={cn(
-                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors',
+                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors gnex-touch-target',
                   side === 'buy'
-                    ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-400'
-                    : 'border-slate-800 text-slate-400'
+                    ? 'border-success-border bg-success-bg text-success'
+                    : 'border-border text-text-secondary hover:border-border-strong hover:text-text-primary'
                 )}
               >
                 Buy
@@ -317,25 +315,25 @@ export default function SpotTerminal() {
                 type="button"
                 onClick={() => setSide('sell')}
                 className={cn(
-                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors',
+                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors gnex-touch-target',
                   side === 'sell'
-                    ? 'border-rose-500/60 bg-rose-500/15 text-rose-400'
-                    : 'border-slate-800 text-slate-400'
+                    ? 'border-danger-border bg-danger-bg text-danger'
+                    : 'border-border text-text-secondary hover:border-border-strong hover:text-text-primary'
                 )}
               >
                 Sell
               </button>
             </div>
 
-            <div className="mt-3 flex gap-1 border-b border-slate-800 pb-2">
+            <div className="mt-3 flex gap-1 border-b border-border pb-2">
               {tabs.map((t) => (
                 <button
                   key={t.key}
                   type="button"
                   onClick={() => setTab(t.key)}
                   className={cn(
-                    'cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors',
-                    tab === t.key ? 'bg-slate-800 text-slate-100' : 'text-slate-500 hover:text-slate-300'
+                    'cursor-pointer rounded-lg px-2.5 py-1 text-caption font-semibold transition-colors',
+                    tab === t.key ? 'bg-surface text-text-primary' : 'text-text-muted hover:text-text-secondary'
                   )}
                 >
                   {t.label}
@@ -346,7 +344,7 @@ export default function SpotTerminal() {
             <div className="mt-3 space-y-2">
               {tab !== 'market' && (
                 <label className="block">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+                  <span className="gnex-label">
                     {tab === 'limit' ? 'Limit price (USD)' : 'Trigger price (USD)'}
                   </span>
                   <input
@@ -360,32 +358,30 @@ export default function SpotTerminal() {
                         : setTriggerPriceInput(e.target.value)
                     }
                     placeholder={tab === 'limit' ? 'Limit price' : 'Trigger price'}
-                    className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 font-mono text-sm text-slate-100 outline-none focus:border-slate-600"
+                    className="gnex-input gnex-input-mono"
                   />
                 </label>
               )}
 
               <label className="block">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
-                  Amount (USD)
-                </span>
+                <span className="gnex-label">Amount (USD)</span>
                 <input
                   type="number"
                   inputMode="decimal"
                   min="0"
                   value={amountInput}
                   onChange={(e) => setAmountInput(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 font-mono text-sm text-slate-100 outline-none focus:border-slate-600"
+                  className="gnex-input gnex-input-mono"
                 />
               </label>
 
-              <p className="flex justify-between text-[11px] text-slate-500">
+              <p className="flex justify-between text-body-sm text-text-muted">
                 <span>Available</span>
                 <span className="font-mono">{formatKes(wallet?.balanceKes ?? 0)}</span>
               </p>
 
               {validationError && (
-                <p className="text-[11px] font-medium text-rose-400">{validationError}</p>
+                <p className="text-body-sm font-medium text-danger">{validationError}</p>
               )}
 
               <button
@@ -393,11 +389,11 @@ export default function SpotTerminal() {
                 disabled={!canSubmit}
                 onClick={handleSubmit}
                 className={cn(
-                  'w-full rounded-xl py-3 text-sm font-bold transition-all',
+                  'gnex-btn w-full py-3 text-sm font-bold',
                   side === 'buy'
-                    ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
-                    : 'bg-rose-500 text-slate-950 hover:bg-rose-400',
-                  canSubmit ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'
+                    ? 'gnex-btn-success'
+                    : 'gnex-btn-danger',
+                  canSubmit ? '' : 'cursor-not-allowed opacity-40'
                 )}
               >
                 {busy
@@ -407,7 +403,7 @@ export default function SpotTerminal() {
                     : `Place ${tabs.find((t) => t.key === tab)?.label} Order`}
               </button>
               {!canSubmit && !busy && !validationError && (
-                <p className="text-center text-[11px] text-slate-500">
+                <p className="text-center text-body-sm text-text-muted">
                   {!userId
                     ? 'Sign in to trade'
                     : priceStale
@@ -427,10 +423,10 @@ export default function SpotTerminal() {
           {feedback && (
             <div
               className={cn(
-                'rounded-2xl border px-4 py-3 text-xs',
+                'rounded-2xl border px-4 py-3 text-body-sm',
                 feedback.tone === 'ok'
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                  : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                  ? 'border-success-border bg-success-bg text-success'
+                  : 'border-danger-border bg-danger-bg text-danger'
               )}
             >
               {feedback.message}
@@ -438,22 +434,22 @@ export default function SpotTerminal() {
           )}
 
           {/* Open orders */}
-          <div className="rounded-3xl border border-slate-900/60 bg-slate-900/20 p-4 backdrop-blur-xl">
-            <h3 className="mb-2 font-mono text-xs uppercase tracking-wider text-slate-500">
+          <div className="gnex-card-elevated p-4">
+            <h3 className="mb-2 font-mono text-caption uppercase tracking-wider text-text-muted">
               Open Orders ({openOrders.length})
             </h3>
             {openOrders.length === 0 ? (
-              <p className="py-3 text-center text-xs text-slate-600">No open orders.</p>
+              <p className="py-3 text-center text-body-sm text-text-muted">No open orders.</p>
             ) : (
-              <ul className="divide-y divide-slate-800/60">
+              <ul className="divide-y divide-border">
                 {openOrders.map((order) => (
                   <li key={order.id} className="flex items-center justify-between gap-2 py-2.5">
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-slate-200">
+                      <p className="truncate text-body-sm font-semibold text-text-primary">
                         {statusLabel(order.status)} · {order.side.toUpperCase()} {order.assetSymbol ?? ''}{' '}
-                        <span className="font-mono text-slate-500">{formatKes(order.quantity * (order.price ?? order.triggerPrice ?? 0))}</span>
+                        <span className="font-mono text-text-muted">{formatKes(order.quantity * (order.price ?? order.triggerPrice ?? 0))}</span>
                       </p>
-                      <p className="font-mono text-[10px] text-slate-500">
+                      <p className="font-mono text-caption text-text-muted">
                         {order.orderType.replace('_', ' ')} ·{' '}
                         {order.price ?? order.triggerPrice
                           ? `$${(order.price ?? order.triggerPrice)?.toLocaleString()}`
@@ -464,7 +460,7 @@ export default function SpotTerminal() {
                       type="button"
                       onClick={() => handleCancel(order)}
                       disabled={cancelMutation.isPending}
-                      className="shrink-0 cursor-pointer rounded-lg border border-slate-700 p-1.5 text-slate-400 hover:border-rose-500/50 hover:text-rose-400 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="shrink-0 cursor-pointer rounded-lg border border-border p-1.5 text-text-muted hover:border-danger/40 hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 gnex-touch-target"
                       aria-label="Cancel order"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -476,35 +472,35 @@ export default function SpotTerminal() {
           </div>
 
           {/* Order history */}
-          <div className="rounded-3xl border border-slate-900/60 bg-slate-900/20 p-4 backdrop-blur-xl">
-            <h3 className="mb-2 font-mono text-xs uppercase tracking-wider text-slate-500">
+          <div className="gnex-card-elevated p-4">
+            <h3 className="mb-2 font-mono text-caption uppercase tracking-wider text-text-muted">
               Order History
             </h3>
             {ordersLoading ? (
-              <p className="py-3 text-center text-xs text-slate-600">Loading…</p>
+              <p className="py-3 text-center text-body-sm text-text-muted">Loading…</p>
             ) : historyOrders.length === 0 ? (
-              <p className="py-3 text-center text-xs text-slate-600">No completed orders yet.</p>
+              <p className="py-3 text-center text-body-sm text-text-muted">No completed orders yet.</p>
             ) : (
-              <ul className="divide-y divide-slate-800/60">
+              <ul className="divide-y divide-border">
                 {historyOrders.slice(0, 15).map((order) => (
                   <li key={order.id} className="flex items-center justify-between py-2.5">
                     <div>
-                      <p className="text-xs font-semibold text-slate-200">
+                      <p className="text-body-sm font-semibold text-text-primary">
                         {order.side.toUpperCase()} {order.assetSymbol ?? ''}
                       </p>
-                      <p className="font-mono text-[10px] text-slate-500">
+                      <p className="font-mono text-caption text-text-muted">
                         {new Date(order.createdAt).toLocaleString()}
                       </p>
                     </div>
                     <div className="text-right">
                       <p
                         className={cn(
-                          'text-[11px] font-bold uppercase',
+                          'text-body-sm font-bold uppercase',
                           order.status === 'filled'
-                            ? 'text-emerald-400'
+                            ? 'text-success'
                             : order.status === 'expired'
-                              ? 'text-amber-400'
-                              : 'text-slate-400'
+                              ? 'text-warning'
+                              : 'text-text-muted'
                         )}
                       >
                         {statusLabel(order.status)}
@@ -512,8 +508,8 @@ export default function SpotTerminal() {
                       {order.realizedPnlKes !== null && (
                         <p
                           className={cn(
-                            'font-mono text-[10px]',
-                            order.realizedPnlKes >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            'font-mono text-caption',
+                            order.realizedPnlKes >= 0 ? 'text-success' : 'text-danger'
                           )}
                         >
                           PnL {formatKes(order.realizedPnlKes)}

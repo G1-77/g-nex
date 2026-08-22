@@ -31,11 +31,11 @@ function PositionPnl({ position }: { position: PositionRow }) {
 
   return (
     <div className="text-right">
-      <p className={`font-mono text-xs font-black ${positive ? 'text-[#8DFF45]' : 'text-[#FF5A5A]'}`}>
+      <p className={`font-mono text-body-sm font-black ${positive ? 'text-success' : 'text-danger'}`}>
         {positive ? '+' : ''}
         {formatKes(pnlKes)}
       </p>
-      <p className={`mt-0.5 font-mono text-[9px] ${positive ? 'text-[#8DFF45]/70' : 'text-[#FF5A5A]/70'}`}>
+      <p className={`mt-0.5 font-mono text-caption ${positive ? 'text-success/70' : 'text-danger/70'}`}>
         {positive ? '+' : ''}
         {pct.toFixed(1)}% · {formatUnits(position.assetSymbol, position.units)}
       </p>
@@ -63,23 +63,23 @@ export default function OpenPositionsCard() {
   }
 
   return (
-    <section className="rounded-xl border border-slate-900/60 bg-slate-900/20 p-5">
+    <section className="gnex-card p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+        <h2 className="font-mono text-caption uppercase tracking-widest text-text-muted">
           Open positions
         </h2>
-        <span className="rounded-full border border-slate-800 px-2 py-0.5 font-mono text-[9px] font-bold text-slate-400">
+        <span className="rounded-full border border-border px-2 py-0.5 font-mono text-caption font-bold text-text-muted">
           {open.length} active
         </span>
       </div>
 
       <div className="mt-4 space-y-2.5">
         {isLoading ? (
-          <p className="py-6 text-center font-mono text-[10px] uppercase tracking-widest text-slate-600">
+          <p className="py-6 text-center font-mono text-caption uppercase tracking-widest text-text-muted">
             Loading positions…
           </p>
         ) : open.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-800 py-8 text-center text-[11px] text-slate-600">
+          <p className="rounded-xl border border-dashed border-border py-8 text-center text-body-sm text-text-muted">
             No open positions. Trade on any market page with up to 100x leverage.
           </p>
         ) : (
@@ -89,9 +89,9 @@ export default function OpenPositionsCard() {
             return (
               <div
                 key={position.id}
-                className="flex items-center gap-3 rounded-xl border border-slate-800/80 bg-slate-950/40 p-3"
+                className="flex items-center gap-3 rounded-xl border border-border bg-surface/40 p-3"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface">
                   <Image
                     src={meta?.logo ?? `/icons/${position.assetSymbol.toLowerCase()}.svg`}
                     alt={meta?.name ?? position.assetSymbol}
@@ -102,21 +102,21 @@ export default function OpenPositionsCard() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-mono text-xs font-black text-slate-200">
+                    <span className="font-mono text-body-sm font-black text-text-primary">
                       {position.assetSymbol}
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-mono text-[8px] font-black uppercase tracking-wider ${
+                      className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-mono text-caption font-black uppercase tracking-wider ${
                         long
-                          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                          : 'border-rose-500/20 bg-rose-500/10 text-rose-400'
+                          ? 'border-success-border bg-success-bg text-success'
+                          : 'border-danger-border bg-danger-bg text-danger'
                       }`}
                     >
                       {long ? <TrendingUp className="h-2 w-2" /> : <TrendingDown className="h-2 w-2" />}
                       {long ? 'Long' : 'Short'} {position.leverage}x
                     </span>
                   </div>
-                  <p className="mt-0.5 font-mono text-[9px] text-slate-500">
+                  <p className="mt-0.5 font-mono text-caption text-text-muted">
                     {formatKes(position.marginKes)} margin · entry{' '}
                     {formatUsd(position.entryPriceUsd)} · liq{' '}
                     {position.liquidationPriceUsd ? formatUsd(position.liquidationPriceUsd) : '—'}
@@ -130,7 +130,7 @@ export default function OpenPositionsCard() {
                   onClick={() => handleClose(position.id)}
                   disabled={closePosition.isPending}
                   aria-label={`Close ${position.assetSymbol} position`}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-800 text-slate-500 transition-colors cursor-pointer hover:border-rose-500/40 hover:text-rose-400 disabled:opacity-50"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition-colors cursor-pointer hover:border-danger/40 hover:text-danger disabled:opacity-50 gnex-touch-target"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

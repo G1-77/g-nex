@@ -45,17 +45,34 @@ async function fetchVerifiedPositions(): Promise<VerifiedPosition[]> {
   if (error) throw new Error(error.message)
   if (!data) return []
 
+  interface ProfileRow {
+    id: string
+    username: string
+    avatar_url: string | null
+    is_verified: boolean
+    monthly_roi: number
+  }
+
+  interface PositionRowRaw {
+    user_id: string
+    asset_symbol: string
+    direction: string
+    margin_kes: number
+    profiles: ProfileRow[]
+  }
+
   // Group positions by user and calculate their primary asset allocation
   const userPositions = new Map<string, {
-    profile: any
+    profile: ProfileRow
     positions: Array<{ asset_symbol: string; direction: string; margin_kes: number }>
   }>()
 
-  data.forEach((row: any) => {
+  data.forEach((row: PositionRowRaw) => {
     const userId = row.user_id
+    const profile = row.profiles[0] // profiles is an array from the inner join
     if (!userPositions.has(userId)) {
       userPositions.set(userId, {
-        profile: row.profiles,
+        profile,
         positions: []
       })
     }

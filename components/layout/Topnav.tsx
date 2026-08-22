@@ -39,120 +39,121 @@ export default function Topnav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-slate-900/60 bg-slate-950/70 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        
-        {/* LEFT SECTION */}
-        <div className="flex items-center gap-6">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex h-[56px] max-w-7xl items-center justify-between gap-4 px-page">
           
-          {/* MOBILE MENU + BRAND */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-slate-800/80 bg-slate-900/40 transition-colors hover:border-slate-700 hover:bg-slate-900 md:hidden"
-            >
-              <Menu className="h-4 w-4 text-slate-400" />
-            </button>
+          {/* LEFT SECTION */}
+          <div className="flex items-center gap-4">
+            
+            {/* MOBILE MENU + BRAND */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface md:hidden gnex-touch-target"
+              >
+                <Menu className="h-5 w-5 text-text-secondary" />
+              </button>
 
-            <Link
-              href="/"
-              className="text-lg font-black tracking-wider text-yellow-600 transition-opacity hover:opacity-90"
-            >
-              GNEX
-            </Link>
-          </div>
+              <Link
+                href="/"
+                className="text-xl font-black tracking-wider text-brand transition-opacity hover:opacity-90"
+              >
+                GNEX
+              </Link>
+            </div>
 
-          {/* SEARCH */}
-          <div className="hidden sm:flex">
-            <div className="flex items-center gap-2.5 rounded-full border border-slate-800/80 bg-slate-900/40 px-3.5 py-1.5 transition-all duration-200 focus-within:border-yellow-600/40 focus-within:ring-1 focus-within:ring-yellow-600/20">
-              <Search className="h-3.5 w-3.5 text-slate-500" />
+            {/* SEARCH */}
+            <div className="hidden sm:flex">
+              <div className="flex items-center gap-2.5 rounded-full border border-border bg-surface/40 px-4 py-2 transition-all duration-200 focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/20">
+                <Search className="h-4 w-4 text-text-muted" />
 
-              <input
-                type="text"
-                placeholder="Search crypto, gold, traders..."
-                className="w-56 bg-transparent text-xs text-slate-200 outline-none placeholder:text-slate-600"
-              />
+                <input
+                  type="text"
+                  placeholder="Search crypto, gold, traders..."
+                  className="w-64 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* CENTER NAVIGATION */}
-        <nav className="hidden h-full items-center gap-1 md:flex">
-          {navItems.map((item) => {
-            const active = pathname === item.href
+          {/* CENTER NAVIGATION */}
+          <nav className="hidden h-full items-center gap-1 md:flex" aria-label="Main navigation">
+            {navItems.map((item) => {
+              const active = pathname === item.href
 
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`relative flex h-full items-center px-4 text-xs font-semibold tracking-wide transition-colors duration-200 ${
-                  active
-                    ? 'text-yellow-600'
-                    : 'text-slate-400 hover:text-slate-200'
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`relative flex h-full items-center px-4 text-sm font-semibold tracking-wide transition-colors duration-200 gnex-touch-target ${
+                    active
+                      ? 'text-brand'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {item.label}
+
+                  {active && (
+                    <span className="absolute bottom-0 left-0 h-0.5 w-full bg-brand shadow-[0_-2px_10px_rgba(202,138,4,0.4)]" />
+                  )}
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* RIGHT SECTION */}
+          <div className="flex items-center gap-2">
+            
+            {/* PORTFOLIO SNAPSHOT */}
+            <Link
+              href="/wallet"
+              className="hidden items-center gap-3 rounded-full border border-border bg-surface/40 px-4 py-2 transition-colors hover:border-border-strong lg:flex gnex-touch-target"
+            >
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-brand" />
+
+                <span className="text-sm font-mono font-bold text-text-primary">
+                  KES {formatKes(totalKes)}
+                </span>
+              </div>
+
+              <span
+                className={`rounded-md border px-2.5 py-1 font-mono text-xs font-bold ${
+                  growthPct === null
+                    ? 'border-border bg-surface/40 text-text-muted'
+                    : growthPct >= 0
+                      ? 'border-success-border bg-success-bg text-success'
+                      : 'border-danger-border bg-danger-bg text-danger'
                 }`}
               >
-                {item.label}
-
-                {active && (
-                  <span className="absolute bottom-0 left-0 h-0.5 w-full bg-yellow-600 shadow-[0_-2px_10px_rgba(202,138,4,0.4)]" />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* RIGHT SECTION */}
-        <div className="flex items-center gap-2.5">
-          
-          {/* PORTFOLIO SNAPSHOT */}
-          <Link
-            href="/wallet"
-            className="hidden items-center gap-3 rounded-full border border-slate-800/60 bg-slate-900/30 px-3 py-1 transition-colors hover:border-slate-700 lg:flex"
-          >
-            <div className="flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5 text-yellow-600" />
-
-              <span className="text-xs font-mono font-bold text-slate-200">
-                KES {formatKes(totalKes)}
+                {growthPct === null ? 'Demo' : `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(1)}%`}
               </span>
-            </div>
+            </Link>
 
-            <span
-              className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold ${
-                growthPct === null
-                  ? 'border-slate-700 bg-slate-800/40 text-slate-400'
-                  : growthPct >= 0
-                    ? 'border-[#8DFF45]/10 bg-[#8DFF45]/5 text-[#8DFF45]'
-                    : 'border-[#FF5A5A]/10 bg-[#FF5A5A]/5 text-[#FF5A5A]'
-              }`}
-            >
-              {growthPct === null ? 'Demo' : `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(1)}%`}
-            </span>
-          </Link>
+            {/* MOBILE SEARCH */}
+            <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface sm:hidden gnex-touch-target">
+              <Search className="h-4 w-4 text-text-secondary" />
+            </button>
 
-          {/* MOBILE SEARCH */}
-          <button className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-slate-800/80 bg-slate-900/40 transition-colors hover:border-slate-700 hover:bg-slate-900 sm:hidden">
-            <Search className="h-3.5 w-3.5 text-slate-400" />
-          </button>
+            {/* MESSAGES */}
+            <button className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface gnex-touch-target">
+              <MessageCircle className="h-4 w-4 text-text-secondary" />
 
-          {/* MESSAGES */}
-          <button className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-slate-800/80 bg-slate-900/40 transition-colors hover:border-slate-700 hover:bg-slate-900">
-            <MessageCircle className="h-3.5 w-3.5 text-slate-400" />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
+            </button>
 
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-600" />
-          </button>
+            {/* NOTIFICATIONS */}
+            <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface gnex-touch-target">
+              <Bell className="h-4 w-4 text-text-secondary" />
+            </button>
 
-          {/* NOTIFICATIONS */}
-          <button className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-slate-800/80 bg-slate-900/40 transition-colors hover:border-slate-700 hover:bg-slate-900">
-            <Bell className="h-3.5 w-3.5 text-slate-400" />
-          </button>
-
-          {/* User Avatar */}
-          <AvatarDropdown />
+            {/* User Avatar */}
+            <AvatarDropdown />
+          </div>
         </div>
-      </div>
       </header>
 
       {/* Rendered outside the <header> — backdrop-blur on the header creates a

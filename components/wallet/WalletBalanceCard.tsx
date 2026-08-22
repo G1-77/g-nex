@@ -35,7 +35,7 @@ interface WalletBalanceCardProps {
 function GrowthBadge({ growthPct, hasInvested }: { growthPct: number | null; hasInvested: boolean }) {
   if (!hasInvested) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/40 px-2.5 py-1 text-[11px] font-semibold text-slate-400">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface/40 px-2.5 py-1 text-caption font-semibold text-text-muted">
         <TrendingUp className="h-3 w-3" />
         Start saving to beat KE inflation {KE_INFLATION}%
       </span>
@@ -44,7 +44,7 @@ function GrowthBadge({ growthPct, hasInvested }: { growthPct: number | null; has
 
   if (growthPct === null) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/40 px-2.5 py-1 text-[11px] font-semibold text-slate-400">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface/40 px-2.5 py-1 text-caption font-semibold text-text-muted">
         <TrendingUp className="h-3 w-3" />
         Portfolio tracking · vs KE inflation {KE_INFLATION}%
       </span>
@@ -53,13 +53,11 @@ function GrowthBadge({ growthPct, hasInvested }: { growthPct: number | null; has
 
   const ahead = growthPct >= KE_INFLATION
   const beating = growthPct >= 0
-  const color = ahead ? 'text-[#8DFF45] border-[#8DFF45]/20 bg-[#8DFF45]/5' : beating ? 'text-amber-400 border-amber-400/20 bg-amber-400/5' : 'text-rose-400 border-rose-400/20 bg-rose-400/5'
+  const color = ahead ? 'text-success border-success-border bg-success-bg' : beating ? 'text-warning border-warning-border bg-warning-bg' : 'text-danger border-danger-border bg-danger-bg'
   const verb = ahead ? "You're ahead" : beating ? 'Beating inflation' : 'Below inflation'
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] font-bold ${color}`}
-    >
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-caption font-bold ${color}`}>
       <TrendingUp className="h-3 w-3" />
       {growthPct >= 0 ? '+' : ''}
       {growthPct.toFixed(1)}% vs KE inflation {KE_INFLATION}% · {verb}
@@ -71,7 +69,7 @@ function AllocationDonut({ allocation }: { allocation: AllocationSlice[] }) {
   const total = allocation.reduce((acc, a) => acc + a.valueKes, 0)
   if (total <= 0) {
     return (
-      <div className="flex h-28 items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-900/20 text-center text-[11px] text-slate-500">
+      <div className="flex h-28 items-center justify-center rounded-xl border border-dashed border-border bg-surface/20 text-center text-caption text-text-muted">
         Buy a first asset to see your
         <br />
         savings split at a glance
@@ -92,7 +90,7 @@ function AllocationDonut({ allocation }: { allocation: AllocationSlice[] }) {
 
   return (
     <svg viewBox="0 0 100 100" className="h-28 w-28 shrink-0">
-      <circle cx="50" cy="50" r={r} fill="none" stroke="#1e293b" strokeWidth="10" />
+      <circle cx="50" cy="50" r={r} fill="none" stroke="var(--color-slate-800)" strokeWidth="10" />
       {segments.map((seg) => (
         <circle
           key={seg.symbol}
@@ -107,10 +105,10 @@ function AllocationDonut({ allocation }: { allocation: AllocationSlice[] }) {
           transform="rotate(-90 50 50)"
         />
       ))}
-      <text x="50" y="47" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontWeight="700" fontFamily="monospace">
+      <text x="50" y="47" textAnchor="middle" fill="var(--color-text-primary)" fontSize="10" fontWeight="700" fontFamily="monospace">
         {total.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
       </text>
-      <text x="50" y="58" textAnchor="middle" fill="#64748b" fontSize="6" fontWeight="600" fontFamily="monospace">
+      <text x="50" y="58" textAnchor="middle" fill="var(--color-text-muted)" fontSize="6" fontWeight="600" fontFamily="monospace">
         KES TOTAL
       </text>
     </svg>
@@ -135,17 +133,17 @@ export default function WalletBalanceCard({
   const allocationSegments = allocation.filter((a) => a.valueKes > 0)
 
   return (
-    <section className="rounded-xl border border-slate-900/60 bg-slate-900/20 p-5">
+    <section className="gnex-card p-6 space-y-6">
       {/* HEADLINE */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+          <p className="font-mono text-caption uppercase tracking-widest text-text-muted">
             Total savings
           </p>
-          <p className="mt-1.5 font-mono text-3xl font-black tabular-nums text-slate-100">
+          <p className="mt-1.5 font-mono text-3xl font-black tabular-nums text-text-primary">
             {currency === 'KES' ? `KES ${formatKes(totalKes)}` : formatUsd(totalUsd)}
           </p>
-          <p className="mt-1 font-mono text-[10px] text-slate-500">
+          <p className="mt-1 font-mono text-caption text-text-muted">
             {currency === 'KES'
               ? `≈ ${formatUsd(totalUsd)} · Rate ${formatKes(usdKes)}`
               : `≈ KES ${formatKes(totalKes)} · Rate ${formatKes(usdKes)}`}
@@ -153,16 +151,16 @@ export default function WalletBalanceCard({
         </div>
 
         {/* CURRENCY TOGGLE */}
-        <div className="flex items-center gap-1 rounded-full border border-slate-800/80 bg-slate-950/60 p-0.5">
+        <div className="flex items-center gap-1 rounded-full border border-border bg-surface/40 p-0.5">
           {(['KES', 'USD'] as const).map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setCurrency(c)}
-              className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-bold transition-colors ${
+              className={`rounded-full px-2.5 py-1 font-mono text-caption font-bold transition-colors ${
                 currency === c
-                  ? 'bg-yellow-600 text-slate-950'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-brand text-text-inverse'
+                  : 'text-text-muted hover:text-text-secondary'
               }`}
             >
               {c}
@@ -172,20 +170,20 @@ export default function WalletBalanceCard({
       </div>
 
       {/* GROWTH BADGE */}
-      <div className="mt-4">
+      <div>
         <GrowthBadge growthPct={growthPct} hasInvested={hasInvested} />
       </div>
 
       {/* SAVINGS SPLIT */}
-      <div className="mt-5 flex items-center gap-5">
+      <div className="flex items-center gap-5">
         <AllocationDonut allocation={allocation} />
 
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+          <p className="font-mono text-caption uppercase tracking-widest text-text-muted">
             Your savings at a glance
           </p>
           {allocationSegments.length === 0 ? (
-            <p className="text-[11px] leading-relaxed text-slate-500">
+            <p className="text-body-sm leading-relaxed text-text-muted">
               Cash-only for now. Add a first holding to start your savings split.
             </p>
           ) : (
@@ -194,7 +192,7 @@ export default function WalletBalanceCard({
                 <li key={slice.symbol}>
                   <Link
                     href={`/markets/${slice.symbol.toLowerCase()}`}
-                    className="group flex items-center gap-2.5 rounded-md py-0.5 transition-colors hover:bg-slate-900/40"
+                    className="group flex items-center gap-2.5 rounded-md py-1 transition-colors hover:bg-surface-hover"
                   >
                     <span
                       className="h-2 w-2 shrink-0 rounded-full"
@@ -207,10 +205,10 @@ export default function WalletBalanceCard({
                       height={16}
                       className="h-4 w-4 shrink-0"
                     />
-                    <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-300 group-hover:text-slate-100">
+                    <span className="min-w-0 flex-1 truncate text-body-sm font-semibold text-text-secondary group-hover:text-text-primary">
                       {slice.name}
                     </span>
-                    <span className="font-mono text-[10px] font-bold text-slate-300">
+                    <span className="font-mono text-caption font-bold text-text-secondary">
                       {slice.pct.toFixed(0)}%
                     </span>
                   </Link>
@@ -222,12 +220,12 @@ export default function WalletBalanceCard({
       </div>
 
       {/* PERFORMANCE */}
-      <div className="mt-5 rounded-xl border border-slate-900/60 bg-slate-950/40 p-4">
+      <div className="gnex-card-elevated p-4">
         <div className="flex items-baseline justify-between">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+          <p className="font-mono text-caption uppercase tracking-widest text-text-muted">
             Performance · This month
           </p>
-          <p className="font-mono text-[11px] font-bold text-[#8DFF45]">
+          <p className="font-mono text-body-sm font-bold text-success">
             {growthPct === null ? '—' : `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(1)}%`}
           </p>
         </div>
@@ -237,37 +235,37 @@ export default function WalletBalanceCard({
       </div>
 
       {/* BALANCE BREAKDOWN */}
-      <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-        <div className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-2 py-2.5">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500">Cash</p>
-          <p className="mt-1 font-mono text-xs font-bold text-slate-200">{formatKes(cashKes)}</p>
+      <div className="grid grid-cols-4 gap-2 text-center">
+        <div className="rounded-lg border border-border bg-surface/40 px-2 py-2.5">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-text-muted">Cash</p>
+          <p className="mt-1 font-mono text-xs font-bold text-text-primary">{formatKes(cashKes)}</p>
         </div>
-        <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-2 py-2.5">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-amber-400/70">Locked</p>
-          <p className="mt-1 font-mono text-xs font-bold text-amber-400">{formatKes(lockedKes)}</p>
+        <div className="rounded-lg border border-warning-border bg-warning-bg px-2 py-2.5">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-warning/70">Locked</p>
+          <p className="mt-1 font-mono text-xs font-bold text-warning">{formatKes(lockedKes)}</p>
         </div>
-        <div className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-2 py-2.5">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500">Reserve</p>
-          <p className="mt-1 font-mono text-xs font-bold text-slate-500">{formatKes(reserveKes)}</p>
+        <div className="rounded-lg border border-border bg-surface/40 px-2 py-2.5">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-text-muted">Reserve</p>
+          <p className="mt-1 font-mono text-xs font-bold text-text-muted">{formatKes(reserveKes)}</p>
         </div>
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-2 py-2.5">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-emerald-500/70">Buying power</p>
-          <p className="mt-1 font-mono text-xs font-bold text-emerald-400">{formatUsd(cashKes / usdKes)}</p>
+        <div className="rounded-lg border border-success-border bg-success-bg px-2 py-2.5">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-success/70">Buying power</p>
+          <p className="mt-1 font-mono text-xs font-bold text-success">{formatUsd(cashKes / usdKes)}</p>
         </div>
       </div>
 
       {/* ACTIONS */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Link
           href="/wallet/deposit"
-          className="flex items-center justify-center gap-2 rounded-xl bg-yellow-600 px-4 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-yellow-500"
+          className="flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-text-inverse transition-colors hover:bg-brand/90 gnex-touch-target"
         >
           <ArrowDownLeft className="h-4 w-4" />
           Deposit
         </Link>
         <Link
           href="/wallet/withdraw"
-          className="flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 text-sm font-bold text-slate-200 transition-colors hover:border-slate-700 hover:bg-slate-900"
+          className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface/40 px-4 py-3 text-sm font-bold text-text-primary transition-colors hover:border-border-strong hover:bg-surface gnex-touch-target"
         >
           <ArrowUpRight className="h-4 w-4" />
           Withdraw
@@ -279,9 +277,9 @@ export default function WalletBalanceCard({
           type="button"
           onClick={onDemoFund}
           disabled={demoFunding}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-400 transition-colors hover:border-yellow-600/40 hover:text-slate-200 disabled:opacity-60"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-2.5 text-caption font-semibold text-text-muted transition-colors hover:border-brand/40 hover:text-text-secondary disabled:opacity-60 gnex-touch-target"
         >
-          <Sparkles className="h-3.5 w-3.5 text-yellow-600" />
+          <Sparkles className="h-3.5 w-3.5 text-brand" />
           {demoFunding ? 'Funding…' : 'Instant demo fund KES 100,000 + demo holdings'}
         </button>
       )}

@@ -72,11 +72,11 @@ function MobileSheet({
         className="absolute inset-0 cursor-pointer bg-black/70 backdrop-blur-sm"
       />
 
-      <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-slate-900 bg-slate-950/95 backdrop-blur-xl p-5 shadow-2xl">
-        <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-slate-800/60" />
+      <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-border bg-surface-overlay backdrop-blur-xl p-5 shadow-[var(--shadow-overlay)]">
+        <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-border-subtle/60" />
 
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center overflow-hidden cursor-pointer rounded-full bg-slate-900/60 border border-slate-900/80">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden cursor-pointer rounded-full bg-surface/40 border border-border">
             {profile?.avatar_url ? (
               <Image
                 src={profile.avatar_url}
@@ -86,26 +86,26 @@ function MobileSheet({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-sm font-black text-slate-200">
+              <span className="text-sm font-black text-text-secondary">
                 {initials}
               </span>
             )}
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold text-slate-100">
+            <p className="truncate text-body-sm font-bold text-text-primary">
               @{profile?.username ?? 'anonymous'}
             </p>
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-body-sm text-text-muted mt-1">
               {profile?.bio ?? 'Crypto & Gold Market Investor'}
             </p>
           </div>
 
-          <div className="rounded-xl border border-emerald-500/10 bg-emerald-500/5 px-3 py-1.5 text-right">
-            <p className="text-[9px] font-bold uppercase text-slate-500">
+          <div className="rounded-xl border border-success-border bg-success-bg px-3 py-1.5 text-right">
+            <p className="text-caption font-bold uppercase text-text-muted">
               ROI
             </p>
-            <p className="font-mono text-xs font-black text-emerald-400">
+            <p className="font-mono text-body-sm font-black text-success">
               +{profile?.monthly_roi ?? 0}%
             </p>
           </div>
@@ -115,32 +115,32 @@ function MobileSheet({
           <Link
             href={`/user/${profile?.username ?? 'anonymous'}`}
             onClick={onClose}
-            className="w-full flex items-center justify-between rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-900/40 active:scale-95 transition-all"
+            className="gnex-btn gnex-btn-secondary w-full justify-between px-4 py-3"
           >
             <div className="flex items-center gap-3">
-              <User className="h-4 w-4 text-slate-500" />
+              <User className="h-4 w-4 text-text-secondary" />
               View Profile
             </div>
-            <ArrowUpRight className="h-4 w-4 text-slate-500" />
+            <ArrowUpRight className="h-4 w-4 text-text-secondary" />
           </Link>
 
           <Link
             href="/wallet"
             onClick={onClose}
-            className="w-full flex items-center justify-between rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-900/40 active:scale-95 transition-all"
+            className="gnex-btn gnex-btn-secondary w-full justify-between px-4 py-3"
           >
             <div className="flex items-center gap-3">
-              <Wallet className="h-4 w-4 text-slate-500" />
+              <Wallet className="h-4 w-4 text-text-secondary" />
               View Wallet
             </div>
-            <ArrowUpRight className="h-4 w-4 text-slate-500" />
+            <ArrowUpRight className="h-4 w-4 text-text-secondary" />
           </Link>
 
           {isStaff && (
             <Link
               href="/admin"
               onClick={onClose}
-              className="w-full flex items-center justify-between rounded-xl border border-yellow-600/10 bg-yellow-600/5 px-4 py-3 text-xs font-bold text-yellow-600 hover:bg-yellow-600/10 active:scale-95 transition-all"
+              className="gnex-btn w-full justify-between px-4 py-3" style={{ background: 'var(--color-brand-bg)', color: 'var(--color-brand)', borderColor: 'var(--color-brand-border)' }}
             >
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-4 w-4" />
@@ -151,8 +151,8 @@ function MobileSheet({
           )}
 
           {/* Appearance: Light / Dark / System */}
-          <div className="rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">
+          <div className="gnex-card-elevated p-3">
+            <p className="text-caption font-bold uppercase tracking-[0.12em] text-text-muted">
               Appearance
             </p>
             <div role="radiogroup" aria-label="Appearance" className="mt-2 grid grid-cols-3 gap-2">
@@ -164,17 +164,17 @@ function MobileSheet({
                     role="radio"
                     aria-checked={active}
                     onClick={() => onThemeChange(value)}
-                    className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg px-2 py-2.5 transition-all active:scale-95 ${
+                    className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg px-2 py-2.5 transition-all active:scale-95 gnex-touch-target ${
                       active
-                        ? 'bg-slate-800 text-slate-100 shadow-inner'
-                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                        ? 'bg-surface text-text-primary shadow-inner'
+                        : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
-                    <span className="text-[10px] font-bold">{label}</span>
+                    <span className="text-caption font-bold">{label}</span>
                     <span
                       aria-hidden
-                      className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-400' : 'bg-transparent'}`}
+                      className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-success' : 'bg-transparent'}`}
                     />
                   </button>
                 )
@@ -184,7 +184,7 @@ function MobileSheet({
 
           <button
             onClick={handleLogout}
-            className="w-full flex cursor-pointer items-center justify-between rounded-xl border border-rose-500/10 bg-rose-500/5 px-4 py-3 text-xs font-bold text-rose-400 hover:bg-rose-500/10 active:scale-95 transition-all"
+            className="gnex-btn gnex-btn-danger w-full justify-between px-4 py-3"
           >
             <div className="flex items-center gap-3">
               <LogOut className="h-4 w-4" />
@@ -206,29 +206,9 @@ export default function AvatarDropdown() {
   const { profile, role, isStaff, isLoading } = useAuth()
   const { theme, setTheme } = useTheme()
 
-  // STRICT SESSION HYDRATION GUARD (prevents stale/testuser overwrite)
-  // useEffect(() => {
-  //   const syncSession = async () => {
-  //     const { data } = await supabase.auth.getUser()
-  //     const authUser = data?.user
-
-  //     if (!authUser) return
-
-  //     if (profile?.username && authUser.email !== 'ahelstakov@gmail.com') {
-  //       // prevent stale or test session mismatch
-  //       setOpen(false)
-  //     }
-  //   }
-
-  //   syncSession()
-  // }, [profile])
-
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
       const target = event.target as Element | null
-      // The mobile sheet is portalled to <body>, i.e. OUTSIDE dropdownRef.
-      // Mousedown inside it must not close the sheet, or the sheet unmounts
-      // before the click ever reaches the links.
       if (target?.closest?.('[data-avatar-sheet]')) return
       if (
         dropdownRef.current &&
@@ -288,7 +268,7 @@ export default function AvatarDropdown() {
   }, [profile?.full_name, profile?.username])
 
   if (isLoading) {
-    return <div className="h-8 w-8 rounded-full bg-slate-800/60 animate-pulse" />
+    return <div className="h-8 w-8 rounded-full bg-surface/40 animate-pulse" />
   }
 
   return (
@@ -296,7 +276,7 @@ export default function AvatarDropdown() {
       {/* Trigger */}
       <button
         onClick={() => setOpen((p) => !p)}
-        className="relative h-8 w-8 flex items-center justify-center rounded-full cursor-pointer bg-slate-900/60 border border-slate-900/80 active:scale-95"
+        className="relative h-8 w-8 flex items-center justify-center rounded-full cursor-pointer bg-surface/40 border border-border active:scale-95 gnex-touch-target"
       >
         {profile?.avatar_url ? (
           <Image
@@ -307,7 +287,7 @@ export default function AvatarDropdown() {
             className="w-full h-full object-cover rounded-full"
           />
         ) : (
-          <span className="text-[10px] font-black text-slate-200">
+          <span className="text-caption font-black text-text-secondary">
             {initials}
           </span>
         )}
@@ -315,12 +295,12 @@ export default function AvatarDropdown() {
 
       {/* Desktop Dropdown */}
       {open && (
-        <div className="absolute right-0 top-11 z-50 hidden w-56 rounded-2xl border border-slate-900/80 bg-slate-950/95 backdrop-blur-xl md:block">
-          <div className="border-b border-slate-900/80 px-4 py-3">
-            <p className="text-xs font-bold text-slate-100 truncate">
+        <div className="absolute right-0 top-11 z-50 hidden w-56 rounded-2xl border border-border bg-surface-overlay backdrop-blur-xl md:block">
+          <div className="border-b border-border px-4 py-3">
+            <p className="text-body-sm font-bold text-text-primary truncate">
               @{profile?.username ?? 'anonymous'}
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-body-sm text-text-muted">
               {role ? role.replace('_', ' ') : 'GNEX Trader Account'}
             </p>
           </div>
@@ -330,18 +310,18 @@ export default function AvatarDropdown() {
             <Link
               href={`/user/${profile?.username ?? 'anonymous'}`}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-xs font-semibold text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all"
+              className="gnex-btn gnex-btn-ghost w-full justify-start px-3 py-2 text-body-sm"
             >
-              <User className="h-4 w-4 text-slate-500" />
+              <User className="h-4 w-4 text-text-secondary" />
               View Profile
             </Link>
 
             <Link
               href="/wallet"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-xs font-semibold cursor-pointer text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all"
+              className="gnex-btn gnex-btn-ghost w-full justify-start px-3 py-2 text-body-sm"
             >
-              <Wallet className="h-4 w-4 text-slate-500" />
+              <Wallet className="h-4 w-4 text-text-secondary" />
               View Wallet
             </Link>
 
@@ -349,16 +329,16 @@ export default function AvatarDropdown() {
               <Link
                 href="/admin"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 text-xs font-semibold text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all"
+                className="gnex-btn gnex-btn-ghost w-full justify-start px-3 py-2 text-body-sm" style={{ color: 'var(--color-brand)' }}
               >
-                <ShieldCheck className="h-4 w-4 text-yellow-600" />
+                <ShieldCheck className="h-4 w-4" style={{ color: 'var(--color-brand)' }} />
                 Admin Portal
               </Link>
             )}
 
             {/* Appearance: Light / Dark / System */}
-            <div className="mt-1 border-t border-slate-900/80 px-1 pt-2">
-              <p className="px-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">
+            <div className="mt-1 border-t border-border px-1 pt-2">
+              <p className="px-2 pb-1.5 text-caption font-bold uppercase tracking-[0.12em] text-text-muted">
                 Appearance
               </p>
               <div role="radiogroup" aria-label="Appearance" className="grid grid-cols-3 gap-0.5">
@@ -370,17 +350,17 @@ export default function AvatarDropdown() {
                       role="radio"
                       aria-checked={active}
                       onClick={() => setTheme(value)}
-                      className={`flex cursor-pointer flex-col items-center gap-1 rounded-lg px-1 py-1.5 transition-all active:scale-95 ${
+                      className={`flex cursor-pointer flex-col items-center gap-1 rounded-lg px-1 py-1.5 transition-all active:scale-95 gnex-touch-target ${
                         active
-                          ? 'bg-slate-800 text-slate-100 shadow-inner'
-                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                          ? 'bg-surface text-text-primary shadow-inner'
+                          : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'
                       }`}
                     >
                       <Icon className="h-3.5 w-3.5" />
-                      <span className="text-[9px] font-bold">{label}</span>
+                      <span className="text-caption font-bold">{label}</span>
                       <span
                         aria-hidden
-                        className={`h-1 w-1 rounded-full ${active ? 'bg-emerald-400' : 'bg-transparent'}`}
+                        className={`h-1 w-1 rounded-full ${active ? 'bg-success' : 'bg-transparent'}`}
                       />
                     </button>
                   )
@@ -390,9 +370,9 @@ export default function AvatarDropdown() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center cursor-pointer gap-3 px-3 py-2 text-xs font-bold text-rose-400 rounded-xl hover:bg-rose-500/10 active:scale-95 transition-all"
+              className="gnex-btn gnex-btn-ghost w-full justify-start px-3 py-2 text-body-sm" style={{ color: 'var(--color-danger)' }}
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4" style={{ color: 'var(--color-danger)' }} />
               Logout Session
             </button>
           </div>
