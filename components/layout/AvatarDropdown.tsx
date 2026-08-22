@@ -15,11 +15,25 @@ import {
   User,
   Wallet,
   ArrowUpRight,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react'
 
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '../providers/AuthProvider'
 import { syncSessionAction } from '@/app/auth/action'
+import { useTheme, type ThemePreference } from '@/components/providers/ThemeProvider'
+
+const APPEARANCE_OPTIONS: Array<{
+  value: ThemePreference
+  label: string
+  Icon: typeof Sun
+}> = [
+  { value: 'light', label: 'Light', Icon: Sun },
+  { value: 'dark', label: 'Dark', Icon: Moon },
+  { value: 'system', label: 'System', Icon: Monitor },
+]
 
 // For Mobile
 
@@ -30,6 +44,8 @@ function MobileSheet({
   isStaff,
   initials,
   handleLogout,
+  theme,
+  onThemeChange,
 }: {
   open: boolean
   onClose: () => void
@@ -43,11 +59,13 @@ function MobileSheet({
   isStaff: boolean
   initials: string
   handleLogout: () => Promise<void>
+  theme: ThemePreference
+  onThemeChange: (t: ThemePreference) => void
 }) {
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 md:hidden">
+    <div className="fixed inset-0 z-50 md:hidden" data-avatar-sheet>
       <button
         onClick={onClose}
         aria-label="Close menu"
@@ -75,7 +93,7 @@ function MobileSheet({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold text-white">
+            <p className="truncate text-xs font-bold text-slate-100">
               @{profile?.username ?? 'anonymous'}
             </p>
             <p className="text-[11px] text-slate-500 mt-1">
@@ -106,13 +124,17 @@ function MobileSheet({
             <ArrowUpRight className="h-4 w-4 text-slate-500" />
           </Link>
 
-          <button className="w-full flex cursor-pointer items-center justify-between rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-900/40 active:scale-95 transition-all">
+          <Link
+            href="/wallet"
+            onClick={onClose}
+            className="w-full flex items-center justify-between rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3 text-xs font-bold text-slate-300 hover:bg-slate-900/40 active:scale-95 transition-all"
+          >
             <div className="flex items-center gap-3">
               <Wallet className="h-4 w-4 text-slate-500" />
               View Wallet
             </div>
             <ArrowUpRight className="h-4 w-4 text-slate-500" />
-          </button>
+          </Link>
 
           {isStaff && (
             <Link
@@ -127,6 +149,38 @@ function MobileSheet({
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           )}
+
+          {/* Appearance: Light / Dark / System */}
+          <div className="rounded-xl border border-slate-900/80 bg-slate-900/20 px-4 py-3">
+            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              Appearance
+            </p>
+            <div role="radiogroup" aria-label="Appearance" className="mt-2 grid grid-cols-3 gap-2">
+              {APPEARANCE_OPTIONS.map(({ value, label, Icon }) => {
+                const active = theme === value
+                return (
+                  <button
+                    key={value}
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => onThemeChange(value)}
+                    className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg px-2 py-2.5 transition-all active:scale-95 ${
+                      active
+                        ? 'bg-slate-800 text-slate-100 shadow-inner'
+                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="text-[10px] font-bold">{label}</span>
+                    <span
+                      aria-hidden
+                      className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-400' : 'bg-transparent'}`}
+                    />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           <button
             onClick={handleLogout}
@@ -150,6 +204,7 @@ export default function AvatarDropdown() {
   const dropdownRef = useRef<HTMLDivElement | null>(null)
 
   const { profile, role, isStaff, isLoading } = useAuth()
+  const { theme, setTheme } = useTheme()
 
   // STRICT SESSION HYDRATION GUARD (prevents stale/testuser overwrite)
   // useEffect(() => {
@@ -170,6 +225,11 @@ export default function AvatarDropdown() {
 
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
+      const target = event.target as Element | null
+      // The mobile sheet is portalled to <body>, i.e. OUTSIDE dropdownRef.
+      // Mousedown inside it must not close the sheet, or the sheet unmounts
+      // before the click ever reaches the links.
+      if (target?.closest?.('[data-avatar-sheet]')) return
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -276,10 +336,14 @@ export default function AvatarDropdown() {
               View Profile
             </Link>
 
-            <button className="flex items-center gap-3 px-3 py-2 text-xs font-semibold cursor-pointer text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all">
+            <Link
+              href="/wallet"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-3 py-2 text-xs font-semibold cursor-pointer text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all"
+            >
               <Wallet className="h-4 w-4 text-slate-500" />
               View Wallet
-            </button>
+            </Link>
 
             {isStaff && (
               <Link
@@ -288,9 +352,41 @@ export default function AvatarDropdown() {
                 className="flex items-center gap-3 px-3 py-2 text-xs font-semibold text-slate-300 rounded-xl hover:bg-slate-900/60 active:scale-95 transition-all"
               >
                 <ShieldCheck className="h-4 w-4 text-yellow-600" />
-                Management Portal
+                Admin Portal
               </Link>
             )}
+
+            {/* Appearance: Light / Dark / System */}
+            <div className="mt-1 border-t border-slate-900/80 px-1 pt-2">
+              <p className="px-2 pb-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                Appearance
+              </p>
+              <div role="radiogroup" aria-label="Appearance" className="grid grid-cols-3 gap-0.5">
+                {APPEARANCE_OPTIONS.map(({ value, label, Icon }) => {
+                  const active = theme === value
+                  return (
+                    <button
+                      key={value}
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setTheme(value)}
+                      className={`flex cursor-pointer flex-col items-center gap-1 rounded-lg px-1 py-1.5 transition-all active:scale-95 ${
+                        active
+                          ? 'bg-slate-800 text-slate-100 shadow-inner'
+                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="text-[9px] font-bold">{label}</span>
+                      <span
+                        aria-hidden
+                        className={`h-1 w-1 rounded-full ${active ? 'bg-emerald-400' : 'bg-transparent'}`}
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
             <button
               onClick={handleLogout}
@@ -311,6 +407,8 @@ export default function AvatarDropdown() {
         isStaff={isStaff}
         initials={initials}
         handleLogout={handleLogout}
+        theme={theme}
+        onThemeChange={setTheme}
       />
     </div>
   )

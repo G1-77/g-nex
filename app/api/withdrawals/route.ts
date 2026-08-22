@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { evaluateWithdrawalApproval } from "@/lib/market/funding"
+import { createServiceClient } from "@/lib/admin/service"
+import { computeWithdrawalAvailability } from "@/lib/market/funding"
 import { withdrawalFee, WITHDRAWAL_FEE_RATE } from "@/lib/constants/wallet"
 
 export async function POST(req: Request) {
@@ -17,6 +18,8 @@ export async function POST(req: Request) {
   }
 
   // Asset-linked cash-outs (trade engine) keep the existing lock_funds path.
+  // NOTE: lock_funds was revoked from authenticated in RPC lockdown; this path
+  // currently fails for regular users. Kept for backward compatibility.
   if (body.asset_id) {
     const { error: lockError } = await supabase.rpc('lock_funds', {
       p_user: user.id,
@@ -47,7 +50,8 @@ export async function POST(req: Request) {
     return Response.json({ success: true })
   }
 
-  // KES cash-out: enforce the 70% cap and run the auto-approval gate.
+  // KES cash-out: enforce the 70% cap and validate availability.
+  // All requests now enter 'pending' for admin approval — no auto-approval.
   const amountKes = Number(body.amount_kes ?? body.amount)
   const phone = String(body.phone ?? '').trim()
   const provider = String(body.provider ?? 'M-Pesa')
@@ -94,37 +98,44 @@ export async function POST(req: Request) {
     return new Response('Payment provider is not currently supported', { status: 400 })
   }
 
-  const { autoApproved, availability } = await evaluateWithdrawalApproval(
-    supabase,
-    user.id,
-    amountKes,
-    phone,
-    { maxWithdrawPct: effectiveMaxPct }
-  )
+  // Validate available balance (pre-reservation rejection for clear UX).
+  const availability = await computeWithdrawalAvailability(supabase, user.id, {
+    maxWithdrawPct: effectiveMaxPct,
+  })
 
   if (amountKes > availability.capLimit || amountKes > availability.available) {
     return new Response('Amount exceeds your available withdrawal balance', { status: 400 })
   }
 
-  const now = new Date().toISOString()
-  const { error: insertError } = await supabase
-    .from('withdrawal_requests')
-    .insert({
-      user_id: user.id,
-      asset_id: null,
-      amount: amountKes,
-      amount_kes: amountKes,
-      fee_kes: feeKes,
-      mobile_money_number: phone,
-      mobile_money_provider: provider,
-      status: autoApproved ? 'approved' : 'pending',
-      approved_by: autoApproved ? 'auto' : null,
-      approved_at: autoApproved ? now : null,
-    })
+  // Generate idempotency key for safe retries (client can also supply one).
+  const idempotencyKey =
+    body.idempotencyKey ?? `wd-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
-  if (insertError) {
-    return new Response(insertError.message, { status: 400 })
+  // Execute request via service-role RPC (atomic reserve + insert + ledger + audit).
+  const service = createServiceClient()
+  const { data, error } = await service.rpc('request_withdrawal', {
+    p_user: user.id,
+    p_amount_kes: amountKes,
+    p_phone: phone,
+    p_provider: provider,
+    p_idempotency_key: idempotencyKey,
+  })
+
+  if (error) {
+    console.error('request_withdrawal RPC error:', error.message)
+    return new Response(error.message, { status: 400 })
   }
 
-  return Response.json({ success: true, autoApproved })
+  if (data && data.ok === false) {
+    return new Response(data.error, { status: 400 })
+  }
+
+  return Response.json({
+    success: true,
+    withdrawalId: data?.withdrawal_id,
+    status: 'pending',
+    grossKes: data?.gross_kes,
+    netKes: data?.net_kes,
+    feeKes: data?.fee_kes,
+  })
 }

@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
   let query = service
     .from("admin_action_requests")
-    .select("*, requester:profiles(username)")
+    .select("*, requester:profiles!admin_action_requests_requested_by_fkey(username)")
     .order("created_at", { ascending: false })
     .limit(limit)
 

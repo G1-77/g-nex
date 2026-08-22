@@ -191,7 +191,7 @@ const handlePublish = async () => {
 
              {/*  1. HYDRATED AUTHOR LABELS CONTEXT ASSETS */}
               <div>
-                <p className="text-sm font-bold text-white">
+                <p className="text-sm font-bold text-slate-100">
                   {isLoading ? 'Synchronizing matrix...' : `@${profile?.username ?? 'anonymous'}`}
                 </p>
                 <p className="text-[11px] text-slate-500">Publishing your feed</p>
@@ -332,7 +332,7 @@ const handlePublish = async () => {
                 <button
                   type="button"
                   onClick={handleRemoveMedia}
-                  className="absolute top-3 right-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-rose-500/20 bg-slate-950/80 text-rose-400 backdrop-blur-md transition-all duration-150 hover:bg-rose-500 hover:text-white active:scale-90 shadow-lg"
+                  className="absolute top-3 right-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-rose-500/20 bg-slate-950/80 text-rose-400 backdrop-blur-md transition-all duration-150 hover:bg-rose-500 hover:text-slate-100 active:scale-90 shadow-lg"
                   aria-label="Remove attached chart screenshot"
                 >
                   <X className="h-4 w-4" />

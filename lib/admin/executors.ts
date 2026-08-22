@@ -390,7 +390,7 @@ export async function processWithdrawal(
   service: SupabaseClient,
   adminId: string,
   withdrawalId: string,
-  action: "process" | "reject",
+  action: "process" | "reject" | "approve" | "fail",
   note: string | null
 ): Promise<ExecutorResult> {
   const { data: wd, error: findError } = await service
@@ -402,10 +402,31 @@ export async function processWithdrawal(
     return { ok: false, status: 404, error: findError?.message ?? "Withdrawal not found" }
   }
 
-  const { data: rpcData, error: rpcError } = await service.rpc(
-    action === "process" ? "admin_process_withdrawal" : "admin_reject_withdrawal",
-    { p_withdrawal_id: withdrawalId, p_admin: adminId, p_note: note }
-  )
+  const rpcMap: Record<
+    typeof action,
+    { rpc: string; expectedStatus: string; newStatus: string; withNote: boolean }
+  > = {
+    approve: { rpc: "admin_approve_withdrawal", expectedStatus: "pending", newStatus: "approved", withNote: false },
+    process: { rpc: "admin_process_withdrawal", expectedStatus: "approved", newStatus: "sent", withNote: true },
+    reject: { rpc: "admin_reject_withdrawal", expectedStatus: "pending|approved", newStatus: "rejected", withNote: true },
+    fail: { rpc: "admin_fail_withdrawal", expectedStatus: "sent|approved|processing", newStatus: "failed", withNote: true },
+  }
+
+  const { rpc, expectedStatus, newStatus, withNote } = rpcMap[action]
+
+  // Validate current status
+  const expected = expectedStatus.split("|")
+  if (!expected.includes(wd.status)) {
+    return { ok: false, status: 400, error: `Withdrawal must be ${expected.join(" or ")} to ${action}` }
+  }
+
+  // PostgREST matches RPCs strictly by parameter set: admin_approve_withdrawal
+  // takes no p_note, so sending it there yields PGRST202.
+  const { data: rpcData, error: rpcError } = await service.rpc(rpc, {
+    p_withdrawal_id: withdrawalId,
+    p_admin: adminId,
+    ...(withNote ? { p_note: note } : {}),
+  })
   if (rpcError) return { ok: false, status: 500, error: rpcError.message }
   if (rpcData && rpcData.ok === false) {
     return { ok: false, status: 400, error: String(rpcData.error ?? "Operation failed") }
@@ -417,11 +438,31 @@ export async function processWithdrawal(
     targetTable: "withdrawal_requests",
     targetId: withdrawalId,
     oldValue: { status: wd.status },
-    newValue: { status: action === "process" ? "sent" : "rejected", ...rpcData },
+    newValue: { status: newStatus, ...rpcData },
     metadata: { amount_kes: Number(wd.amount_kes ?? wd.amount ?? 0), note },
   })
 
   return { ok: true, result: rpcData }
+}
+
+// New executor: approve withdrawal (pending -> approved)
+export async function approveWithdrawal(
+  service: SupabaseClient,
+  adminId: string,
+  withdrawalId: string,
+  note: string | null
+): Promise<ExecutorResult> {
+  return processWithdrawal(service, adminId, withdrawalId, "approve", note)
+}
+
+// New executor: fail withdrawal (post-debit failure or pre-debit cancellation)
+export async function failWithdrawal(
+  service: SupabaseClient,
+  adminId: string,
+  withdrawalId: string,
+  note: string | null
+): Promise<ExecutorResult> {
+  return processWithdrawal(service, adminId, withdrawalId, "fail", note)
 }
 
 // ----------------------------------------------------------------------------

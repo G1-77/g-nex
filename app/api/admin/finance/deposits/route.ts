@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
   let query = service
     .from("deposit_requests")
-    .select("*, user:profiles(username)")
+    .select("*, user:profiles!deposit_requests_user_id_fkey(username)")
     .order("created_at", { ascending: false })
     .limit(limit)
 

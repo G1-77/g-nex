@@ -1,7 +1,7 @@
 # GNEX Milestones — Phase Progress Tracker
 
 > Living document tracking every GNEX phase from kickoff to production.
-> **Last updated:** 2026-08-19
+> **Last updated:** 2026-08-22
 
 ---
 
@@ -286,3 +286,29 @@
 
 ### Known Follow-ups
 - Visual/manual QA of chart interactions + narrow viewports recommended.
+
+---
+
+## Phase 9 — Theme System + Withdrawal Approval Boundary
+
+**Status:** ✅ Implemented, lint + typecheck clean — migration deployment not verified in this session
+
+### Delivered
+- **Theme system (Light / Dark / System)**: `ThemeProvider` with `useSyncExternalStore` for zero-hydration-mismatch SSR; preference persisted in `localStorage` (`gnex-theme`); OS `prefers-color-scheme` live re-resolution; inline no-flash script in `app/layout.tsx` applies `dark`/`light` classes to `<html>`; `globals.css` light palette (Slate scale inverted); 20+ UI components updated across feed, admin, profile, market, wallet, layout
+- **Withdrawal approval boundary rework**: ALL KES withdrawals now enter `pending` for admin review — auto-approval removed entirely
+- **Atomic service-role RPC `request_withdrawal`**: FOR UPDATE wallet lock → idempotent replay check (idempotency keys prevent double-reservation) → fee/provider/cap validation → balance→locked reservation → insert request + pending ledger entry + audit trail
+- **Migrations**:
+  - `20260822120000_approval_request_fk.sql` — FK for approval requests
+  - `20260822130000_withdrawal_approval_boundary.sql` — core RPC + boundary logic
+  - `20260822140000_withdrawal_notifications.sql` — lifecycle trigger (requested/approved/processing/sent/rejected/failed/cancelled); `create_notification` execute re-granted to `service_role`
+  - `20260822150000_fix_request_withdrawal.sql` — fixes: `record` vs jsonb unwrapping (`#>> '{}'` for bare scalars), cost-basis holdings valuation, debit-before-upsert ordering bug
+- **API routes rewritten**: `POST /api/withdrawals` uses `computeWithdrawalAvailability` pre-validation + service-role RPC execution; structured response with `grossKes`/`netKes`/`feeKes`
+- **Admin routes updated**: `app/api/admin/approvals/route.ts`, `app/api/admin/finance/withdrawals/route.ts`, `app/admin/finance/withdrawals/page.tsx` aligned with pending-only flow
+
+### Key Files
+`components/providers/ThemeProvider.tsx`, `app/layout.tsx`, `app/globals.css`, `app/api/withdrawals/route.ts`, `lib/market/funding.ts`, `lib/admin/executors.ts`, `app/api/admin/approvals/route.ts`, `supabase/migrations/202608221{2,3,4,5}0000_*.sql`, 20+ theme-aware components
+
+### Verification
+- `tsc --noEmit` ✅ Clean
+- ESLint on new/edited code ✅ 0 errors (2 pre-existing `any` errors in `VerifiedPositioning.tsx` from earlier commit remain)
+- Migration syntax validated locally; remote deployment status not checked in this session

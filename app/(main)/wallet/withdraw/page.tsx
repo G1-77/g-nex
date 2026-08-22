@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Check } from 'lucide-react'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -33,6 +33,10 @@ export default function WithdrawPage() {
   const [provider, setProvider] = useState<'M-Pesa' | 'Airtel Money'>(profile?.mobileMoneyProvider === 'Airtel' ? 'Airtel Money' : 'M-Pesa')
   const [phone, setPhone] = useState(profile?.mobileMoneyNumber ?? '')
   const [submitted, setSubmitted] = useState(false)
+
+  // Stable per-session key so retries never duplicate the withdrawal server-side.
+  // Generated lazily in the submit handler (impure calls belong there, not render).
+  const idempotencyKeyRef = useRef<string | null>(null)
 
   useDemoSimulation(userId, submitted)
 
@@ -69,8 +73,11 @@ export default function WithdrawPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!userId || !valid) return
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `wd-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    }
     createWithdrawal.mutate(
-      { userId, amount: amountNum, phone: phone.trim(), provider },
+      { userId, amount: amountNum, phone: phone.trim(), provider, idempotencyKey: idempotencyKeyRef.current },
       {
         onSuccess: () => setSubmitted(true),
       }
@@ -90,7 +97,7 @@ export default function WithdrawPage() {
             <Check className="h-7 w-7 text-[#8DFF45]" />
           </div>
           <h1 className="mt-4 text-xl font-black text-[#8DFF45]">
-            {paid ? 'Withdrawal paid' : 'Withdrawal request sent'}
+            {paid ? 'Withdrawal paid' : 'Withdrawal request submitted'}
           </h1>
           <p className="mt-2 text-sm text-slate-400">
             KES {formatKes(amountNum)} to <span className="font-mono font-bold text-slate-200">{phone}</span> via{' '}
@@ -99,7 +106,7 @@ export default function WithdrawPage() {
           <p className="mt-1 text-xs text-slate-500">
             {paid
               ? 'The amount has been sent to your mobile money.'
-              : 'The amount is reserved now and pays out after approval — usually within the hour.'}
+              : 'Your funds are reserved and the request is pending admin approval — usually within the hour.'}
           </p>
           <Link
             href="/wallet/history"
@@ -218,8 +225,8 @@ export default function WithdrawPage() {
 
         {/* APPROVAL NOTE */}
         <p className="mt-3 text-[10px] text-slate-500">
-          Requests under the 70% cap with your registered phone are approved automatically; anything
-          unusual goes to manual review.
+          Every withdrawal is reviewed by our team. Requests under the 70% cap are typically processed
+          within the hour.
         </p>
 
         {/* FEE SUMMARY */}

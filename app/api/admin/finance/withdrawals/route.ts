@@ -6,6 +6,8 @@ import {
   deleteWithdrawal,
   editRecord,
   processWithdrawal,
+  approveWithdrawal,
+  failWithdrawal,
 } from "@/lib/admin/executors"
 
 export interface AdminWithdrawalRow {
@@ -24,6 +26,7 @@ export interface AdminWithdrawalRow {
   approved_at: string | null
   processed_at: string | null
   created_at: string
+  phone_matches_profile: boolean | null
 }
 
 export async function GET(req: Request) {
@@ -38,7 +41,9 @@ export async function GET(req: Request) {
 
   let query = service
     .from("withdrawal_requests")
-    .select("*, user:profiles(username), asset:assets(symbol)")
+    .select(
+      "*, user:profiles!withdrawal_requests_user_id_fkey(username, mobile_money_number), asset:assets(symbol)"
+    )
     .order("created_at", { ascending: false })
     .limit(limit)
 
@@ -47,23 +52,34 @@ export async function GET(req: Request) {
   const { data, error } = await query
   if (error) return new Response(error.message, { status: 500 })
 
-  const rows: AdminWithdrawalRow[] = (data ?? []).map((r) => ({
-    id: r.id,
-    user_id: r.user_id,
-    username: r.user?.username ?? null,
-    amount_kes: Number(r.amount_kes ?? r.amount ?? 0),
-    amount: Number(r.amount ?? 0),
-    fee_kes: Number(r.fee_kes ?? 0),
-    mobile_money_number: r.mobile_money_number,
-    mobile_money_provider: r.mobile_money_provider,
-    asset_symbol: r.asset?.symbol ?? null,
-    status: r.status,
-    admin_notes: r.admin_notes,
-    approved_by: r.approved_by,
-    approved_at: r.approved_at,
-    processed_at: r.processed_at,
-    created_at: r.created_at,
-  }))
+  const rows: AdminWithdrawalRow[] = (data ?? []).map((r) => {
+    const profilePhone = r.user?.mobile_money_number ?? null
+    const requestPhone = r.mobile_money_number
+    const digits = (p: string) => p.replace(/\D/g, '')
+    const phoneMatches =
+      !profilePhone || !requestPhone
+        ? null
+        : digits(profilePhone) === digits(requestPhone)
+
+    return {
+      id: r.id,
+      user_id: r.user_id,
+      username: r.user?.username ?? null,
+      amount_kes: Number(r.amount_kes ?? r.amount ?? 0),
+      amount: Number(r.amount ?? 0),
+      fee_kes: Number(r.fee_kes ?? 0),
+      mobile_money_number: r.mobile_money_number,
+      mobile_money_provider: r.mobile_money_provider,
+      asset_symbol: r.asset?.symbol ?? null,
+      status: r.status,
+      admin_notes: r.admin_notes,
+      approved_by: r.approved_by,
+      approved_at: r.approved_at,
+      processed_at: r.processed_at,
+      created_at: r.created_at,
+      phone_matches_profile: phoneMatches,
+    }
+  })
 
   return Response.json({ withdrawals: rows })
 }
@@ -76,28 +92,41 @@ export async function POST(req: Request) {
 
   const body = await req.json()
   const withdrawalId = String(body.withdrawalId ?? "")
-  const rawAction = String(body.action ?? "") // process | reject
+  const rawAction = String(body.action ?? "") // approve | process | reject | fail
   const note = String(body.note ?? "").trim() || null
 
   if (!withdrawalId) return new Response("Missing withdrawalId", { status: 400 })
-  if (rawAction !== "process" && rawAction !== "reject") {
+  if (!["approve", "process", "reject", "fail"].includes(rawAction)) {
     return new Response("Invalid action", { status: 400 })
   }
-  const action: "process" | "reject" = rawAction
+  const action = rawAction as "approve" | "process" | "reject" | "fail"
 
-  // Money leaving the platform always needs a higher-rank sign-off; rejecting
-  // is conservative and stays direct.
-  if (action === "process") {
+  // Approve and Process require dual-control (super_admin direct, others queued).
+  // Reject stays direct for operational agility.
+  // Fail is dual-controlled (post-debit failure review).
+  const isDualControlled = action === "approve" || action === "process" || action === "fail"
+
+  if (isDualControlled) {
+    const executorMap: Record<
+      typeof action,
+      () => Promise<import("@/lib/admin/executors").ExecutorResult>
+    > = {
+      approve: () => approveWithdrawal(service, ctx.userId, withdrawalId, note),
+      process: () => processWithdrawal(service, ctx.userId, withdrawalId, "process", note),
+      fail: () => failWithdrawal(service, ctx.userId, withdrawalId, note),
+    }
+
     return resolveAction(ctx, service, {
       actionType: "withdrawal_process",
       targetTable: "withdrawal_requests",
       targetId: withdrawalId,
-      label: `Process payout ${withdrawalId.slice(0, 8)}…`,
+      label: `${action.charAt(0).toUpperCase() + action.slice(1)} withdrawal ${withdrawalId.slice(0, 8)}…`,
       payload: { action, note },
-      execute: () => processWithdrawal(service, ctx.userId, withdrawalId, action, note),
+      execute: executorMap[action],
     })
   }
 
+  // Reject is direct (any withdrawals.process holder)
   const result = await processWithdrawal(service, ctx.userId, withdrawalId, action, note)
   if (!result.ok) return new Response(result.error, { status: result.status })
   return Response.json({ success: true, result: result.result ?? null })

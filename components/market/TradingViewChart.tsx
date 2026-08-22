@@ -19,7 +19,11 @@ import {
   type IPriceLine,
   type ISeriesApi,
   type UTCTimestamp,
+  type ChartOptions,
+  type DeepPartial,
 } from 'lightweight-charts'
+
+import { useTheme } from '@/components/providers/ThemeProvider'
 
 export interface OHLCData {
   time: number
@@ -38,6 +42,28 @@ interface TradingViewChartProps {
 }
 
 const VISIBLE_BARS = 80
+
+// Chart chrome per resolved theme. DARK values are the canonical GNEX Slate
+// chart look (unchanged from before theming existed). Semantic series colors
+// (emerald up / rose down / amber price) are theme-independent and live in
+// the series effects below.
+function chartChrome(resolved: 'light' | 'dark') {
+  return resolved === 'dark'
+    ? {
+        textColor: '#94a3b8',
+        grid: 'rgba(30, 41, 59, 0.3)',
+        scaleBorder: 'rgba(30, 41, 59, 0.6)',
+        crosshair: 'rgba(148, 163, 184, 0.4)',
+        crosshairLabelBg: '#1e293b',
+      }
+    : {
+        textColor: '#475569',
+        grid: 'rgba(15, 23, 42, 0.06)',
+        scaleBorder: 'rgba(15, 23, 42, 0.14)',
+        crosshair: 'rgba(71, 85, 105, 0.5)',
+        crosshairLabelBg: '#e2e8f0',
+      }
+}
 
 interface OhlcResponse {
   candles: OHLCData[]
@@ -60,6 +86,9 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
   const priceLineRef = useRef<IPriceLine | null>(null)
   const lastCandleRef = useRef<{ time: number; open: number; high: number; low: number; close: number } | null>(null)
 
+  // Resolved (not preferred) theme — System mode follows the live OS value.
+  const { resolvedTheme } = useTheme()
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ohlc', symbol, timeframe],
     queryFn: () => loadOHLC(symbol, timeframe),
@@ -74,22 +103,23 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
     const container = containerRef.current
     if (!container) return
 
+    const c = chartChrome(resolvedTheme)
     const chart = createChart(container, {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#94a3b8',
+        textColor: c.textColor,
         fontFamily: "'JetBrains Mono', ui-monospace, monospace",
       },
       grid: {
-        vertLines: { color: 'rgba(30, 41, 59, 0.3)' },
-        horzLines: { color: 'rgba(30, 41, 59, 0.3)' },
+        vertLines: { color: c.grid },
+        horzLines: { color: c.grid },
       },
       rightPriceScale: {
-        borderColor: 'rgba(30, 41, 59, 0.6)',
+        borderColor: c.scaleBorder,
       },
       timeScale: {
-        borderColor: 'rgba(30, 41, 59, 0.6)',
+        borderColor: c.scaleBorder,
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 5,
@@ -97,8 +127,8 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
         fixRightEdge: true,
       },
       crosshair: {
-        vertLine: { color: 'rgba(148, 163, 184, 0.4)', labelBackgroundColor: '#1e293b' },
-        horzLine: { color: 'rgba(148, 163, 184, 0.4)', labelBackgroundColor: '#1e293b' },
+        vertLine: { color: c.crosshair, labelBackgroundColor: c.crosshairLabelBg },
+        horzLine: { color: c.crosshair, labelBackgroundColor: c.crosshairLabelBg },
       },
     })
 
@@ -111,7 +141,32 @@ export default function TradingViewChart({ symbol, timeframe, chartType, current
       chartRef.current = null
       chart.remove()
     }
+    // Create exactly once per mount; theme changes mutate via applyOptions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ---- Theme lifecycle: re-skin the EXISTING instance in place. Never
+  // destroy/rebuild — data, visible range and live streaming are preserved.
+  useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return
+
+    const c = chartChrome(resolvedTheme)
+    const options: DeepPartial<ChartOptions> = {
+      layout: { textColor: c.textColor },
+      grid: {
+        vertLines: { color: c.grid },
+        horzLines: { color: c.grid },
+      },
+      rightPriceScale: { borderColor: c.scaleBorder },
+      timeScale: { borderColor: c.scaleBorder },
+      crosshair: {
+        vertLine: { color: c.crosshair, labelBackgroundColor: c.crosshairLabelBg },
+        horzLine: { color: c.crosshair, labelBackgroundColor: c.crosshairLabelBg },
+      },
+    }
+    chart.applyOptions(options)
+  }, [resolvedTheme])
 
   // ---- Series lifecycle: swap the series only when the chart type changes.
   useEffect(() => {

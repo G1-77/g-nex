@@ -85,7 +85,7 @@ export default function ProfileHeader({
           {/* USER INFO */}
           <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white truncate mt-2">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-100 truncate mt-2">
                 @{username}
               </h1>
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { createPortal } from "react-dom"
 import { X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { runAction } from "@/components/admin/useAdminQuery"
@@ -63,8 +64,11 @@ export function EditRowModal({
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  // Portal to <body>: the admin table panel uses backdrop-blur (a containing
+  // block for fixed descendants) plus overflow clipping, which would otherwise
+  // trap this overlay inside the table instead of covering the viewport.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
       <button
         aria-label="Close editor"
         onClick={onClose}
@@ -142,6 +146,7 @@ export function EditRowModal({
           </AdminButton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

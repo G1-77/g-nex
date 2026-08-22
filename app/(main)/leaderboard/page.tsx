@@ -80,7 +80,7 @@ export default async function LeaderboardPage() {
             <Trophy className="h-5 w-5 text-yellow-600" />
           </span>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white">Leaderboards</h1>
+            <h1 className="text-xl font-black tracking-tight text-slate-100">Leaderboards</h1>
             <p className="text-xs text-slate-500">
               Top traders ranked by daily-computed 30d ROI
             </p>
@@ -125,7 +125,7 @@ export default async function LeaderboardPage() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="truncate text-sm font-bold text-slate-100 transition-colors group-hover:text-white">
+                          <span className="truncate text-sm font-bold text-slate-100 transition-colors group-hover:text-slate-100">
                             @{trader.username}
                           </span>
                           {trader.is_verified && (

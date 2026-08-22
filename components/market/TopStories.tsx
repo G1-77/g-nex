@@ -43,7 +43,7 @@ function StoryRow({ article }: { article: NewsArticle }) {
           <span>·</span>
           <span>{relativeTime(article.publishedAt)}</span>
         </div>
-        <p className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-slate-100 transition-colors group-hover:text-white">
+        <p className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-slate-100 transition-colors group-hover:text-slate-50">
           {article.title}
         </p>
       </div>

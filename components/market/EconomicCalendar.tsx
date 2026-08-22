@@ -88,7 +88,7 @@ function EventRow({ event }: { event: CalendarEvent }) {
           </span>
         </div>
 
-        <p className="mt-1.5 text-sm font-bold leading-snug text-slate-100 transition-colors group-hover:text-white">
+        <p className="mt-1.5 text-sm font-bold leading-snug text-slate-100 transition-colors group-hover:text-slate-50">
           {event.title}
         </p>
 

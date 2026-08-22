@@ -60,7 +60,7 @@ export default async function ActivitiesPage({ params }: ActivitiesPageProps) {
 
             <div className="flex min-w-0 flex-col">
               <div className="flex items-center gap-1.5">
-                <h1 className="truncate text-lg font-black tracking-tight text-white">
+                <h1 className="truncate text-lg font-black tracking-tight text-slate-100">
                   @{profile.username}
                 </h1>
                 {profile.is_verified && (

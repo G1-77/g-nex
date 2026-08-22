@@ -38,7 +38,7 @@ function WatchRow({ ticker, onOpen }: { ticker: MarketTicker; onOpen: (symbol: M
           className="h-6 w-6 shrink-0 rounded-full"
         />
         <div className="flex min-w-0 flex-col text-left">
-          <span className="truncate text-sm font-bold text-slate-200 group-hover:text-white">
+          <span className="truncate text-sm font-bold text-slate-200 group-hover:text-slate-50">
             {ticker.symbol}
           </span>
           <span className="truncate text-[11px] text-slate-500">{ticker.name}</span>

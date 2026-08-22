@@ -130,7 +130,7 @@ export default function FollowersPopup({
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-slate-900 bg-slate-900/50 text-slate-400 transition-colors hover:border-slate-800 hover:text-white"
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-slate-900 bg-slate-900/50 text-slate-400 transition-colors hover:border-slate-800 hover:text-slate-50"
           aria-label="Close followers"
         >
           <X className="h-3.5 w-3.5" />

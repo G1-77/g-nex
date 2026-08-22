@@ -1,5 +1,5 @@
 // GNEX wallet funding engine: deposit account numbers, reserve split, withdrawal
-// availability (70% cap) and the auto-approval gate.
+// availability (70% cap).
 //
 // These helpers run server-side (API routes) with either the auth-scoped server
 // client or the service-role client for wallet/ledger writes.
@@ -230,38 +230,3 @@ export async function computeWithdrawalAvailability(
   }
 }
 
-export interface WithdrawalApprovalResult {
-  autoApproved: boolean
-  availability: WithdrawalAvailability
-}
-
-/**
- * Evaluate the auto-approval gate for a KES cash-out.
- * Auto-approve only when the request is within the 70% cap AND the phone
- * matches the profile's registered number. Anything else needs admin review.
- */
-export async function evaluateWithdrawalApproval(
-  supabase: SupabaseClient,
-  userId: string,
-  amountKes: number,
-  phone: string,
-  overrides: AvailabilityOverrides = {}
-): Promise<WithdrawalApprovalResult> {
-  const availability = await computeWithdrawalAvailability(supabase, userId, overrides)
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('mobile_money_number')
-    .eq('id', userId)
-    .maybeSingle()
-
-  const profilePhone = profile?.mobile_money_number
-  const digits = (p: string) => p.replace(/\D/g, '')
-  const phoneMatches =
-    !profilePhone || (phone.trim().length > 0 && digits(phone) === digits(profilePhone))
-
-  const autoApproved =
-    amountKes > 0 && amountKes <= availability.capLimit && amountKes <= availability.available && phoneMatches
-
-  return { autoApproved, availability }
-}

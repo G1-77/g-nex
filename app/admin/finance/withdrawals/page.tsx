@@ -25,10 +25,11 @@ interface WithdrawalsData {
     processed_at: string | null
     admin_notes: string | null
     created_at: string
+    phone_matches_profile: boolean | null
   }>
 }
 
-const FILTERS = ["pending", "approved", "processing", "sent", "rejected"] as const
+const FILTERS = ["pending", "approved", "processing", "sent", "rejected", "failed", "cancelled"] as const
 
 export default function AdminWithdrawalsPage() {
   const [status, setStatus] = useState("pending")
@@ -94,6 +95,19 @@ export default function AdminWithdrawalsPage() {
       preview: false,
     },
     {
+      key: "phone_match",
+      label: "Phone match",
+      render: (w) =>
+        w.phone_matches_profile === null ? (
+          <span className="text-[var(--admin-text-dim)]">—</span>
+        ) : w.phone_matches_profile ? (
+          <span className="text-emerald-300 text-xs">✓ matches profile</span>
+        ) : (
+          <span className="text-amber-300 text-xs">⚠ mismatch</span>
+        ),
+      preview: false,
+    },
+    {
       key: "status",
       label: "Status",
       render: (w) => <StatusBadge status={w.status} tone={statusTone(w.status) as StatusTone} />,
@@ -129,45 +143,83 @@ export default function AdminWithdrawalsPage() {
         rows={data?.withdrawals}
         loading={isLoading}
         emptyMessage="No withdrawals in this queue"
-        actions={(w) => (
-                <div className="flex items-center justify-end gap-1.5">
-                  {canProcess && (w.status === "pending" || w.status === "approved") && (
-                    <>
-                      <AdminButton variant="subtle" onClick={() => act(w.id, "process")}>
-                        Process
-                      </AdminButton>
-                      <AdminButton variant="danger" onClick={() => act(w.id, "reject")}>
-                        Reject
-                      </AdminButton>
-                    </>
-                  )}
-                  {canEdit && (
-                    <EditButton
-                      iconOnly
-                      url="/api/admin/finance/withdrawals"
-                      id={w.id}
-                      row={{ id: w.id, status: w.status, admin_notes: w.admin_notes ?? "", amount_kes: w.amount_kes }}
-                      fields={[
-                        {
-                          key: "status",
-                          label: "Status",
-                          type: "select",
-                          options: [
-                            { value: "pending", label: "pending" },
-                            { value: "approved", label: "approved" },
-                            { value: "processing", label: "processing" },
-                            { value: "sent", label: "sent" },
-                            { value: "rejected", label: "rejected" },
-                          ],
-                        },
-                        { key: "admin_notes", label: "Admin notes", type: "textarea" },
-                        { key: "amount_kes", label: "Amount (KES)", type: "number" },
-                      ]}
-                    />
-                  )}
-                  {canDelete && <DeleteButton iconOnly url="/api/admin/finance/withdrawals" id={w.id} />}
-                </div>
-              )}
+        actions={(w) => {
+          const actions: React.ReactNode[] = []
+
+          // pending: Approve, Reject
+          if (canProcess && w.status === "pending") {
+            actions.push(
+              <AdminButton key="approve" variant="subtle" onClick={() => act(w.id, "approve")}>
+                Approve
+              </AdminButton>
+            )
+            actions.push(
+              <AdminButton key="reject" variant="danger" onClick={() => act(w.id, "reject")}>
+                Reject
+              </AdminButton>
+            )
+          }
+
+          // approved: Send (process), Reject
+          if (canProcess && w.status === "approved") {
+            actions.push(
+              <AdminButton key="process" variant="subtle" onClick={() => act(w.id, "process")}>
+                Send
+              </AdminButton>
+            )
+            actions.push(
+              <AdminButton key="reject" variant="danger" onClick={() => act(w.id, "reject")}>
+                Reject
+              </AdminButton>
+            )
+          }
+
+          // sent / processing: Fail (post-debit failure)
+          if (canProcess && (w.status === "sent" || w.status === "processing")) {
+            actions.push(
+              <AdminButton key="fail" variant="danger" onClick={() => act(w.id, "fail")}>
+                Mark Failed
+              </AdminButton>
+            )
+          }
+
+          // Edit button (safe columns)
+          if (canEdit) {
+            actions.push(
+              <EditButton
+                key="edit"
+                iconOnly
+                url="/api/admin/finance/withdrawals"
+                id={w.id}
+                row={{ id: w.id, status: w.status, admin_notes: w.admin_notes ?? "", amount_kes: w.amount_kes }}
+                fields={[
+                  {
+                    key: "status",
+                    label: "Status",
+                    type: "select",
+                    options: [
+                      { value: "pending", label: "pending" },
+                      { value: "approved", label: "approved" },
+                      { value: "processing", label: "processing" },
+                      { value: "sent", label: "sent" },
+                      { value: "rejected", label: "rejected" },
+                      { value: "failed", label: "failed" },
+                      { value: "cancelled", label: "cancelled" },
+                    ],
+                  },
+                  { key: "admin_notes", label: "Admin notes", type: "textarea" },
+                  { key: "amount_kes", label: "Amount (KES)", type: "number" },
+                ]}
+              />
+            )
+          }
+
+          if (canDelete) {
+            actions.push(<DeleteButton key="delete" iconOnly url="/api/admin/finance/withdrawals" id={w.id} />)
+          }
+
+          return <div className="flex items-center justify-end gap-1.5">{actions}</div>
+        }}
       />
     </div>
   )

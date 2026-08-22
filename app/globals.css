@@ -1,8 +1,63 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+   GNEX THEME SYSTEM — Light / Dark / System
+   ---------------------------------------------------------------------------
+   GNEX is dark-first: the DEFAULT palette below is the canonical GNEX Slate
+   Dark identity and must never be replaced by black/neutral equivalents.
+
+   LIGHT mode inverts the slate scale at the CSS-variable level (html.light).
+   Every existing slate background, text and border utility keeps its
+   semantic role (background stays background, text stays text) while
+   resolving to a light-appropriate value. No component classes need
+   rewriting.
+
+   Semantic product colors (amber gold, cyan emerald crypto, emerald positive,
+   rose negative) are NOT inverted — GNEX identity holds in both modes.
+   =========================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Canonical GNEX Slate Dark values (Tailwind v4 defaults, restated for clarity). */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --slate-950: #020617;
+
+  /* Page-level legacy tokens now bound to Slate (was neutral #0a0a0a black). */
+  --background: var(--slate-950);
+  --foreground: var(--slate-100);
+
+  color-scheme: dark;
+}
+
+/* Tailwind v4 resolves every slate-* utility through these variables.
+   html.light remaps them to the flipped scale: structural roles are preserved
+   (surfaces stay surfaces, text stays text) while the UI reads as a clean,
+   conventional light financial interface with GNEX accents intact. */
+html.light {
+  --color-slate-950: var(--slate-100);   /* page background            */
+  --color-slate-900: var(--slate-200);   /* primary surface / panels   */
+  --color-slate-800: var(--slate-300);   /* elevated surface / chips   */
+  --color-slate-700: var(--slate-400);   /* secondary surface          */
+  --color-slate-600: var(--slate-500);
+  --color-slate-500: var(--slate-500);   /* midpoint anchor (muted)    */
+  --color-slate-400: var(--slate-600);   /* secondary text             */
+  --color-slate-300: var(--slate-700);   /* strong secondary text      */
+  --color-slate-200: var(--slate-800);
+  --color-slate-100: var(--slate-900);   /* primary text               */
+  --color-slate-50: var(--slate-950);
+
+  --background: var(--slate-100);
+  --foreground: var(--slate-900);
+
+  color-scheme: light;
 }
 
 @theme inline {
@@ -10,13 +65,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -135,6 +183,56 @@ body::-webkit-scrollbar {
   --admin-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.06);
   --admin-shadow-glow: 0 0 0 1px rgba(141, 255, 69, 0.22), 0 12px 32px rgba(0, 0, 0, 0.5),
     0 0 28px rgba(141, 255, 69, 0.07);
+}
+
+/* ---------------------------------------------------------------------------
+   Admin Centre — GNEX Light overrides.
+   Same slate-based glass language on a light canvas. The lime brand accent
+   (#8dff45) is unreadable on white, so light mode uses its darker sibling
+   (lime-600 family) for text/accents while keeping the same hue identity.
+   --------------------------------------------------------------------------- */
+html.light {
+  --admin-bg: #f1f5f9;
+  --admin-bg-elevated: #ffffff;
+  --admin-panel: rgba(15, 23, 42, 0.03);
+  --admin-panel-hover: rgba(15, 23, 42, 0.06);
+  --admin-panel-active: rgba(15, 23, 42, 0.09);
+  --admin-panel-elevated: #ffffff;
+
+  --admin-border: rgba(15, 23, 42, 0.1);
+  --admin-border-strong: rgba(15, 23, 42, 0.2);
+
+  --admin-text: #0f172a;
+  --admin-text-dim: #475569;
+  --admin-text-faint: #94a3b8;
+
+  --admin-green: #4d7c0f;
+  --admin-green-strong: #3f6212;
+  --admin-green-glow: rgba(101, 163, 13, 0.35);
+  --admin-green-wash: rgba(101, 163, 13, 0.12);
+  --admin-gradient: linear-gradient(135deg, #65a30d 0%, #059669 100%);
+
+  --admin-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  --admin-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  --admin-shadow-glow: 0 0 0 1px rgba(101, 163, 13, 0.25), 0 12px 32px rgba(15, 23, 42, 0.1);
+}
+
+html.light .admin-input,
+html.light .admin-input:focus {
+  background: #ffffff;
+}
+
+html.light .admin-btn-danger {
+  color: #be123c;
+  background: rgba(244, 63, 94, 0.08);
+  border-color: rgba(244, 63, 94, 0.25);
+}
+
+html.light .premium-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+}
+html.light .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
 }
 
 html[data-admin="true"] body {

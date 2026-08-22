@@ -287,6 +287,7 @@ interface WithdrawalPayload {
   amount: number
   phone: string
   provider: string
+  idempotencyKey?: string
 }
 
 async function createDeposit({ amount, phone, provider, reference, paymentChannel, accountNumber }: DepositPayload): Promise<void> {
@@ -321,12 +322,12 @@ export function useCreateDepositMutation() {
   })
 }
 
-async function createWithdrawal({ amount, phone, provider }: WithdrawalPayload): Promise<void> {
+async function createWithdrawal({ amount, phone, provider, idempotencyKey }: WithdrawalPayload): Promise<void> {
   // KES cash-out: no asset_id, so the route skips the asset lock_funds call
   const res = await fetch('/api/withdrawals', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, amount_kes: amount, phone, provider }),
+    body: JSON.stringify({ amount, amount_kes: amount, phone, provider, idempotencyKey }),
   })
 
   if (!res.ok) {

@@ -33,7 +33,7 @@ export function EditPostModal({ post, isOpen, isSaving, onClose, onSave }: EditP
           <button
             type="button"
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-900 hover:text-white cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-900 hover:text-slate-50 cursor-pointer"
             aria-label="Close"
           >
             ✕

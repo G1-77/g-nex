@@ -287,7 +287,7 @@ export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProp
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href={`/user/${cleanUsername}`}
-                className="text-sm font-bold text-slate-100 hover:text-white hover:underline transition-colors truncate max-w-27.5"
+                className="text-sm font-bold text-slate-100 hover:text-slate-100 hover:underline transition-colors truncate max-w-27.5"
               >
                 @{post.profiles?.username ?? 'anonymous'}
               </Link>
@@ -335,7 +335,7 @@ export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProp
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/40 text-slate-400 transition hover:text-white cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/40 text-slate-400 transition hover:text-slate-100 cursor-pointer"
               aria-label="Post actions"
             >
               <span className="text-lg leading-none">⋯</span>
@@ -349,7 +349,7 @@ export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProp
                     setMenuOpen(false)
                     setEditOpen(true)
                   }}
-                  className="flex w-full items-center gap-2 px-3.5 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-900 hover:text-white cursor-pointer"
+                  className="flex w-full items-center gap-2 px-3.5 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-900 hover:text-slate-100 cursor-pointer"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   Edit Post
@@ -433,7 +433,7 @@ export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProp
 
               <div className="flex min-w-0 flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white">
+                  <span className="text-sm font-bold text-slate-100">
                     {assetMeta.symbol}
                   </span>
 
@@ -482,7 +482,7 @@ export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProp
                   />
 
                   <div className="flex min-w-0 flex-col">
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-slate-100">
                       {assetMeta.symbol}
                     </span>
                     <span className="truncate text-xs text-slate-500">
@@ -492,7 +492,7 @@ export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProp
                 </div>
 
                 <div className="mt-3 flex items-baseline justify-between gap-2">
-                  <span className="text-lg font-black text-white">
+                  <span className="text-lg font-black text-slate-100">
                     {displayPriceLabel}
                   </span>
                   <span
@@ -526,7 +526,7 @@ export default function FeedPostCard({ post, variant = 'feed' }:FeedPostCardProp
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col">
               <div className="flex items-baseline gap-2">
-                <span className="text-lg font-black text-white">
+                <span className="text-lg font-black text-slate-100">
                   {displayPriceLabel}
                 </span>
 

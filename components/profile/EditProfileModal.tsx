@@ -153,7 +153,7 @@ export default function EditProfileModal({
 
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/40 text-slate-400 transition hover:text-white cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/40 text-slate-400 transition hover:text-slate-50 cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>

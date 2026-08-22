@@ -53,7 +53,7 @@ function TraderRow({ trader, rank }: { trader: TopTrader; rank: number }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1">
-            <span className="truncate text-xs font-bold text-slate-200 transition-colors group-hover:text-white">
+            <span className="truncate text-xs font-bold text-slate-200 transition-colors group-hover:text-slate-50">
               @{trader.username}
             </span>
             {trader.is_verified && (
