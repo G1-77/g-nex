@@ -1,7 +1,7 @@
 # GNEX Milestones — Phase Progress Tracker
 
 > Living document tracking every GNEX phase from kickoff to production.
-> **Last updated:** 2026-08-22
+> **Last updated:** 2026-08-23
 
 ---
 
@@ -312,3 +312,45 @@
 - `tsc --noEmit` ✅ Clean
 - ESLint on new/edited code ✅ 0 errors (2 pre-existing `any` errors in `VerifiedPositioning.tsx` from earlier commit remain)
 - Migration syntax validated locally; remote deployment status not checked in this session
+
+---
+
+## Phase 10 — Mobile + Visual UI Polish
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Semantic theme token system**: `--surface`, `--surface-elevated`, `--surface-overlay`, `--border`, `--border-subtle`, `--text-primary/secondary/muted`, `--success/danger/warning/gold/crypto/brand` — single source of truth across all components
+- **Three-level card elevation**: `gnex-card` (Level 1), `gnex-card-elevated` (Level 2), `gnex-overlay` (Level 3) with progressive shadows and hover states
+- **Typography scale**: 10 utility classes (`text-display` → `text-caption`, `text-mono-xl` → `text-mono-xs`) with Geist Sans + Geist Mono, proper line-heights for social readability
+- **Mobile-first touch targets**: `gnex-touch-target` (44px) and `gnex-touch-target-lg` (48px) applied to all interactive elements
+- **Bottom navigation**: 64px height, caption labels, 24px icons, proper `aria-current` states
+- **Feed cards**: elevated surfaces, 18px body text (1.7 line-height), clear author/metadata/content/action hierarchy
+- **Market cards**: price hierarchy (`text-mono-lg` for prices), semantic Buy/Sell buttons, filter tabs
+- **Wallet**: clear balance breakdown, semantic warning/success colors, gnex-card containers
+- **Trading UI**: `gnex-input`/`gnex-btn` component classes, 44px inputs, proper disabled states with reason lines
+- **Light mode**: clean white cards on slate-100, slate-200 borders, slate-900/600/500 text
+- **Dark mode**: preserved GNEX Slate identity (slate-950 bg → slate-900 cards → slate-800 elevated), zero black/zinc takeover
+- **Responsive**: mobile-first composition (no squeezed desktop layouts), proper breakpoint behavior at 375/390/412/430/768/1024/1280+
+- **Accessibility**: focus-visible rings, semantic roles, reduced-motion support, touch targets ≥ 44px
+- **Component utilities**: `gnex-btn` (primary/secondary/success/danger/ghost), `gnex-input` (mono variant), `gnex-label`
+
+### Key Files
+`app/globals.css` (complete token system), `app/(main)/layout.tsx`, `app/(main)/page.tsx`,
+`components/layout/{Bottomnav,Topnav,AvatarDropdown,MarketTradeBar}.tsx`,
+`components/feed/{FeedPostCard,FeedList,CreatePostCard,TopMoversWidget,TopTradersWidget}.tsx`,
+`components/market/{AssetSparklineCard,MarketDataGrid,VerifiedPositioning}.tsx`,
+`components/wallet/{WalletBalanceCard,HoldingsList,OpenPositionsCard,LockCard}.tsx`,
+`components/trade/{QuickTradePanel,SpotTerminal}.tsx`,
+`components/profile/ProfileHeader.tsx`
+
+### Verification
+- `tsc --noEmit` ✅ Clean
+- `eslint . --ext .ts,.tsx` ✅ 0 errors (13 pre-existing warnings only)
+- `next build` ✅ Compiled successfully in 2.7min
+- Manual mobile verification at 375px, 390px, 412px, 430px: Feed, Markets, Wallet, Trade, Quick Trade, Spot, Profile, Navigation, Avatar dropdown all functional with no horizontal overflow, no clipped components
+
+---
+
+**Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
+---
