@@ -130,21 +130,21 @@ export async function getMarketPrices(assets: LegacyAsset[]): Promise<MarketPric
 
   // Preserve the legacy contract: requested-but-failed rows are simply absent.
   const bySymbol = new Map(snapshot.quotes.map((q) => [q.symbol.toUpperCase(), q]))
-  return assets
-    .map((asset) => {
-      const quote = bySymbol.get(asset.symbol.toUpperCase())
-      if (!quote) return null
-      return {
-        symbol: quote.symbol,
-        price_usd: quote.priceUsd,
-        price_kes: quote.priceKes,
-        change_24h: quote.change24h,
-        volume_24h: quote.volume24h,
-        market_cap: quote.marketCap,
-        high_24h: quote.high24h,
-        low_24h: quote.low24h,
-        last_updated: new Date(quote.lastUpdatedAt).toISOString(),
-      } satisfies MarketPrice
+  const rows: MarketPrice[] = []
+  for (const asset of assets) {
+    const quote = bySymbol.get(asset.symbol.toUpperCase())
+    if (!quote) continue
+    rows.push({
+      symbol: quote.symbol,
+      price_usd: quote.priceUsd,
+      price_kes: quote.priceKes,
+      change_24h: quote.change24h,
+      volume_24h: quote.volume24h,
+      market_cap: quote.marketCap,
+      high_24h: quote.high24h,
+      low_24h: quote.low24h,
+      last_updated: new Date(quote.lastUpdatedAt).toISOString(),
     })
-    .filter((p): p is MarketPrice => p !== null)
+  }
+  return rows
 }
