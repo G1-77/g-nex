@@ -42,3 +42,8 @@ next-env.d.ts
 
 # supabase cli local state
 supabase/.temp/
+
+# Local design sources (markdown extractions live in docs/design/)
+UI/
+*.odt
+*.odt#
