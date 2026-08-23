@@ -497,4 +497,38 @@
 - `next build` ✅ compiled; `/feed` route present; Proxy (Middleware) detected
 
 ---
+---
+
+## Phase 16 — GNEX 2.0 Homepage Hierarchy (Brief §52 Phase 2)
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Create Post first** (`HomeComposer.tsx`): market-specific prompt "What's happening in the market?" reusing existing `CreatePostModal`; auth-gated, loading states.
+- **Trader Discovery** (`TraderDiscoverySection.tsx`): horizontal card carousel; deterministic suggestions from top-ROI traders excluding self + followed; `Follow` button wired to `useToggleFollowMutation`.
+- **Trading Activity** (`TradingActivityFeed.tsx`): compact real-time layer "Alex opened a BTC long · 15m"; backed by `activity_events` table populated via triggers on `user_positions` (OPEN/CLOSED) and `trade_tags` (analysis_published); 7-day auto-prune; realtime via `useActivityRealtime` hook.
+- **Market Opportunities** (`MarketOpportunities.tsx`): grid of opportunity cards merging discussion counts (RPC `get_market_opportunities`) with live prices/sparklines from `useMarketPrices`; click-through to asset detail.
+- **Market Sentiment** (`SentimentOverview.tsx`): stacked bull/neutral/bear bars for top-4 discussed symbols via batched `get_sentiment_overview` RPC; methodology documented in SQL comment (brief §33).
+- **Quick Trade placeholder**: inline panel slot (full embed + chart preview in Phase E).
+- **Portfolio Access** (`PortfolioAccessCard.tsx`): compact wallet link with KES total + growth %.
+- **Feed Transition** (`FeedTransition.tsx`): explicit "Explore Feed" CTA desktop; mobile swipe-up hint + fallback.
+- **Homepage restructured**: center column order per brief §11 (Composer → Trader Discovery → Activity → Opportunities → Sentiment → Quick Trade → Portfolio → Transition); right sidebar keeps TopTraders/TopMovers/Watchlist/TopStories.
+
+### Backend (migration `20260823000000_gnex2_home_intelligence.sql`)
+- `activity_events` table + triggers + RLS + realtime publication.
+- `get_market_activity(limit)` — activity feed RPC.
+- `get_asset_sentiment(symbol)` — sentiment distribution with documented v1 weights (discussions×2, positions×1).
+- `get_market_opportunities(limit)` — symbols with discussion/bullish/bearish counts.
+- `get_sentiment_overview(limit)` — batched sentiment for top symbols.
+- Indexes on `trade_tags(asset_symbol, created_at)`.
+
+### Key Files
+`supabase/migrations/20260823000000_gnex2_home_intelligence.sql`, `lib/react-query/home.queries.ts`, `lib/hooks/useActivityRealtime.ts`, `components/home/*.tsx` (7 files), `app/(main)/page.tsx`
+
+### Verification
+- `npx tsc --noEmit` ✅ Clean
+- ESLint on touched paths ✅ 0 errors
+- `next build` ✅ compiled; `/feed` route present; Proxy (Middleware) detected
+
+---
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
