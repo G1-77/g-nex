@@ -39,7 +39,7 @@ export default function Topnav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex h-[56px] max-w-7xl items-center justify-between gap-4 px-page">
           
           {/* LEFT SECTION */}
@@ -47,12 +47,12 @@ export default function Topnav() {
             
             {/* MOBILE MENU + BRAND */}
             <div className="flex items-center gap-2">
-<button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover md:hidden gnex-touch-target"
-            >
+              <button
+                type="button"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover md:hidden gnex-touch-target"
+              >
                 <Menu className="h-5 w-5 text-text-secondary" />
               </button>
 
@@ -95,6 +95,9 @@ export default function Topnav() {
                   aria-current={active ? 'page' : undefined}
                 >
                   {item.label}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand" />
+                  )}
                 </Link>
               )
             })}

@@ -126,23 +126,23 @@ export default function AssetDetailPage({ params }: PageProps) {
       ? 'live'
       : getPriceStatus(ticker, now, isStreamed ? PRICE_STALE_MS : baselineCeilingFor(symbol))
 
-  return (
-    <div className="min-h-screen w-full bg-slate-950 text-slate-100">
+return (
+    <div className="min-h-screen w-full bg-background text-foreground">
       {/* Header */}
-      <div className="sticky top-0 z-40 -mx-4 md:-mx-6 px-4 md:px-6 bg-slate-950/90 backdrop-blur-xl border-b border-slate-900">
+      <div className="sticky top-0 z-40 -mx-4 md:-mx-6 px-4 md:px-6 bg-background/90 backdrop-blur-xl border-b border-border">
         <div className="py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="cursor-pointer text-slate-400 hover:text-slate-200 transition-colors"
+              className="cursor-pointer text-text-secondary hover:text-text-primary transition-colors gnex-touch-target"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
             
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-black text-slate-100">{asset.name}</h1>
-                <span className="text-xs font-mono text-slate-500 uppercase">
+                <h1 className="text-xl font-black text-text-primary">{asset.name}</h1>
+                <span className="text-xs font-mono text-text-muted uppercase">
                   {symbol} / {asset.assetType}
                 </span>
               </div>
@@ -152,10 +152,10 @@ export default function AssetDetailPage({ params }: PageProps) {
           <button
             onClick={handleWatchlistToggle}
             disabled={toggleWatchlistMutation.isPending}
-            className={`flex items-center justify-center h-10 w-10 rounded-full border transition-all cursor-pointer ${
+            className={`flex items-center justify-center h-10 w-10 rounded-full border transition-all cursor-pointer gnex-touch-target ${
               isWatching
-                ? 'bg-amber-500 border-amber-600 text-slate-950'
-                : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-brand border-brand text-text-inverse'
+                : 'bg-surface/40 border-border text-text-secondary hover:bg-surface-hover hover:text-text-primary'
             }`}
           >
             <Star className={`h-4 w-4 ${isWatching ? 'fill-current' : ''}`} />
@@ -169,29 +169,29 @@ export default function AssetDetailPage({ params }: PageProps) {
           {/* Price Display */}
           <div className="space-y-2">
             <div className="flex items-baseline gap-3">
-              <span className="text-4xl md:text-5xl font-black font-mono text-slate-100">
+              <span className="text-4xl md:text-5xl font-black font-mono text-text-primary">
                 ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span
                 className={`text-xl font-black font-mono ${
-                  isPositive ? 'text-emerald-500' : 'text-rose-500'
+                  isPositive ? 'text-success' : 'text-danger'
                 }`}
               >
                 {isPositive ? '+' : ''}{change24h.toFixed(2)}%
               </span>
               <span
-                className={`rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide ${
+                className={`rounded-full px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide ${
                   priceStatus === 'live'
-                    ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                    ? 'text-success bg-success-bg'
                     : priceStatus === 'delayed'
-                      ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
-                      : 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+                      ? 'text-warning bg-warning-bg'
+                      : 'text-danger bg-danger-bg'
                 }`}
               >
                 {priceStatus.toUpperCase()}
               </span>
             </div>
-            <p className="text-sm text-slate-500 font-mono">
+            <p className="text-sm text-text-muted font-mono">
               ≈ KES {priceKes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
@@ -207,12 +207,14 @@ export default function AssetDetailPage({ params }: PageProps) {
           </div>
 
           {/* Chart */}
-          <TradingViewChart
-            symbol={symbol}
-            timeframe={timeframe}
-            chartType={chartType}
-            currentPrice={currentPrice}
-          />
+          <div className="gnex-card-elevated overflow-hidden">
+            <TradingViewChart
+              symbol={symbol}
+              timeframe={timeframe}
+              chartType={chartType}
+              currentPrice={currentPrice}
+            />
+          </div>
 
           {/* Metrics Grid */}
           <MetricsGrid
@@ -228,24 +230,24 @@ export default function AssetDetailPage({ params }: PageProps) {
 
         {/* Desktop execution panel */}
         <aside className="hidden lg:block w-96 shrink-0">
-          <div className="sticky top-20 rounded-xl border border-slate-900/60 bg-slate-900/20 p-4">
+          <div className="sticky top-20 gnex-card-elevated p-4">
             <ExecutionPanel symbol={symbol} />
           </div>
         </aside>
       </div>
 
       {/* Fixed Action Bar (mobile/tablet) */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-900 backdrop-blur-xl p-4 lg:hidden">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-background/95 border-t border-border backdrop-blur-xl p-4 lg:hidden">
         <div className="max-w-7xl mx-auto flex gap-3">
           <button
             onClick={handleBuy}
-            className="flex-1 cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 rounded-xl text-lg transition-all active:scale-95 shadow-lg"
+            className="flex-1 cursor-pointer bg-success hover:bg-success/90 text-text-inverse font-black py-4 rounded-xl text-lg transition-all active:scale-95 shadow-lg gnex-touch-target"
           >
             Buy {symbol}
           </button>
           <button
             onClick={handleSell}
-            className="flex-1 cursor-pointer bg-slate-900 hover:bg-[#f43f5e] hover:border-[#f43f5e] border border-slate-800 text-slate-100 hover:text-slate-950 font-black py-4 rounded-xl text-lg transition-all duration-300 active:scale-95"
+            className="flex-1 cursor-pointer bg-danger hover:bg-danger/90 text-text-inverse font-black py-4 rounded-xl text-lg transition-all active:scale-95 gnex-touch-target"
           >
             Sell {symbol}
           </button>
@@ -265,7 +267,6 @@ export default function AssetDetailPage({ params }: PageProps) {
         }}
         onAdjustAmount={() => {
           setShowInsufficientModal(false)
-          // Could open amount selector here
         }}
       />
     </div>

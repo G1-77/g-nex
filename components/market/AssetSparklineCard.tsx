@@ -28,6 +28,25 @@ function formatPrice(price: number): string {
   })
 }
 
+function formatPriceCompact(price: number): string {
+  if (price >= 1000) {
+    return price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  }
+  if (price >= 1) {
+    return price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 3,
+    })
+  }
+  return price.toLocaleString('en-US', {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 4,
+  })
+}
+
 interface AssetSparklineCardProps {
   ticker: MarketTicker
   onOpen: (symbol: AssetSymbol) => void
@@ -50,7 +69,7 @@ export default function AssetSparklineCard({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onOpen(ticker.symbol)
       }}
-      className="group gnex-card gnex-card-hover p-4 flex flex-col"
+      className="group gnex-card gnex-interactive p-4 flex flex-col"
     >
       {/* Asset identity */}
       <div className="flex items-start justify-between gap-2">
@@ -77,7 +96,7 @@ export default function AssetSparklineCard({
             e.stopPropagation()
             onToggleWatchlist(ticker.symbol)
           }}
-          className="cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-hover gnex-touch-target"
+          className="cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-hover gnex-touch-target shrink-0"
         >
           <Star className={`h-4 w-4 ${ticker.isWatching ? 'fill-amber-400 text-amber-400' : 'text-text-muted'}`} />
         </button>
@@ -85,7 +104,7 @@ export default function AssetSparklineCard({
 
       {/* Primary metric + change badge */}
       <div className="mt-4 flex items-end justify-between gap-2">
-        <span className="font-mono text-mono-lg tabular-nums tracking-tight text-text-primary">
+        <span className="font-mono text-mono-lg sm:text-mono-xl tabular-nums tracking-tight text-text-primary shrink-0">
           ${formatPrice(ticker.priceUsd)}
         </span>
         <span

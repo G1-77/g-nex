@@ -785,6 +785,78 @@ html[data-admin="true"] body {
 }
 
 /* ===========================================================================
+   INTERACTION STATES - Mobile pressed / Desktop hover / Focus
+   =========================================================================== */
+
+/* Mobile pressed states - use :active for touch feedback */
+.gnex-pressable:active {
+  transform: scale(0.98);
+  transition: transform 0.05s ease-out;
+}
+
+/* Enhanced pressable with background transition */
+.gnex-pressable-bg:active {
+  background: var(--surface-active);
+  transition: background 0.05s ease-out;
+}
+
+/* Desktop hover states */
+.gnex-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gnex-hover-bg:hover {
+  background: var(--surface-hover);
+  transition: background 0.15s ease;
+}
+
+.gnex-hover-shadow:hover {
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.15s ease;
+}
+
+/* Combined pressable + hover */
+.gnex-interactive {
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.gnex-interactive:hover {
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-card);
+}
+.gnex-interactive:active {
+  transform: scale(0.98);
+  background: var(--surface-active);
+}
+
+/* Cursor pointer for interactive elements */
+.gnex-cursor-pointer {
+  cursor: pointer;
+}
+
+/* Focus visible for accessibility */
+.gnex-focus-visible:focus-visible {
+  outline: none;
+  ring: 2px;
+  ring-offset: 2px;
+  ring-color: var(--brand);
+  ring-offset-color: var(--background);
+}
+
+/* Disable hover on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .gnex-hover-lift:hover,
+  .gnex-hover-bg:hover,
+  .gnex-hover-shadow:hover,
+  .gnex-interactive:hover {
+    transform: none;
+    background: inherit;
+    box-shadow: inherit;
+  }
+}
+
+/* ===========================================================================
    SELECTION STYLES
    =========================================================================== */
 ::selection {

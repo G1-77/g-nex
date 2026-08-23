@@ -77,7 +77,7 @@ export default function Bottomnav() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1.5 transition-colors gnex-touch-target-lg ${
+                className={`relative flex flex-col items-center justify-center gap-1.5 transition-colors gnex-touch-target-lg ${
                   active
                     ? 'text-brand'
                     : 'text-muted hover:text-secondary'
@@ -89,6 +89,9 @@ export default function Bottomnav() {
                 <span className="text-caption font-medium tracking-wide">
                   {item.label}
                 </span>
+                {active && (
+                  <span className="absolute top-0 left-0 right-0 h-0.5 bg-brand" />
+                )}
               </Link>
             )
           })}

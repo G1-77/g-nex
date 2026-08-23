@@ -37,7 +37,7 @@ export default function MarketDataGrid({
             <button
               key={filter}
               onClick={() => onFilterChange(filter)}
-              className={`rounded-lg px-3 py-1.5 text-caption font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer gnex-touch-target ${
+              className={`rounded-lg px-3 py-1.5 text-caption font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer gnex-touch-target gnex-interactive ${
                 activeFilter === filter
                   ? 'bg-brand text-text-inverse'
                   : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
@@ -61,7 +61,7 @@ export default function MarketDataGrid({
           return (
             <div
               key={ticker.symbol}
-              className="gnex-card gnex-card-hover p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="gnex-card gnex-interactive p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               {/* Identity Token Box Section */}
               <div className="flex items-center gap-3 min-w-0">
@@ -120,7 +120,7 @@ export default function MarketDataGrid({
                   </button>
                   <button
                     onClick={() => onToggleWatchlist(ticker.symbol)}
-                    className={`p-1.5 rounded-lg transition-all cursor-pointer gnex-touch-target ${
+                    className={`p-1.5 rounded-lg transition-all cursor-pointer gnex-touch-target gnex-interactive ${
                       ticker.isWatching
                         ? 'bg-amber-500/10 text-amber-400'
                         : 'bg-surface text-text-muted hover:bg-surface-hover hover:text-text-secondary'

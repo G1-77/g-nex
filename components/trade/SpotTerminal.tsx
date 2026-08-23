@@ -37,9 +37,9 @@ import { cn, safeRandomUUID } from '@/lib/utils'
 type FormTab = 'market' | 'limit' | 'stop' | 'tp'
 
 const statusPillClasses: Record<string, string> = {
-  live: 'text-success border-success-border bg-success-bg',
-  delayed: 'text-warning border-warning-border bg-warning-bg',
-  unavailable: 'text-danger border-danger-border bg-danger-bg',
+  live: 'text-success bg-success-bg',
+  delayed: 'text-warning bg-warning-bg',
+  unavailable: 'text-danger bg-danger-bg',
 }
 
 export default function SpotTerminal() {
@@ -221,7 +221,7 @@ export default function SpotTerminal() {
 
   return (
     <div className="space-y-4">
-      {/* Pair selector */}
+{/* Pair selector */}
       <div className="flex flex-wrap gap-2">
         {MARKET_ASSETS_LIST.map((asset) => (
           <button
@@ -232,7 +232,7 @@ export default function SpotTerminal() {
               setFeedback(null)
             }}
             className={cn(
-              'flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-caption font-bold transition-colors gnex-touch-target',
+              'flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-caption font-bold transition-colors gnex-touch-target gnex-interactive',
               symbol === asset.symbol
                 ? 'bg-brand-bg text-brand'
                 : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
@@ -298,12 +298,12 @@ export default function SpotTerminal() {
         {/* Order form + books column */}
         <div className="space-y-4">
           <div className="gnex-card-elevated p-4">
-            <div className="grid grid-cols-2 gap-2">
+<div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setSide('buy')}
                 className={cn(
-                  'cursor-pointer rounded-xl py-2 text-sm font-bold transition-colors gnex-touch-target',
+                  'cursor-pointer rounded-xl py-2 text-sm font-bold transition-colors gnex-touch-target gnex-interactive',
                   side === 'buy'
                     ? 'bg-success-bg text-success'
                     : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
@@ -315,7 +315,7 @@ export default function SpotTerminal() {
                 type="button"
                 onClick={() => setSide('sell')}
                 className={cn(
-                  'cursor-pointer rounded-xl py-2 text-sm font-bold transition-colors gnex-touch-target',
+                  'cursor-pointer rounded-xl py-2 text-sm font-bold transition-colors gnex-touch-target gnex-interactive',
                   side === 'sell'
                     ? 'bg-danger-bg text-danger'
                     : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
@@ -460,7 +460,7 @@ export default function SpotTerminal() {
                       type="button"
                       onClick={() => handleCancel(order)}
                       disabled={cancelMutation.isPending}
-                      className="shrink-0 cursor-pointer rounded-lg bg-surface/40 p-1.5 text-text-muted hover:bg-surface-hover hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 gnex-touch-target"
+                      className="shrink-0 cursor-pointer rounded-lg bg-surface/40 p-1.5 text-text-muted hover:bg-surface-hover hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 gnex-touch-target gnex-interactive"
                       aria-label="Cancel order"
                     >
                       <X className="h-3.5 w-3.5" />
