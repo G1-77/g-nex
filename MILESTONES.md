@@ -352,5 +352,42 @@
 
 ---
 
+## Phase 11 — Visual Design System Refinement
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Semantic theme token refinement**: Updated `--surface`, `--surface-elevated`, `--surface-overlay`, `--surface-active`, `--surface-hover`, `--border`, `--border-subtle`, `--border-strong`, `--shadow-sm`, `--shadow-card`, `--shadow-elevated`, `--shadow-overlay` — unified surface hierarchy across all components
+- **Four-level surface hierarchy**: Level 0 (background), Level 1 (standard surface, borderless), Level 2 (elevated, shadow-based), Level 3 (floating overlay, border + strong shadow), Active/Pressed state surface
+- **Border reduction strategy**: Removed borders from 100+ components (cards, modals, nav, inputs where not needed); kept borders only on form inputs, selected states, and accessibility-critical boundaries
+- **Light mode overhaul**: Background `slate-50`, surfaces pure white, borders `slate-200` (subtle), hover `slate-100`, active `slate-200`, shadows rgba(15,23,42,0.06-0.12)
+- **Dark Slate preservation**: Background `slate-950`, surfaces `slate-900`, elevated `slate-800`, borders `slate-800`, zero black/zinc takeover — GNEX identity intact
+- **Hover/active states**: Consistent 150ms transitions, surface tint changes instead of border color, subtle shadow elevation on hover, pressed states using `--surface-active`
+- **FeedPostCard**: Borderless, 18px body text (1.7 line-height), clear spacing hierarchy, elevated asset context card
+- **CreatePostModal**: Polished composer, spacing-based sections, surface-based signal buttons, no internal divider lines
+- **TopNav**: Removed bottom border, surface-based hover/active states, cleaner icon buttons
+- **Market cards**: AssetSparklineCard, MarketDataGrid borderless with elevation, semantic filter tabs, surface-based watchlist button
+- **Wallet cards**: Borderless, semantic color backgrounds (success/warning/danger) instead of borders for balance breakdown
+- **Trading UI**: QuickTradePanel, SpotTerminal borderless with surface-based side toggles, cleaner quote preview
+- **BottomNav, AvatarDropdown**: Refined borders and states
+- **Component utilities**: `gnex-card` (borderless), `gnex-card-bordered` (when needed), `gnex-card-elevated`, `gnex-overlay`, `gnex-btn` variants, `gnex-input`, `gnex-label`
+
+### Key Files
+`app/globals.css` (complete token system), `components/feed/{FeedPostCard,CreatePostModal}.tsx`,
+`components/layout/{Topnav,Bottomnav,AvatarDropdown}.tsx`,
+`components/market/{AssetSparklineCard,MarketDataGrid}.tsx`,
+`components/wallet/{WalletBalanceCard,HoldingsList,OpenPositionsCard,LockCard}.tsx`,
+`components/trade/{QuickTradePanel,SpotTerminal}.tsx`
+
+### Verification
+- `tsc --noEmit` ✅ Clean
+- `eslint . --ext .ts,.tsx` ✅ 0 errors (13 pre-existing warnings only)
+- `next build` ✅ Compiled successfully in 2.7min
+- Manual verification at 375px, 390px, 412px, 430px: all core pages functional
+- Financial/trading/wallet/auth logic unchanged
+- SOL/XRP/USD/XAU real pricing untouched
+
+---
+
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
 ---
