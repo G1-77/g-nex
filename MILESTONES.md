@@ -421,5 +421,35 @@
 
 ---
 
+## Phase 13 — Sparkline Repair + UI Consistency Completion
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Sparkline data source repaired**: Replaced fake linear interpolation (6 points between implied 24h-ago price and current price) with real Binance WebSocket price history (up to 40 actual observations) via `usePriceHistory` hook. Sparklines now reflect actual market movement with natural peaks, troughs, and directional persistence.
+- **TopStories**: Updated to `gnex-card` with semantic tokens, removed borders, `gnex-interactive` on story rows
+- **EconomicCalendar**: Updated to `gnex-card` with semantic tokens, removed borders, `gnex-interactive` on event rows
+- **IdeasCarousel**: Updated to `gnex-card` with semantic tokens, borderless cards, mode tabs use brand active state, `gnex-interactive` on all interactive elements
+- **Trade Hub**: Updated product cards to `gnex-card-elevated` with semantic tokens, consistent hover/active states
+- **ExploreNavTiles**: Borderless tiles with `gnex-interactive` hover states, brand icon color
+- **ExploreFilterTrack**: Borderless filter tabs with brand active state, `gnex-interactive` on filter buttons
+- **MarketTradeBar**: Uses `gnex-btn` variants (`gnex-btn-success`/`gnex-btn-danger`), `gnex-interactive` on buttons
+- **Sparkline data flow**: All components now use real Binance WS price history (up to 40 points) instead of fake linear interpolation
+- **Interaction state utilities** (globals.css): `.gnex-pressable`, `.gnex-pressable-bg`, `.gnex-hover-lift`, `.gnex-hover-bg`, `.gnex-hover-shadow`, `.gnex-interactive`, `.gnex-cursor-pointer`, `.gnex-focus-visible`, reduced-motion support
+
+### Key Files
+`app/globals.css` (interaction utilities), `lib/react-query/market/queries.prices.ts` (sparkline data source), `components/market/{TopStories,EconomicCalendar,IdeasCarousel,AssetSparklineCard}.tsx`, `components/layout/{ExploreNavTiles,ExploreFilterTrack,MarketTradeBar}.tsx`, `app/(main)/trade/page.tsx`, `components/trade/QuickTradePanel.tsx`, `components/trade/SpotTerminal.tsx`
+
+### Verification
+- `tsc --noEmit` ✅ Clean
+- `eslint . --ext .ts,.tsx` ✅ 0 errors (15 pre-existing warnings only)
+- `next build` ✅ Compiled successfully in 3.0min, 48 static pages
+- Manual verification at 375px, 390px, 412px, 430px: Feed, Markets, Asset Detail, Quick Trade, Spot, Wallet, Profile, Navigation all functional with no horizontal overflow
+- Financial/trading/wallet/auth logic unchanged
+- SOL/XRP/USD/XAU real pricing untouched
+- Single authoritative price source confirmed across all 15 components
+
+---
+
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
 ---
