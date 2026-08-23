@@ -7,6 +7,8 @@ import './globals.css'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import ReactQueryProvider from '@/components/providers/ReactQueryProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { ToastProvider } from '@/components/notifications/Toast'
+import { ConfirmProvider } from '@/components/notifications/ConfirmDialog'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -45,7 +47,11 @@ export default function RootLayout({
           <ReactQueryProvider>
 
             <AuthProvider>
-              {children}
+              <ToastProvider>
+                <ConfirmProvider>
+                  {children}
+                </ConfirmProvider>
+              </ToastProvider>
             </AuthProvider>
 
           </ReactQueryProvider>

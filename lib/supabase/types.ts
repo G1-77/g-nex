@@ -69,6 +69,7 @@ export interface FeedPost {
   comments_count: number
   shares_count: number // Root property contract declaration preserved intact
   isLikedByCurrentUser?: boolean // tracks current active browser session engagements
+  isSavedByCurrentUser?: boolean // tracks current active browser session saves
 }
 
 /** create post payload */

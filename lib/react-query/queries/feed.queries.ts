@@ -70,6 +70,13 @@ export async function hydrateFeedRows(
 
   const likedPostIds = new Set(userLikes?.map((l) => l.post_id) ?? [])
 
+  // 2b. Fetch saved posts for current user
+  const { data: userSaves } = currentUserId
+    ? await supabase.from('saved_posts').select('post_id').eq('user_id', currentUserId)
+    : { data: null }
+
+  const savedPostIds = new Set(userSaves?.map((s) => s.post_id) ?? [])
+
   // 2b. Fetch follow rows initiated by the current session to tag each author
   // with a persistent isFollowingByViewer boolean state check.
   const { data: userFollows } = currentUserId
@@ -101,6 +108,7 @@ export async function hydrateFeedRows(
       signalType: row.signalType,
       trade_tags: normalizeTradeTags(row.trade_tags),
       isLikedByCurrentUser: likedPostIds.has(row.id),
+      isSavedByCurrentUser: savedPostIds.has(row.id),
       profiles: row.profiles
         ? {
             ...row.profiles,

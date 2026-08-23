@@ -8,10 +8,12 @@ import {
   Menu,
   MessageCircle,
   Search,
-  Wallet
+  Wallet,
+  X
 } from 'lucide-react'
 import AvatarDropdown from './AvatarDropdown'
 import MobileMenuDrawer from './MobileMenuDrawer'
+import SearchComponent from './Search'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { usePortfolioSummary } from '@/lib/react-query/market/queries.market'
 import { formatKes } from '@/lib/market/wallet-utils'
@@ -38,6 +40,7 @@ const navItems = [
 export default function Topnav() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const { user } = useAuth()
   const { totalKes, growthPct } = usePortfolioSummary(user?.id ?? null)
 
@@ -70,15 +73,7 @@ export default function Topnav() {
 
             {/* SEARCH */}
             <div className="hidden sm:flex">
-              <div className="flex items-center gap-2.5 rounded-full bg-surface/40 px-4 py-2 transition-all duration-200 focus-within:ring-1 focus-within:ring-brand/20">
-                <Search className="h-4 w-4 text-text-muted" />
-
-                <input
-                  type="text"
-                  placeholder="Search crypto, gold, traders..."
-                  className="w-64 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
-                />
-              </div>
+              <SearchComponent />
             </div>
           </div>
 
@@ -137,7 +132,11 @@ export default function Topnav() {
             </Link>
 
             {/* MOBILE SEARCH */}
-            <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover sm:hidden gnex-touch-target">
+            <button
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover sm:hidden gnex-touch-target"
+              onClick={() => setMobileSearchOpen(true)}
+              aria-label="Search"
+            >
               <Search className="h-4 w-4 text-text-secondary" />
             </button>
 
@@ -162,6 +161,26 @@ export default function Topnav() {
       {/* Rendered outside the <header> — backdrop-blur on the header creates a
           containing block that would trap the drawer's position:fixed */}
       <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Mobile Search Modal */}
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-[70] sm:hidden">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileSearchOpen(false)} />
+          <div className="fixed top-0 left-0 right-0 z-[71] bg-background border-b border-border p-4 pb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-surface/40 text-text-secondary transition-colors hover:bg-surface-hover"
+                aria-label="Close search"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <SearchComponent autoFocus />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

@@ -441,13 +441,36 @@
 `app/globals.css` (interaction utilities), `lib/react-query/market/queries.prices.ts` (sparkline data source), `components/market/{TopStories,EconomicCalendar,IdeasCarousel,AssetSparklineCard}.tsx`, `components/layout/{ExploreNavTiles,ExploreFilterTrack,MarketTradeBar}.tsx`, `app/(main)/trade/page.tsx`, `components/trade/QuickTradePanel.tsx`, `components/trade/SpotTerminal.tsx`
 
 ### Verification
-- `tsc --noEmit` ✅ Clean
+- `npx tsc --noEmit` ✅ Clean
 - `eslint . --ext .ts,.tsx` ✅ 0 errors (15 pre-existing warnings only)
 - `next build` ✅ Compiled successfully in 3.0min, 48 static pages
 - Manual verification at 375px, 390px, 412px, 430px: Feed, Markets, Asset Detail, Quick Trade, Spot, Wallet, Profile, Navigation all functional with no horizontal overflow
 - Financial/trading/wallet/auth logic unchanged
 - SOL/XRP/USD/XAU real pricing untouched
 - Single authoritative price source confirmed across all 15 components
+
+---
+
+## Phase 17 — GNEX 2.0 Social Interaction Layer (Brief §52 Phase 3)
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Toast notification system** (`components/notifications/Toast.tsx`): replaces all browser-native `alert()` calls across the app; semantic tones (success/error/warning/info); auto-dismiss with configurable duration; accessible `role="alert"`.
+- **Confirmation dialog system** (`components/notifications/ConfirmDialog.tsx`): replaces all browser-native `confirm()` calls; three variants (danger/primary/warning) with loading state; accessible dialog pattern with focus trap.
+- **FeedPostCard updated**: all `alert()`/`confirm()` calls replaced with Toast/ConfirmDialog; save/unsave, report, follow/unfollow, like, share, edit/delete all use new feedback system.
+- **CommentThread real data integration** (`components/feed/CommentThread.tsx`): now uses `useCommentThread` hook for real comment fetching with threaded replies (Facebook-style hierarchy); `useCreateCommentMutation` for posting comments/replies with optimistic UI; composer at top with reply-to support.
+- **Comment creation mutation** (`lib/react-query/mutations/social.mutations.ts`): `useCreateCommentMutation` with RPC `create_comment`; invalidates both comment thread and feed queries.
+- **Quick Trade chart preview** (`components/trade/QuickTradePanel.tsx`): desktop hover reveals compact sparkline chart (brief §18); mobile tap-to-expand with persistent chart (brief §19); uses real Binance WS price history via `usePriceHistory`; expand/collapse button on mobile.
+- **Global search with autocomplete** (`components/layout/Search.tsx`, integrated in `Topnav.tsx`): debounced queries (200ms) searching users, assets, posts; keyboard navigation (arrow keys, enter, escape); mobile modal with backdrop; results show type badges (User/Asset/Post) with avatars/logos.
+- **Social migration extended** (`supabase/migrations/20260823000001_gnex2_social_interaction.sql`): added `create_comment` RPC with parent_id validation for threaded replies; grants to authenticated.
+
+### Key Files
+`components/notifications/{Toast,ConfirmDialog}.tsx`, `components/feed/{FeedPostCard,CommentThread}.tsx`, `components/trade/QuickTradePanel.tsx`, `components/layout/{Search,Topnav}.tsx`, `lib/react-query/mutations/social.mutations.ts`, `supabase/migrations/20260823000001_gnex2_social_interaction.sql`
+
+### Verification
+- `npx tsc --noEmit` ✅ Clean
+- ESLint on touched paths ✅ 0 errors
 
 ---
 

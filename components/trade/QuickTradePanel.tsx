@@ -5,14 +5,17 @@
 // live price (server snapshot + Binance WS overlay), a server-computed quote,
 // and executes with product='quick_trade'. Execution is blocked only when the
 // price is genuinely stale/unavailable or the amount violates platform bounds.
+// Includes chart preview on hover (desktop) / tap (mobile) per brief §18/§19.
 
-import { useMemo, useState } from 'react'
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, Info } from 'lucide-react'
+import { useMemo, useState, useEffect } from 'react'
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Info, Maximize2, Minimize2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useNow } from '@/lib/hooks/useNow'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
 import { usePlatformConfigQuery } from '@/lib/react-query/market/queries.config'
 import { useBinanceRealtime } from '@/lib/market/binance-realtime'
+import { usePriceHistory } from '@/lib/market/binance-realtime'
 import {
   useExecuteTradeMutation,
   useTradeQuoteQuery,
@@ -25,6 +28,7 @@ import type { AssetSymbol } from '@/lib/supabase/types'
 import type { MarketTicker } from '@/lib/supabase/market.types'
 import type { BinanceTicker } from '@/lib/market/binance-realtime'
 import { cn, safeRandomUUID } from '@/lib/utils'
+import Sparkline from '@/components/market/Sparkline'
 
 const SIDE_CAPS = [0.25, 0.5, 0.75, 1] as const
 
@@ -45,6 +49,16 @@ export default function QuickTradePanel() {
   const [side, setSide] = useState<'buy' | 'sell'>('buy')
   const [amountInput, setAmountInput] = useState('50')
   const [feedback, setFeedback] = useState<{ tone: 'ok' | 'err'; message: string } | null>(null)
+  const [chartExpanded, setChartExpanded] = useState(false)
+  const [isHovering, setIsHovering] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const { data: wallet } = useGetUserWalletQuery(userId)
   const { data: holdings = [] } = useGetUserHoldingsQuery(userId)
@@ -52,6 +66,7 @@ export default function QuickTradePanel() {
   const { data: usdKesRate = 130 } = useUsdKesRate()
   const { data: prices = [] } = useMarketPrices([symbol])
   const realtime = useBinanceRealtime()
+  const liveHistory = usePriceHistory(symbol)
 
   const minTradeUsd = config?.minTradeUsd ?? 1
   const maxTradeUsd = config?.maxTradeUsd ?? 50_000
@@ -179,6 +194,11 @@ export default function QuickTradePanel() {
     unavailable: { label: 'UNAVAILABLE', className: 'text-danger border-danger-border bg-danger-bg' },
   }
 
+  const sparklineData = liveHistory.length >= 2 ? Array.from(liveHistory) : (ticker?.sparkline ?? [])
+  const sparklineColor = (ticker?.change24h ?? 0) >= 0 ? '#8DFF45' : '#FF5A5A'
+
+  const showChart = chartExpanded || (!isMobile && isHovering)
+
   return (
     <div className="mx-auto w-full max-w-md space-y-4">
       {/* Asset selector */}
@@ -190,6 +210,7 @@ export default function QuickTradePanel() {
             onClick={() => {
               setSymbol(asset.symbol)
               setFeedback(null)
+              setChartExpanded(false)
             }}
             className={cn(
               'flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-left transition-colors gnex-touch-target',
@@ -204,8 +225,13 @@ export default function QuickTradePanel() {
         ))}
       </div>
 
-      {/* Live price header */}
-      <div className="gnex-card-elevated p-4">
+      {/* Live price header with chart preview trigger */}
+      <div
+        className="gnex-card-elevated p-4 relative"
+        onMouseEnter={() => !isMobile && setIsHovering(true)}
+        onMouseLeave={() => !isMobile && setIsHovering(false)}
+        onClick={() => isMobile && setChartExpanded(!chartExpanded)}
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="font-mono text-caption uppercase tracking-wider text-text-muted">
@@ -252,6 +278,55 @@ export default function QuickTradePanel() {
               ? 'The price feed has not refreshed recently. Orders are paused until it recovers.'
               : 'No live price is available for this asset right now.'}
           </p>
+        )}
+
+        {/* Chart preview - expanded on hover (desktop) or tap (mobile) */}
+        <AnimatePresence>
+          {showChart && sparklineData.length > 1 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="mt-3 overflow-hidden rounded-xl bg-surface/40"
+            >
+              <div className="relative h-48 p-3">
+                <Sparkline
+                  data={sparklineData}
+                  color={sparklineColor}
+                  width={sparklineData.length}
+                  height={180}
+                />
+                {isMobile && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setChartExpanded(false) }}
+                    className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm text-text-muted hover:text-text-primary transition-colors"
+                    aria-label="Close chart"
+                  >
+                    <Minimize2 className="h-4 w-4" />
+                  </button>
+                )}
+                {!isMobile && !chartExpanded && (
+                  <div className="absolute bottom-2 right-2 text-xs text-text-muted font-mono">
+                    Hover for chart
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Chart expand button for mobile */}
+        {isMobile && sparklineData.length > 1 && !chartExpanded && (
+          <button
+            type="button"
+            onClick={() => setChartExpanded(true)}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface/40 px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-hover"
+          >
+            <Maximize2 className="h-4 w-4" />
+            <span>Tap to view chart</span>
+          </button>
         )}
       </div>
 

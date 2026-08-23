@@ -4,20 +4,24 @@ import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { BadgeCheck, MessagesSquare, Pencil, Share2, ThumbsUp, Trash2 } from 'lucide-react'
+import { BadgeCheck, Bookmark, Flag, MessagesSquare, Pencil, Share2, ThumbsUp, Trash2 } from 'lucide-react'
 
 import Sparkline from '@/components/market/Sparkline'
 import { useToggleLikeMutation, useSharePostMutation, useEditPostMutation, useDeletePostMutation } from '@/lib/react-query/mutations/feed.mutations'
+import { useToggleSaveMutation } from '@/lib/react-query/mutations/social.mutations'
+import { useReportMutation } from '@/lib/react-query/mutations/social.mutations'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
 import { usePriceHistory } from '@/lib/market/binance-realtime'
 import type { FeedPost } from '@/lib/supabase/types'
 import type { AssetSymbol } from '@/lib/supabase/types'
 
 import { useAuth } from '../providers/AuthProvider'
-import CommentDrawer from './CommentDrawer'
+import CommentThread from './CommentThread'
 import FollowersPopup from './FollowersPopup'
 import { useToggleFollowMutation } from '@/lib/react-query/mutations/follow.mutations'
 import { EditPostModal } from './EditPostModal'
+import { useToast } from '@/components/notifications/Toast'
+import { useConfirmDialog } from '@/components/notifications/ConfirmDialog'
 
 interface FeedPostCardProps {
   post: FeedPost
@@ -58,6 +62,8 @@ const SIGNAL_BADGES: Record<string, string> = {
 export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardProps) {
   const { user } = useAuth()
   const router = useRouter()
+  const { error: toastError, success: toastSuccess, warning: toastWarning } = useToast()
+  const { confirmDanger, confirmAction } = useConfirmDialog()
 
   const [commentOpen, setCommentOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -72,12 +78,14 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
   const shareMutation = useSharePostMutation()
   const editMutation = useEditPostMutation()
   const deleteMutation = useDeletePostMutation()
+  const toggleSaveMutation = useToggleSaveMutation()
+  const reportMutation = useReportMutation()
 
   const isOwnPost = user?.id === post.profiles?.id
 
   const handleShareClick = () => {
     if (!user) {
-      alert('Please sign in to share posts.')
+      toastError('Please sign in to share posts.')
       return
     }
     if (shareMutation.isPending) return
@@ -85,18 +93,24 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
   }
 
   const handleDeleteClick = () => {
-    if (!window.confirm('Delete this post permanently? This cannot be undone.')) return
-    deleteMutation.mutate(post.id)
-    setMenuOpen(false)
+    confirmDanger(
+      'Delete Post',
+      'Delete this post permanently? This cannot be undone.',
+      () => {
+        deleteMutation.mutate(post.id)
+        setMenuOpen(false)
+      },
+      'Delete'
+    )
   }
 
   const handleFollowClick = () => {
     if (!user) {
-      alert('Please sign in to track platform participant portfolios.')
+      toastError('Please sign in to track platform participant portfolios.')
       return
     }
     if (user.id === post.profiles?.id) {
-      alert('You cannot follow your own analytical tracking portfolio.')
+      toastWarning('You cannot follow your own analytical tracking portfolio.')
       return
     }
     if (toggleFollowMutation.isPending) return
@@ -129,7 +143,7 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
 
   const handleLikeClick = () => {
     if (!user) {
-      alert('Please sign in to like posts.')
+      toastError('Please sign in to like posts.')
       return
     }
     if (toggleLikeMutation.isPending) return
@@ -311,22 +325,42 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
       )}
 
       {/* Social actions */}
-      <div className="flex items-center justify-between pt-3">
-        <button type="button" onClick={handleLikeClick} disabled={toggleLikeMutation.isPending} className={`flex flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold transition-all gnex-touch-target ${post.isLikedByCurrentUser ? 'bg-brand-bg text-brand font-bold' : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}>
+      <div className="flex items-center gap-2 pt-3">
+        <button type="button" onClick={handleLikeClick} disabled={toggleLikeMutation.isPending} className={`flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold transition-all gnex-touch-target ${post.isLikedByCurrentUser ? 'bg-brand-bg text-brand font-bold' : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}>
           <ThumbsUp className={`h-5 w-5 transition-transform ${post.isLikedByCurrentUser ? 'fill-brand stroke-none text-brand' : ''}`} aria-hidden="true" />
           <span>Like</span>
           {post.likes_count > 0 && <span className="ml-1 rounded-md bg-success-bg px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.likes_count}</span>}
         </button>
-        <button type="button" onClick={() => setCommentOpen(true)} className="flex flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold text-text-muted transition-all hover:bg-surface-hover hover:text-text-secondary gnex-touch-target">
+        <button type="button" onClick={() => setCommentOpen(true)} className="flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold text-text-muted transition-all hover:bg-surface-hover hover:text-text-secondary gnex-touch-target">
           <MessagesSquare className="h-5 w-5" aria-hidden="true" />
           <span>Comment</span>
           {(post.comments_count ?? 0) > 0 && <span className="ml-1 rounded-md bg-success-bg px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.comments_count}</span>}
         </button>
-        <button type="button" onClick={handleShareClick} disabled={shareMutation.isPending} className="flex flex-1 items-center justify-center cursor-pointer gap-2 rounded-xl py-2.5 text-sm font-semibold text-text-muted transition-all hover:bg-surface-hover hover:text-text-secondary gnex-touch-target">
+        <button type="button" onClick={handleShareClick} disabled={shareMutation.isPending} className="flex-1 items-center justify-center cursor-pointer gap-2 rounded-xl py-2.5 text-sm font-semibold text-text-muted transition-all hover:bg-surface-hover hover:text-text-secondary gnex-touch-target">
           <Share2 className="h-5 w-5" aria-hidden="true" />
           <span>Share</span>
           {(post.shares_count ?? 0) > 0 && <span className="ml-1 rounded-md bg-success-bg px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.shares_count}</span>}
         </button>
+        <button type="button" onClick={() => { if (!user) { toastError('Please sign in to save posts.'); return } if (toggleSaveMutation.isPending) return; toggleSaveMutation.mutate(post.id) }} disabled={toggleSaveMutation.isPending} className={`flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold transition-all gnex-touch-target ${post.isSavedByCurrentUser ? 'bg-brand-bg text-brand font-bold' : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}>
+          <Bookmark className={`h-5 w-5 transition-transform ${post.isSavedByCurrentUser ? 'fill-brand stroke-none text-brand' : ''}`} aria-hidden="true" />
+          <span>Save</span>
+        </button>
+        <div className="relative">
+          <button type="button" onClick={() => setMenuOpen((v) => !v)} className="flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold text-text-muted transition-all hover:bg-surface-hover hover:text-text-secondary gnex-touch-target" aria-label="More actions">
+            <Flag className="h-5 w-5" aria-hidden="true" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-xl border border-border bg-surface-overlay gnex-overlay">
+              <button type="button" onClick={() => { setMenuOpen(false); if (!user) { toastError('Please sign in to report posts.'); return } reportMutation.mutate({ contentType: 'post', contentId: post.id, reason: 'Spam or misleading', details: '' }, { onSuccess: () => toastSuccess('Post reported successfully') }) }} className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-hover hover:text-text-primary"><Flag className="h-4 w-4" />Report Post</button>
+              {isOwnPost && (
+                <>
+                  <button type="button" onClick={() => { setMenuOpen(false); setEditOpen(true) }} className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-hover hover:text-text-primary"><Pencil className="h-4 w-4" />Edit Post</button>
+                  <button type="button" onClick={handleDeleteClick} disabled={deleteMutation.isPending} className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm font-semibold text-danger transition hover:bg-danger-bg"><Trash2 className="h-4 w-4" />{deleteMutation.isPending ? 'Deleting...' : 'Delete Post'}</button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {mediaPreviewOpen && post.media_url && (
@@ -335,8 +369,13 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
         </div>
       )}
 
-      <CommentDrawer postId={post.id} isOpen={commentOpen} onClose={() => setCommentOpen(false)} />
-      <EditPostModal post={post} isOpen={editOpen} isSaving={editMutation.isPending} onClose={() => setEditOpen(false)} onSave={(content) => { editMutation.mutate({ postId: post.id, content, assetSymbols: post.assetSymbols, signalType: post.signalType }, { onSuccess: () => setEditOpen(false), onError: (error) => alert(error.message) }) }} />
+      {commentOpen && (
+          <CommentThread
+              postId={post.id}
+              commentsCount={post.comments_count ?? 0}
+          />
+      )}
+      <EditPostModal post={post} isOpen={editOpen} isSaving={editMutation.isPending} onClose={() => setEditOpen(false)} onSave={(content) => { editMutation.mutate({ postId: post.id, content, assetSymbols: post.assetSymbols, signalType: post.signalType }, { onSuccess: () => { setEditOpen(false); toastSuccess('Post updated successfully') }, onError: (error) => toastError(error.message) }) }} />
     </article>
   )
 }
