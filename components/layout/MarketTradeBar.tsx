@@ -52,7 +52,7 @@ export default function MarketTradeBar() {
           </span>
           <span className="font-mono text-caption font-black" style={{ color: isPositive ? 'var(--color-success)' : 'var(--color-danger)' }}>
             {ticker
-              ? `$${ticker.priceUsd.toLocaleString('en-US', { maximumFractionDigits: 2 })} · ${isPositive ? '+' : ''}${ticker.change24h.toFixed(2)}%`
+              ? `$${Number.isFinite(ticker.priceUsd) ? ticker.priceUsd.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'} · ${isPositive ? '+' : ''}${ticker.change24h.toFixed(2)}%`
               : '—'}
           </span>
         </span>

@@ -113,10 +113,10 @@ export default function AssetDetailPage({ params }: PageProps) {
     )
   }
 
-  const currentPrice = ticker.priceUsd
+  const currentPrice = Number.isFinite(ticker.priceUsd) ? ticker.priceUsd : 0
   const change24h = ticker.change24h
   const isPositive = change24h >= 0
-  const priceKes = currentPrice * usdKesRate
+  const priceKes = Number.isFinite(currentPrice) && Number.isFinite(usdKesRate) ? currentPrice * usdKesRate : 0
 
   // Honest freshness status for this asset's feed. Pre-mount renders
   // optimistically as live; the clock settles on the first effect pass.
@@ -170,7 +170,7 @@ return (
           <div className="space-y-2">
             <div className="flex items-baseline gap-3">
               <span className="text-4xl md:text-5xl font-black font-mono text-text-primary">
-                ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${Number.isFinite(currentPrice) ? currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
               </span>
               <span
                 className={`text-xl font-black font-mono ${
@@ -192,7 +192,7 @@ return (
               </span>
             </div>
             <p className="text-sm text-text-muted font-mono">
-              ≈ KES {priceKes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ≈ KES {Number.isFinite(priceKes) ? priceKes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
             </p>
           </div>
 

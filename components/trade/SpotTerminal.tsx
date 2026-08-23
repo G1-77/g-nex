@@ -107,7 +107,7 @@ export default function SpotTerminal() {
       ? 'live'
       : getPriceStatus(ticker, now, isStreamed ? PRICE_STALE_MS : baselineCeilingFor(symbol))
   const priceStale = priceStatus !== 'live'
-  const currentPrice = ticker?.priceUsd ?? 0
+  const currentPrice = Number.isFinite(ticker?.priceUsd) ? ticker?.priceUsd ?? 0 : 0
 
   // ---- Client-side pre-validation mirroring the server gates. The server
   // re-checks everything at execution time; this exists to explain rejections
@@ -452,7 +452,7 @@ export default function SpotTerminal() {
                       <p className="font-mono text-caption text-text-muted">
                         {order.orderType.replace('_', ' ')} ·{' '}
                         {order.price ?? order.triggerPrice
-                          ? `$${(order.price ?? order.triggerPrice)?.toLocaleString()}`
+                          ? `$${Number.isFinite(order.price ?? order.triggerPrice) ? (order.price ?? order.triggerPrice)!.toLocaleString() : '—'}`
                           : '—'}
                       </p>
                     </div>

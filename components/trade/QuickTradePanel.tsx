@@ -90,7 +90,7 @@ export default function QuickTradePanel() {
   const priceStale = status !== 'live'
   const ageSeconds = priceAgeSeconds(ticker, now)
 
-  const currentPriceUsd = ticker?.priceUsd ?? 0
+  const currentPriceUsd = Number.isFinite(ticker?.priceUsd) ? ticker?.priceUsd ?? 0 : 0
 
   // ---- Side-specific caps (client-side pre-validation; the server re-checks).
   // BUY: cost incl. fee must fit the KES balance. SELL: cannot exceed held value.
@@ -162,8 +162,8 @@ export default function QuickTradePanel() {
         tone: 'ok',
         message:
           side === 'buy'
-            ? `Bought ${formatUnits(symbol, result.quantity)} ${symbol} @ $${result.priceUsd.toLocaleString()} — ${formatKes(result.amountKes)} debited (fee ${formatKes(result.feeKes)})`
-            : `Sold ${formatUnits(symbol, result.quantity)} ${symbol} @ $${result.priceUsd.toLocaleString()} — ${formatKes(result.amountKes)} credited (fee ${formatKes(result.feeKes)})`,
+            ? `Bought ${formatUnits(symbol, result.quantity)} ${symbol} @ $${Number.isFinite(result.priceUsd) ? result.priceUsd.toLocaleString() : '—'} — ${formatKes(result.amountKes)} debited (fee ${formatKes(result.feeKes)})`
+            : `Sold ${formatUnits(symbol, result.quantity)} ${symbol} @ $${Number.isFinite(result.priceUsd) ? result.priceUsd.toLocaleString() : '—'} — ${formatKes(result.amountKes)} credited (fee ${formatKes(result.feeKes)})`,
       })
     } catch (err) {
       setFeedback({
@@ -353,7 +353,7 @@ export default function QuickTradePanel() {
                 <span className="font-mono text-text-secondary">
                   {formatUnits(symbol, heldUnits)} {symbol}
                 </span>{' '}
-                <span className="text-text-muted">(≈ ${maxSellUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })})</span>
+                <span className="text-text-muted">(≈ ${Number.isFinite(maxSellUsd) ? maxSellUsd.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'})</span>
               </>
             )}
           </p>
@@ -365,7 +365,7 @@ export default function QuickTradePanel() {
         <div className="space-y-1.5 gnex-card-elevated p-4 text-body-sm">
           <div className="flex justify-between text-text-secondary">
             <span>Price</span>
-            <span className="font-mono text-text-primary">${quote.priceUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            <span className="font-mono text-text-primary">${Number.isFinite(quote.priceUsd) ? quote.priceUsd.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</span>
           </div>
           <div className="flex justify-between text-text-secondary">
             <span>Rate</span>
