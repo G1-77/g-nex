@@ -60,14 +60,14 @@ export default function Bottomnav() {
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-xl md:bottom-0"
+          className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl md:bottom-0"
         >
           <MarketTradeBar />
         </motion.div>
       )}
 
       {/* Persistent bottom navigation — always visible on mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border bg-background/95 backdrop-blur-xl md:hidden" role="navigation" aria-label="Main navigation">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 w-full bg-background/95 backdrop-blur-xl md:hidden" role="navigation" aria-label="Main navigation">
         <div className="grid h-[64px] grid-cols-4">
           {navItems.map((item) => {
             const active = isActive(item.href)

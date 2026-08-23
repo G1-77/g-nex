@@ -166,10 +166,10 @@ const handlePublish = async () => {
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-3xl border border-slate-800/60 bg-slate-950 shadow-2xl shadow-black/40 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-2xl rounded-3xl bg-slate-950 shadow-2xl shadow-black/40 overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-slate-900 px-5 py-4 shrink-0 bg-slate-950">
+        <div className="flex items-center justify-between px-5 py-4 shrink-0 bg-slate-950">
           <div className="flex items-center gap-3">
             {/*  3. Defensive parent Frame With Reusable Ibitials Overlay No Unconfigured Strings */}
               <div className="relative flex h-10.5 w-10.5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-900/80 bg-slate-900">
@@ -217,7 +217,7 @@ const handlePublish = async () => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Share your market intelligence..."
-              className="min-h-35 w-full resize-none rounded-2xl border border-slate-800/40 bg-slate-900/30 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-yellow-600/40 focus:ring-1 focus:ring-yellow-600/20"
+              className="min-h-35 w-full resize-none rounded-2xl bg-slate-900/30 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:ring-1 focus:ring-yellow-600/20"
             />
             <div className="flex justify-end">
               <span className={`text-[11px] font-mono ${remainingCharacters <= 50 ? 'text-yellow-600' : 'text-slate-500'}`}>
@@ -237,14 +237,14 @@ const handlePublish = async () => {
                     key={signal.value}
                     type="button"
                     onClick={() => setSelectedSignal(signal.value)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition cursor-pointer gnex-touch-target ${
                       active
                         ? signal.value === 'Bullish'
-                          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                          ? 'bg-emerald-500/10 text-emerald-400'
                           : signal.value === 'Bearish'
-                          ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
-                          : 'border-yellow-600/30 bg-yellow-600/10 text-yellow-600'
-                        : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                          ? 'bg-rose-500/10 text-rose-400'
+                          : 'bg-yellow-600/10 text-yellow-600'
+                        : 'bg-slate-900/40 text-text-muted hover:bg-surface-hover hover:text-text-primary'
                     }`}
                   >
                     {signal.label}
@@ -262,17 +262,17 @@ const handlePublish = async () => {
               value={assetInput}
               onChange={(e) => setAssetInput(e.target.value)}
               placeholder="Search BTC, SOL, XAU..."
-              className="w-full rounded-xl border border-slate-800/50 bg-slate-900/30 px-3 py-2 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-yellow-600/40"
+              className="w-full rounded-xl bg-slate-900/30 px-3 py-2 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:ring-1 focus:ring-yellow-600/20"
             />
 
             {assetInput.length > 0 && filteredAssets.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-1.5 border border-slate-900 bg-slate-900/10 p-2 rounded-xl">
+              <div className="flex flex-wrap gap-2 mt-1.5 bg-slate-900/10 p-2 rounded-xl">
                 {filteredAssets.map((asset) => (
                   <button
                     key={asset}
                     type="button"
                     onClick={() => handleAddAsset(asset)}
-                    className="rounded-full border border-slate-800 bg-slate-900/40 px-2.5 py-1 text-xs font-semibold text-slate-300 transition hover:border-yellow-600/40 hover:text-yellow-600 cursor-pointer"
+                    className="rounded-full bg-slate-900/40 px-2.5 py-1 text-xs font-semibold text-text-muted transition hover:bg-surface-hover hover:text-brand cursor-pointer gnex-touch-target"
                   >
                     +{asset}
                   </button>
@@ -285,7 +285,7 @@ const handlePublish = async () => {
                 {selectedAssets.map((asset) => (
                   <div
                     key={asset}
-                    className="flex items-center gap-1 rounded-full border border-yellow-600/20 bg-yellow-600/10 px-3 py-1 text-xs font-semibold text-yellow-600"
+                    className="flex items-center gap-1 rounded-full bg-yellow-600/10 px-3 py-1 text-xs font-semibold text-yellow-600"
                   >
                     <span>#{asset}</span>
                     <button
@@ -319,7 +319,7 @@ const handlePublish = async () => {
           {mediaFile && imagePreviewUrl ? (
             <div className="space-y-2 animate-scaleIn">
               {/* GLOWING HIGH-FIDELITY LIVE PREVIEW CONTAINER */}
-              <div className="relative w-full aspect-video rounded-2xl border border-slate-900 overflow-hidden bg-slate-950 shadow-inner group">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 shadow-inner group">
                 <Image
                   src={imagePreviewUrl}
                   alt="Attached technical analysis chart overview preview"
@@ -332,7 +332,7 @@ const handlePublish = async () => {
                 <button
                   type="button"
                   onClick={handleRemoveMedia}
-                  className="absolute top-3 right-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-rose-500/20 bg-slate-950/80 text-rose-400 backdrop-blur-md transition-all duration-150 hover:bg-rose-500 hover:text-slate-100 active:scale-90 shadow-lg"
+                  className="absolute top-3 right-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-rose-500/20 text-rose-400 backdrop-blur-md transition-all duration-150 hover:bg-rose-500 hover:text-slate-100 active:scale-90 shadow-lg"
                   aria-label="Remove attached chart screenshot"
                 >
                   <X className="h-4 w-4" />
@@ -340,12 +340,12 @@ const handlePublish = async () => {
               </div>
 
               {/* METADATA META CAPSULE INFO STRIP */}
-              <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-slate-900/60 bg-slate-900/20 text-[10px] font-mono font-bold text-slate-500">
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/20 text-[10px] font-mono font-bold text-text-muted">
                 <div className="flex items-center gap-2 min-w-0">
                   <Paperclip className="h-3.5 w-3.5 text-yellow-600 shrink-0" />
-                  <span className="truncate text-slate-300 max-w-55">{mediaFile.name}</span>
+                  <span className="truncate text-text-primary max-w-55">{mediaFile.name}</span>
                 </div>
-                <span className="shrink-0 text-slate-600">
+                <span className="shrink-0 text-text-muted">
                   ({(mediaFile.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
               </div>
@@ -355,13 +355,13 @@ const handlePublish = async () => {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="group flex min-h-27.5 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-900 bg-slate-900/10 p-4 text-center transition-all duration-200 hover:border-yellow-600/20 hover:bg-slate-900/20"
+              className="group flex min-h-27.5 w-full cursor-pointer flex-col items-center justify-center rounded-2xl bg-slate-900/10 p-4 text-center transition-all duration-200 hover:bg-slate-900/20"
             >
-              <ImagePlus className="mb-2 h-5 w-5 text-slate-500 transition-colors group-hover:text-yellow-600" />
-              <p className="text-xs font-medium text-slate-400 transition-colors group-hover:text-slate-300">
+              <ImagePlus className="mb-2 h-5 w-5 text-text-muted transition-colors group-hover:text-brand" />
+              <p className="text-xs font-medium text-text-muted transition-colors group-hover:text-text-secondary">
                 Click to attach market view chart sheets or execution screenshots
               </p>
-              <p className="mt-0.5 text-[10px] text-slate-600">Supports pristine PNG, JPG up to 3MB</p>
+              <p className="mt-0.5 text-[10px] text-text-muted">Supports pristine PNG, JPG up to 3MB</p>
             </button>
           )}
         </div>
@@ -370,7 +370,7 @@ const handlePublish = async () => {
         </div>
 
         {/* FOOTER */}
-        <div className="flex items-center justify-end border-t border-slate-900 px-5 py-4 bg-slate-950 shrink-0">
+        <div className="flex items-center justify-end px-5 py-4 bg-slate-950 shrink-0">
           <button
             type="button"
             disabled={isPublishing || !content.trim() || isLoading || !profile}

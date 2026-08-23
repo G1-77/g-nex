@@ -89,10 +89,9 @@ export default function AssetSparklineCard({
           ${formatPrice(ticker.priceUsd)}
         </span>
         <span
-          className="shrink-0 rounded-md border px-2 py-0.5 font-mono text-caption font-black tabular-nums"
+          className="shrink-0 rounded-md px-2 py-0.5 font-mono text-caption font-black tabular-nums"
           style={{
             color,
-            borderColor: `${color}33`,
             backgroundColor: `${color}0f`,
           }}
         >

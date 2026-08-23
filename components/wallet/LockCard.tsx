@@ -45,7 +45,7 @@ export default function LockCard({
       </p>
 
       <div className="mt-4 flex items-center gap-2">
-        <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-surface/40 px-3.5 py-2.5 focus-within:border-brand/40">
+        <div className="flex flex-1 items-center gap-2 rounded-xl bg-surface/40 px-3.5 py-2.5 focus-within:ring-1 focus-within:ring-brand/20">
           <span className="font-mono text-caption font-bold text-text-muted">KES</span>
           <input
             type="number"
@@ -90,7 +90,7 @@ export default function LockCard({
           {activeLocks.map((lock) => (
             <li
               key={lock.id}
-              className="flex items-center justify-between rounded-lg border border-border bg-surface/40 px-3.5 py-2.5"
+              className="flex items-center justify-between rounded-lg bg-surface/40 px-3.5 py-2.5"
             >
               <div>
                 <p className="font-mono text-body-sm font-bold text-text-primary">
@@ -111,10 +111,10 @@ export default function LockCard({
                 </p>
               </div>
               <span
-                className={`rounded-full border px-2 py-0.5 font-mono text-caption font-bold uppercase tracking-wide ${
+                className={`rounded-full px-2 py-0.5 font-mono text-caption font-bold uppercase tracking-wide ${
                   lock.status === 'unlock_pending'
-                    ? 'border-warning-border bg-warning-bg text-warning'
-                    : 'border-border bg-surface/40 text-text-muted'
+                    ? 'bg-warning-bg text-warning'
+                    : 'bg-surface/40 text-text-muted'
                 }`}
               >
                 {lock.status === 'unlock_pending' ? 'Unlocking' : 'Locked'}

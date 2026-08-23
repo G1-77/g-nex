@@ -39,7 +39,7 @@ export default function Topnav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-[56px] max-w-7xl items-center justify-between gap-4 px-page">
           
           {/* LEFT SECTION */}
@@ -47,12 +47,12 @@ export default function Topnav() {
             
             {/* MOBILE MENU + BRAND */}
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setMenuOpen(true)}
-                aria-label="Open menu"
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface md:hidden gnex-touch-target"
-              >
+<button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover md:hidden gnex-touch-target"
+            >
                 <Menu className="h-5 w-5 text-text-secondary" />
               </button>
 
@@ -66,7 +66,7 @@ export default function Topnav() {
 
             {/* SEARCH */}
             <div className="hidden sm:flex">
-              <div className="flex items-center gap-2.5 rounded-full border border-border bg-surface/40 px-4 py-2 transition-all duration-200 focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/20">
+              <div className="flex items-center gap-2.5 rounded-full bg-surface/40 px-4 py-2 transition-all duration-200 focus-within:ring-1 focus-within:ring-brand/20">
                 <Search className="h-4 w-4 text-text-muted" />
 
                 <input
@@ -89,16 +89,12 @@ export default function Topnav() {
                   href={item.href}
                   className={`relative flex h-full items-center px-4 text-sm font-semibold tracking-wide transition-colors duration-200 gnex-touch-target ${
                     active
-                      ? 'text-brand'
-                      : 'text-text-secondary hover:text-text-primary'
+                      ? 'text-brand bg-surface-hover'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
                   }`}
                   aria-current={active ? 'page' : undefined}
                 >
                   {item.label}
-
-                  {active && (
-                    <span className="absolute bottom-0 left-0 h-0.5 w-full bg-brand shadow-[0_-2px_10px_rgba(202,138,4,0.4)]" />
-                  )}
                 </Link>
               )
             })}
@@ -110,7 +106,7 @@ export default function Topnav() {
             {/* PORTFOLIO SNAPSHOT */}
             <Link
               href="/wallet"
-              className="hidden items-center gap-3 rounded-full border border-border bg-surface/40 px-4 py-2 transition-colors hover:border-border-strong lg:flex gnex-touch-target"
+              className="hidden items-center gap-3 rounded-full bg-surface/40 px-4 py-2 transition-colors hover:bg-surface-hover lg:flex gnex-touch-target"
             >
               <div className="flex items-center gap-2">
                 <Wallet className="h-4 w-4 text-brand" />
@@ -121,12 +117,12 @@ export default function Topnav() {
               </div>
 
               <span
-                className={`rounded-md border px-2.5 py-1 font-mono text-xs font-bold ${
+                className={`rounded-md px-2.5 py-1 font-mono text-xs font-bold ${
                   growthPct === null
-                    ? 'border-border bg-surface/40 text-text-muted'
+                    ? 'text-text-muted'
                     : growthPct >= 0
-                      ? 'border-success-border bg-success-bg text-success'
-                      : 'border-danger-border bg-danger-bg text-danger'
+                      ? 'bg-success-bg text-success'
+                      : 'bg-danger-bg text-danger'
                 }`}
               >
                 {growthPct === null ? 'Demo' : `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(1)}%`}
@@ -134,19 +130,19 @@ export default function Topnav() {
             </Link>
 
             {/* MOBILE SEARCH */}
-            <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface sm:hidden gnex-touch-target">
+            <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover sm:hidden gnex-touch-target">
               <Search className="h-4 w-4 text-text-secondary" />
             </button>
 
             {/* MESSAGES */}
-            <button className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface gnex-touch-target">
+            <button className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover gnex-touch-target">
               <MessageCircle className="h-4 w-4 text-text-secondary" />
 
               <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
             </button>
 
             {/* NOTIFICATIONS */}
-            <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface/40 transition-colors hover:border-border-strong hover:bg-surface gnex-touch-target">
+            <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface/40 transition-colors hover:bg-surface-hover gnex-touch-target">
               <Bell className="h-4 w-4 text-text-secondary" />
             </button>
 

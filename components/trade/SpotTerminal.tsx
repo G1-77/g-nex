@@ -232,10 +232,10 @@ export default function SpotTerminal() {
               setFeedback(null)
             }}
             className={cn(
-              'flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-caption font-bold transition-colors gnex-touch-target',
+              'flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-caption font-bold transition-colors gnex-touch-target',
               symbol === asset.symbol
-                ? 'border-brand/60 bg-brand-bg text-brand'
-                : 'border-border text-text-secondary hover:border-border-strong hover:text-text-primary'
+                ? 'bg-brand-bg text-brand'
+                : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
             )}
           >
             <img src={asset.logo} alt="" className="h-4 w-4 rounded-full" />
@@ -303,10 +303,10 @@ export default function SpotTerminal() {
                 type="button"
                 onClick={() => setSide('buy')}
                 className={cn(
-                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors gnex-touch-target',
+                  'cursor-pointer rounded-xl py-2 text-sm font-bold transition-colors gnex-touch-target',
                   side === 'buy'
-                    ? 'border-success-border bg-success-bg text-success'
-                    : 'border-border text-text-secondary hover:border-border-strong hover:text-text-primary'
+                    ? 'bg-success-bg text-success'
+                    : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
                 )}
               >
                 Buy
@@ -315,17 +315,17 @@ export default function SpotTerminal() {
                 type="button"
                 onClick={() => setSide('sell')}
                 className={cn(
-                  'cursor-pointer rounded-xl border py-2 text-sm font-bold transition-colors gnex-touch-target',
+                  'cursor-pointer rounded-xl py-2 text-sm font-bold transition-colors gnex-touch-target',
                   side === 'sell'
-                    ? 'border-danger-border bg-danger-bg text-danger'
-                    : 'border-border text-text-secondary hover:border-border-strong hover:text-text-primary'
+                    ? 'bg-danger-bg text-danger'
+                    : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
                 )}
               >
                 Sell
               </button>
             </div>
 
-            <div className="mt-3 flex gap-1 border-b border-border pb-2">
+            <div className="mt-3 flex gap-1 pb-2">
               {tabs.map((t) => (
                 <button
                   key={t.key}
@@ -333,7 +333,7 @@ export default function SpotTerminal() {
                   onClick={() => setTab(t.key)}
                   className={cn(
                     'cursor-pointer rounded-lg px-2.5 py-1 text-caption font-semibold transition-colors',
-                    tab === t.key ? 'bg-surface text-text-primary' : 'text-text-muted hover:text-text-secondary'
+                    tab === t.key ? 'bg-surface text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover'
                   )}
                 >
                   {t.label}
@@ -423,10 +423,10 @@ export default function SpotTerminal() {
           {feedback && (
             <div
               className={cn(
-                'rounded-2xl border px-4 py-3 text-body-sm',
+                'rounded-2xl px-4 py-3 text-body-sm',
                 feedback.tone === 'ok'
-                  ? 'border-success-border bg-success-bg text-success'
-                  : 'border-danger-border bg-danger-bg text-danger'
+                  ? 'bg-success-bg text-success'
+                  : 'bg-danger-bg text-danger'
               )}
             >
               {feedback.message}
@@ -460,7 +460,7 @@ export default function SpotTerminal() {
                       type="button"
                       onClick={() => handleCancel(order)}
                       disabled={cancelMutation.isPending}
-                      className="shrink-0 cursor-pointer rounded-lg border border-border p-1.5 text-text-muted hover:border-danger/40 hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 gnex-touch-target"
+                      className="shrink-0 cursor-pointer rounded-lg bg-surface/40 p-1.5 text-text-muted hover:bg-surface-hover hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 gnex-touch-target"
                       aria-label="Cancel order"
                     >
                       <X className="h-3.5 w-3.5" />

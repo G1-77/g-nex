@@ -44,7 +44,7 @@ export default function HoldingsList({ rows, loading }: HoldingsListProps) {
         </p>
         <Link
           href="/markets"
-          className="mt-4 inline-block rounded-xl border border-brand-border bg-brand-bg px-4 py-2.5 text-caption font-bold text-brand transition-colors hover:bg-brand-bg/20"
+          className="mt-4 inline-block rounded-xl bg-brand-bg px-4 py-2.5 text-caption font-bold text-brand transition-colors hover:bg-brand-bg/20"
         >
           Browse markets to start
         </Link>

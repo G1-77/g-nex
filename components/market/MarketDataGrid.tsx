@@ -30,17 +30,17 @@ export default function MarketDataGrid({
   return (
     <div className="space-y-3 w-full">
       {/* Table Sub-Header Control Bar Layer */}
-      <div className="flex items-center justify-between border-b border-border pb-2 select-none">
+      <div className="flex items-center justify-between pb-2 select-none">
         <span className="text-caption font-black uppercase tracking-wider text-text-muted">Market Dashboard</span>
         <div className="flex gap-1">
           {(['All', 'Crypto', 'Gold', 'Watchlist'] as MarketFilterType[]).map((filter) => (
             <button
               key={filter}
               onClick={() => onFilterChange(filter)}
-              className={`rounded-lg px-3 py-1.5 text-caption font-bold uppercase tracking-wider border transition-all duration-150 cursor-pointer gnex-touch-target ${
+              className={`rounded-lg px-3 py-1.5 text-caption font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer gnex-touch-target ${
                 activeFilter === filter
-                  ? 'bg-brand text-text-inverse border-brand'
-                  : 'text-text-secondary border-border hover:border-border-strong hover:text-text-primary'
+                  ? 'bg-brand text-text-inverse'
+                  : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
               }`}
             >
               {filter}
@@ -65,7 +65,7 @@ export default function MarketDataGrid({
             >
               {/* Identity Token Box Section */}
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-10 w-10 rounded-xl bg-surface border border-border flex items-center justify-center font-mono text-xs font-black text-text-secondary">
+                <div className="h-10 w-10 rounded-xl bg-surface flex items-center justify-center font-mono text-xs font-black text-text-secondary">
                   {ticker.symbol.slice(0, 2)}
                 </div>
                 <div className="flex flex-col min-w-0">
@@ -120,10 +120,10 @@ export default function MarketDataGrid({
                   </button>
                   <button
                     onClick={() => onToggleWatchlist(ticker.symbol)}
-                    className={`p-1.5 rounded-lg border transition-all cursor-pointer gnex-touch-target ${
+                    className={`p-1.5 rounded-lg transition-all cursor-pointer gnex-touch-target ${
                       ticker.isWatching
-                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                        : 'bg-surface border-border text-text-muted hover:border-border-strong hover:text-text-secondary'
+                        ? 'bg-amber-500/10 text-amber-400'
+                        : 'bg-surface text-text-muted hover:bg-surface-hover hover:text-text-secondary'
                     }`}
                     aria-label={ticker.isWatching ? `Remove ${ticker.symbol} from watchlist` : `Add ${ticker.symbol} to watchlist`}
                   >

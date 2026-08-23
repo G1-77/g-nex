@@ -72,7 +72,7 @@ function MobileSheet({
         className="absolute inset-0 cursor-pointer bg-black/70 backdrop-blur-sm"
       />
 
-      <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-border bg-surface-overlay backdrop-blur-xl p-5 shadow-[var(--shadow-overlay)]">
+      <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-surface-overlay backdrop-blur-xl p-5 shadow-[var(--shadow-overlay)]">
         <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-border-subtle/60" />
 
         <div className="flex items-center gap-3">
@@ -295,8 +295,8 @@ export default function AvatarDropdown() {
 
       {/* Desktop Dropdown */}
       {open && (
-        <div className="absolute right-0 top-11 z-50 hidden w-56 rounded-2xl border border-border bg-surface-overlay backdrop-blur-xl md:block">
-          <div className="border-b border-border px-4 py-3">
+        <div className="absolute right-0 top-11 z-50 hidden w-56 rounded-2xl bg-surface-overlay backdrop-blur-xl md:block">
+          <div className="px-4 py-3">
             <p className="text-body-sm font-bold text-text-primary truncate">
               @{profile?.username ?? 'anonymous'}
             </p>
@@ -337,7 +337,7 @@ export default function AvatarDropdown() {
             )}
 
             {/* Appearance: Light / Dark / System */}
-            <div className="mt-1 border-t border-border px-1 pt-2">
+            <div className="mt-1 px-1 pt-2">
               <p className="px-2 pb-1.5 text-caption font-bold uppercase tracking-[0.12em] text-text-muted">
                 Appearance
               </p>

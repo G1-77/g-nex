@@ -44,9 +44,10 @@
   --surface-elevated: var(--slate-800);  /* Level 2: Important panels, modals */
   --surface-hover: var(--slate-800);     /* Hover state for interactive cards */
   --surface-overlay: var(--slate-950);   /* Level 3: Dropdowns, popovers, drawers */
+  --surface-active: var(--slate-700);    /* Active/pressed state */
 
   /* ---- BORDERS ---- */
-  --border: var(--slate-700);            /* Standard card borders */
+  --border: var(--slate-800);            /* Standard card borders (subtle) */
   --border-subtle: var(--slate-800);     /* Subtle dividers, internal borders */
   --border-strong: var(--slate-600);     /* Focus rings, active states */
 
@@ -101,11 +102,11 @@
     (surfaces stay surfaces, text stays text) while the UI reads as a clean,
     conventional light financial interface with GNEX accents intact. */
 html.light {
-  --color-slate-950: var(--slate-100);   /* page background            */
-  --color-slate-900: var(--slate-200);   /* primary surface / panels   */
-  --color-slate-800: var(--slate-300);   /* elevated surface / chips   */
-  --color-slate-700: var(--slate-400);   /* secondary surface          */
-  --color-slate-600: var(--slate-500);
+  --color-slate-950: var(--slate-50);    /* page background            */
+  --color-slate-900: var(--slate-100);   /* primary surface / panels   */
+  --color-slate-800: var(--slate-200);   /* elevated surface / chips   */
+  --color-slate-700: var(--slate-300);   /* secondary surface          */
+  --color-slate-600: var(--slate-400);
   --color-slate-500: var(--slate-500);   /* midpoint anchor (muted)    */
   --color-slate-400: var(--slate-600);   /* secondary text             */
   --color-slate-300: var(--slate-700);   /* strong secondary text      */
@@ -113,7 +114,7 @@ html.light {
   --color-slate-100: var(--slate-900);   /* primary text               */
   --color-slate-50: var(--slate-950);
 
-  --background: var(--slate-100);
+  --background: var(--slate-50);
   --foreground: var(--slate-900);
 
   /* ===========================================================================
@@ -125,9 +126,10 @@ html.light {
   --surface-elevated: #ffffff;           /* Level 2: White elevated + shadow */
   --surface-hover: var(--slate-100);     /* Hover: slate-100 */
   --surface-overlay: #ffffff;            /* Level 3: White dropdowns/modals */
+  --surface-active: var(--slate-200);    /* Active/pressed state */
 
   /* ---- BORDERS ---- */
-  --border: var(--slate-200);            /* Standard borders */
+  --border: var(--slate-200);            /* Standard borders (subtle) */
   --border-subtle: var(--slate-200);     /* Subtle dividers */
   --border-strong: var(--slate-400);     /* Focus rings */
 
@@ -157,6 +159,7 @@ html.light {
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-hover: var(--surface-hover);
   --color-surface-overlay: var(--surface-overlay);
+  --color-surface-active: var(--surface-active);
 
   /* Semantic borders */
   --color-border: var(--border);
@@ -214,28 +217,41 @@ body {
    =========================================================================== */
 
 @layer components {
-  /* Level 1: Standard content card */
+  /* Level 1: Standard content card — borderless, relies on surface contrast + subtle shadow */
   .gnex-card {
+    background: var(--surface);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .gnex-card-hover {
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .gnex-card-hover:hover {
+    background: var(--surface-hover);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Level 1 variant: with subtle border (for cases needing explicit boundary) */
+  .gnex-card-bordered {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 1rem;
     box-shadow: var(--shadow-sm);
   }
-  .gnex-card-hover {
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-  }
-  .gnex-card-hover:hover {
+  .gnex-card-bordered:hover {
     border-color: var(--border-strong);
     box-shadow: var(--shadow-card);
     background: var(--surface-hover);
   }
 
-  /* Level 2: Elevated card / important panel */
+  /* Level 2: Elevated card / important panel — stronger shadow, no border */
   .gnex-card-elevated {
     background: var(--surface-elevated);
-    border: 1px solid var(--border);
     border-radius: 1rem;
     box-shadow: var(--shadow-card);
+  }
+  .gnex-card-elevated:hover {
+    box-shadow: var(--shadow-elevated);
   }
 
   /* Level 3: Dropdown / popover / modal / floating surface */
@@ -322,6 +338,10 @@ body {
     filter: brightness(1.1);
     box-shadow: 0 4px 16px rgba(202, 138, 4, 0.35);
   }
+  .gnex-btn-primary:active {
+    background: var(--brand);
+    filter: brightness(0.95);
+  }
 
   .gnex-btn-secondary {
     background: var(--surface);
@@ -332,30 +352,45 @@ body {
     background: var(--surface-hover);
     border-color: var(--border-strong);
   }
+  .gnex-btn-secondary:active {
+    background: var(--surface-active);
+  }
 
   .gnex-btn-success {
     background: var(--success);
     color: var(--text-inverse);
+    border: none;
   }
   .gnex-btn-success:hover {
     background: #7ae63e;
+  }
+  .gnex-btn-success:active {
+    background: #6bd435;
   }
 
   .gnex-btn-danger {
     background: var(--danger);
     color: var(--text-inverse);
+    border: none;
   }
   .gnex-btn-danger:hover {
     background: #f04a4a;
+  }
+  .gnex-btn-danger:active {
+    background: #e03a3a;
   }
 
   .gnex-btn-ghost {
     background: transparent;
     color: var(--text-secondary);
+    border: none;
   }
   .gnex-btn-ghost:hover {
     background: var(--surface-hover);
     color: var(--text-primary);
+  }
+  .gnex-btn-ghost:active {
+    background: var(--surface-active);
   }
 
   /* Input base styles */

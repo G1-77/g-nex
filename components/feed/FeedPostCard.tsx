@@ -251,7 +251,7 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
 
       {/* Media attachment */}
       {post.media_url && (
-        <div className="w-full overflow-hidden rounded-xl border border-border-subtle bg-surface/40 group" onMouseEnter={() => setMediaPreviewOpen(true)} onMouseLeave={() => setMediaPreviewOpen(false)}>
+        <div className="w-full overflow-hidden rounded-xl bg-surface/40 group" onMouseEnter={() => setMediaPreviewOpen(true)} onMouseLeave={() => setMediaPreviewOpen(false)}>
           <Image src={post.media_url} alt="Trading intelligence chart layout attachment" width={450} height={450} className="aspect-video w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.01]" loading="lazy" />
         </div>
       )}
@@ -273,9 +273,9 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
                 )}
               </div>
             </div>
-            {isStale && <span className="shrink-0 rounded-md border border-border px-2 py-0.5 text-caption font-black uppercase tracking-wider text-text-muted">Expired</span>}
+            {isStale && <span className="shrink-0 rounded-md bg-surface-active px-2 py-0.5 text-caption font-black uppercase tracking-wider text-text-muted">Expired</span>}
             {assetPreviewOpen && assetMeta && (
-              <div className="pointer-events-none absolute left-0 top-full z-40 mt-2 w-72 rounded-xl border border-border bg-surface-overlay gnex-overlay p-4">
+              <div className="pointer-events-none absolute left-0 top-full z-40 mt-2 w-72 rounded-xl bg-surface-overlay gnex-overlay p-4">
                 <div className="flex items-center gap-2.5">
                   <Image src={assetLogo as string} width={32} height={32} alt={assetMeta.name} className="h-8 w-8 shrink-0 rounded-full" />
                   <div className="flex min-w-0 flex-col"><span className="text-sm font-bold text-text-primary">{assetMeta.symbol}</span><span className="truncate text-xs text-text-muted">{assetMeta.name}</span></div>
@@ -311,27 +311,27 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
       )}
 
       {/* Social actions */}
-      <div className="flex items-center justify-between border-t border-border pt-3">
+      <div className="flex items-center justify-between pt-3">
         <button type="button" onClick={handleLikeClick} disabled={toggleLikeMutation.isPending} className={`flex flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold transition-all gnex-touch-target ${post.isLikedByCurrentUser ? 'bg-brand-bg text-brand font-bold' : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}>
           <ThumbsUp className={`h-5 w-5 transition-transform ${post.isLikedByCurrentUser ? 'fill-brand stroke-none text-brand' : ''}`} aria-hidden="true" />
           <span>Like</span>
-          {post.likes_count > 0 && <span className="ml-1 rounded-md bg-surface px-1.5 py-0.5 font-mono text-caption font-bold text-success border border-border animate-fadeIn">{post.likes_count}</span>}
+          {post.likes_count > 0 && <span className="ml-1 rounded-md bg-success-bg px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.likes_count}</span>}
         </button>
         <button type="button" onClick={() => setCommentOpen(true)} className="flex flex-1 items-center justify-center gap-2 cursor-pointer rounded-xl py-2.5 text-sm font-semibold text-text-muted transition-all hover:bg-surface-hover hover:text-text-secondary gnex-touch-target">
           <MessagesSquare className="h-5 w-5" aria-hidden="true" />
           <span>Comment</span>
-          {(post.comments_count ?? 0) > 0 && <span className="ml-1 rounded-md bg-surface border border-border px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.comments_count}</span>}
+          {(post.comments_count ?? 0) > 0 && <span className="ml-1 rounded-md bg-success-bg px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.comments_count}</span>}
         </button>
         <button type="button" onClick={handleShareClick} disabled={shareMutation.isPending} className="flex flex-1 items-center justify-center cursor-pointer gap-2 rounded-xl py-2.5 text-sm font-semibold text-text-muted transition-all hover:bg-surface-hover hover:text-text-secondary gnex-touch-target">
           <Share2 className="h-5 w-5" aria-hidden="true" />
           <span>Share</span>
-          {(post.shares_count ?? 0) > 0 && <span className="ml-1 rounded-md bg-surface border border-border px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.shares_count}</span>}
+          {(post.shares_count ?? 0) > 0 && <span className="ml-1 rounded-md bg-success-bg px-1.5 py-0.5 font-mono text-caption font-bold text-success animate-fadeIn">{post.shares_count}</span>}
         </button>
       </div>
 
       {mediaPreviewOpen && post.media_url && (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-fadeIn" onMouseEnter={() => setMediaPreviewOpen(true)} onMouseLeave={() => setMediaPreviewOpen(false)}>
-          <Image src={post.media_url} alt="Trading intelligence chart layout attachment preview" width={1200} height={675} className="max-h-[90vh] w-auto max-w-full rounded-xl border border-border object-contain shadow-[var(--shadow-overlay)]" />
+          <Image src={post.media_url} alt="Trading intelligence chart layout attachment preview" width={1200} height={675} className="max-h-[90vh] w-auto max-w-full rounded-xl object-contain shadow-[var(--shadow-overlay)]" />
         </div>
       )}
 

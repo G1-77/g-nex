@@ -192,10 +192,10 @@ export default function QuickTradePanel() {
               setFeedback(null)
             }}
             className={cn(
-              'flex cursor-pointer items-center gap-2 rounded-2xl border px-3 py-2.5 text-left transition-colors gnex-touch-target',
+              'flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-left transition-colors gnex-touch-target',
               symbol === asset.symbol
-                ? 'border-brand/60 bg-brand-bg'
-                : 'border-border bg-surface/40 hover:border-border-strong'
+                ? 'bg-brand-bg'
+                : 'bg-surface/40 hover:bg-surface-hover'
             )}
           >
             <img src={asset.logo} alt="" className="h-5 w-5 rounded-full" />
@@ -264,10 +264,10 @@ export default function QuickTradePanel() {
             setFeedback(null)
           }}
           className={cn(
-            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-bold transition-colors gnex-touch-target',
+            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold transition-colors gnex-touch-target',
             side === 'buy'
-              ? 'border-success-border bg-success-bg text-success'
-              : 'border-border bg-surface/40 text-text-secondary hover:border-border-strong hover:text-text-primary'
+              ? 'bg-success-bg text-success'
+              : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
           )}
         >
           <ArrowUpRight className="h-4 w-4" />
@@ -280,10 +280,10 @@ export default function QuickTradePanel() {
             setFeedback(null)
           }}
           className={cn(
-            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-bold transition-colors gnex-touch-target',
+            'flex cursor-pointer items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold transition-colors gnex-touch-target',
             side === 'sell'
-              ? 'border-danger-border bg-danger-bg text-danger'
-              : 'border-border bg-surface/40 text-text-secondary hover:border-border-strong hover:text-text-primary'
+              ? 'bg-danger-bg text-danger'
+              : 'bg-surface/40 text-text-secondary hover:bg-surface-hover hover:text-text-primary'
           )}
         >
           <ArrowDownRight className="h-4 w-4" />
@@ -319,7 +319,7 @@ export default function QuickTradePanel() {
           <button
             type="button"
             onClick={() => applyFraction(0)}
-            className="shrink-0 cursor-pointer rounded-full border border-border px-3 py-1 text-caption font-semibold text-text-secondary transition-colors hover:border-border-strong"
+            className="shrink-0 cursor-pointer rounded-full bg-surface/40 px-3 py-1 text-caption font-semibold text-text-secondary transition-colors hover:bg-surface-hover"
           >
             MIN
           </button>
@@ -330,7 +330,7 @@ export default function QuickTradePanel() {
               onClick={() => applyFraction(fraction)}
               disabled={sideCapUsd <= 0}
               className={cn(
-                'shrink-0 rounded-full border border-border px-3 py-1 text-caption font-semibold text-text-secondary transition-colors hover:border-border-strong',
+                'shrink-0 rounded-full bg-surface/40 px-3 py-1 text-caption font-semibold text-text-secondary transition-colors hover:bg-surface-hover',
                 sideCapUsd > 0 && 'cursor-pointer',
                 sideCapUsd <= 0 && 'cursor-not-allowed opacity-40'
               )}
@@ -377,7 +377,7 @@ export default function QuickTradePanel() {
           </div>
           {side === 'buy' ? (
             <>
-              <div className="flex justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
+              <div className="flex justify-between pt-1.5 font-semibold text-text-primary">
                 <span>Total cost</span>
                 <span className="font-mono">{formatKes(quote.amountKes)}</span>
               </div>
@@ -392,7 +392,7 @@ export default function QuickTradePanel() {
                 <span>Gross proceeds</span>
                 <span className="font-mono text-text-primary">{formatKes(parsedAmount * quote.fxRate)}</span>
               </div>
-              <div className="flex justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
+              <div className="flex justify-between pt-1.5 font-semibold text-text-primary">
                 <span>Net proceeds</span>
                 <span className="font-mono">{formatKes(quote.amountKes)}</span>
               </div>
@@ -432,10 +432,10 @@ export default function QuickTradePanel() {
       {feedback && (
         <div
           className={cn(
-            'flex items-start gap-2 rounded-2xl border px-4 py-3 text-body-sm',
+            'flex items-start gap-2 rounded-2xl px-4 py-3 text-body-sm',
             feedback.tone === 'ok'
-              ? 'border-success-border bg-success-bg text-success'
-              : 'border-danger-border bg-danger-bg text-danger'
+              ? 'bg-success-bg text-success'
+              : 'bg-danger-bg text-danger'
           )}
         >
           <Info className="mt-0.5 h-4 w-4 shrink-0" />

@@ -35,7 +35,7 @@ interface WalletBalanceCardProps {
 function GrowthBadge({ growthPct, hasInvested }: { growthPct: number | null; hasInvested: boolean }) {
   if (!hasInvested) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface/40 px-2.5 py-1 text-caption font-semibold text-text-muted">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/40 px-2.5 py-1 text-caption font-semibold text-text-muted">
         <TrendingUp className="h-3 w-3" />
         Start saving to beat KE inflation {KE_INFLATION}%
       </span>
@@ -44,7 +44,7 @@ function GrowthBadge({ growthPct, hasInvested }: { growthPct: number | null; has
 
   if (growthPct === null) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface/40 px-2.5 py-1 text-caption font-semibold text-text-muted">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/40 px-2.5 py-1 text-caption font-semibold text-text-muted">
         <TrendingUp className="h-3 w-3" />
         Portfolio tracking · vs KE inflation {KE_INFLATION}%
       </span>
@@ -53,11 +53,11 @@ function GrowthBadge({ growthPct, hasInvested }: { growthPct: number | null; has
 
   const ahead = growthPct >= KE_INFLATION
   const beating = growthPct >= 0
-  const color = ahead ? 'text-success border-success-border bg-success-bg' : beating ? 'text-warning border-warning-border bg-warning-bg' : 'text-danger border-danger-border bg-danger-bg'
+  const color = ahead ? 'text-success bg-success-bg' : beating ? 'text-warning bg-warning-bg' : 'text-danger bg-danger-bg'
   const verb = ahead ? "You're ahead" : beating ? 'Beating inflation' : 'Below inflation'
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-caption font-bold ${color}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-caption font-bold ${color}`}>
       <TrendingUp className="h-3 w-3" />
       {growthPct >= 0 ? '+' : ''}
       {growthPct.toFixed(1)}% vs KE inflation {KE_INFLATION}% · {verb}
@@ -236,19 +236,19 @@ export default function WalletBalanceCard({
 
       {/* BALANCE BREAKDOWN */}
       <div className="grid grid-cols-4 gap-2 text-center">
-        <div className="rounded-lg border border-border bg-surface/40 px-2 py-2.5">
+        <div className="rounded-lg bg-surface/40 px-2 py-2.5">
           <p className="font-mono text-[9px] uppercase tracking-widest text-text-muted">Cash</p>
           <p className="mt-1 font-mono text-xs font-bold text-text-primary">{formatKes(cashKes)}</p>
         </div>
-        <div className="rounded-lg border border-warning-border bg-warning-bg px-2 py-2.5">
+        <div className="rounded-lg bg-warning-bg px-2 py-2.5">
           <p className="font-mono text-[9px] uppercase tracking-widest text-warning/70">Locked</p>
           <p className="mt-1 font-mono text-xs font-bold text-warning">{formatKes(lockedKes)}</p>
         </div>
-        <div className="rounded-lg border border-border bg-surface/40 px-2 py-2.5">
+        <div className="rounded-lg bg-surface/40 px-2 py-2.5">
           <p className="font-mono text-[9px] uppercase tracking-widest text-text-muted">Reserve</p>
           <p className="mt-1 font-mono text-xs font-bold text-text-muted">{formatKes(reserveKes)}</p>
         </div>
-        <div className="rounded-lg border border-success-border bg-success-bg px-2 py-2.5">
+        <div className="rounded-lg bg-success-bg px-2 py-2.5">
           <p className="font-mono text-[9px] uppercase tracking-widest text-success/70">Buying power</p>
           <p className="mt-1 font-mono text-xs font-bold text-success">{formatUsd(cashKes / usdKes)}</p>
         </div>
@@ -265,7 +265,7 @@ export default function WalletBalanceCard({
         </Link>
         <Link
           href="/wallet/withdraw"
-          className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface/40 px-4 py-3 text-sm font-bold text-text-primary transition-colors hover:border-border-strong hover:bg-surface gnex-touch-target"
+          className="flex items-center justify-center gap-2 rounded-xl bg-surface/40 px-4 py-3 text-sm font-bold text-text-primary transition-colors hover:bg-surface-hover gnex-touch-target"
         >
           <ArrowUpRight className="h-4 w-4" />
           Withdraw
@@ -277,7 +277,7 @@ export default function WalletBalanceCard({
           type="button"
           onClick={onDemoFund}
           disabled={demoFunding}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-2.5 text-caption font-semibold text-text-muted transition-colors hover:border-brand/40 hover:text-text-secondary disabled:opacity-60 gnex-touch-target"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-surface/40 px-4 py-2.5 text-caption font-semibold text-text-muted transition-colors hover:bg-surface-hover hover:text-text-secondary disabled:opacity-60 gnex-touch-target"
         >
           <Sparkles className="h-3.5 w-3.5 text-brand" />
           {demoFunding ? 'Funding…' : 'Instant demo fund KES 100,000 + demo holdings'}

@@ -79,7 +79,7 @@ export default function OpenPositionsCard() {
             Loading positions…
           </p>
         ) : open.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border py-8 text-center text-body-sm text-text-muted">
+          <p className="rounded-xl bg-surface/20 py-8 text-center text-body-sm text-text-muted">
             No open positions. Trade on any market page with up to 100x leverage.
           </p>
         ) : (
@@ -89,9 +89,9 @@ export default function OpenPositionsCard() {
             return (
               <div
                 key={position.id}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface/40 p-3"
+                className="flex items-center gap-3 rounded-xl bg-surface/40 p-3"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
                   <Image
                     src={meta?.logo ?? `/icons/${position.assetSymbol.toLowerCase()}.svg`}
                     alt={meta?.name ?? position.assetSymbol}
@@ -125,12 +125,11 @@ export default function OpenPositionsCard() {
 
                 <PositionPnl position={position} />
 
-                <button
+<button
                   type="button"
                   onClick={() => handleClose(position.id)}
                   disabled={closePosition.isPending}
-                  aria-label={`Close ${position.assetSymbol} position`}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition-colors cursor-pointer hover:border-danger/40 hover:text-danger disabled:opacity-50 gnex-touch-target"
+                  className="shrink-0 rounded-lg bg-surface/40 px-2.5 py-1.5 font-mono text-[9px] font-black uppercase tracking-wider text-text-muted transition-colors cursor-pointer hover:bg-surface-hover hover:text-danger disabled:opacity-50 gnex-touch-target"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
