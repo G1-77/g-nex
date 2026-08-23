@@ -55,10 +55,10 @@ function formatCalendarTime(date: string, time: string): string {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="font-mono text-[9px] font-black uppercase tracking-wider text-slate-600">
+      <p className="font-mono text-[9px] font-black uppercase tracking-wider text-text-muted">
         {label}
       </p>
-      <p className="mt-0.5 truncate font-mono text-xs font-bold tabular-nums text-slate-200">
+      <p className="mt-0.5 truncate font-mono text-xs font-bold tabular-nums text-text-primary">
         {value}
       </p>
     </div>
@@ -71,28 +71,28 @@ function EventRow({ event }: { event: CalendarEvent }) {
       href={event.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+      className="group flex items-start gap-3 py-3 first:pt-0 last:pb-0 gnex-interactive"
     >
       <span className="mt-0.5 text-xl leading-none">{flagFor(event.country)}</span>
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-slate-950/80 px-1.5 py-0.5 font-mono text-[10px] font-black text-slate-300">
+          <span className="flex items-center gap-1.5 rounded-md bg-surface/40 px-1.5 py-0.5 font-mono text-caption font-black text-text-secondary">
             <CalendarDays className="h-3 w-3 text-amber-400" />
             {formatCalendarTime(event.date, event.time)}
           </span>
 
-          <span className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase tracking-wider text-slate-500">
+          <span className="flex items-center gap-1.5 font-mono text-caption font-black uppercase tracking-wider text-text-muted">
             <span className={`h-1.5 w-1.5 rounded-full ${IMPACT_STYLE[event.impact]}`} />
             {event.impact}
           </span>
         </div>
 
-        <p className="mt-1.5 text-sm font-bold leading-snug text-slate-100 transition-colors group-hover:text-slate-50">
+        <p className="mt-1.5 text-sm font-bold leading-snug text-text-primary transition-colors group-hover:text-brand">
           {event.title}
         </p>
 
-        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-slate-900/60 pt-2">
+        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-border pt-2">
           <Metric label="Actual" value="—" />
           <Metric label="Forecast" value={event.forecast ?? '—'} />
           <Metric label="Prior" value={event.previous ?? '—'} />
@@ -106,8 +106,8 @@ export default function EconomicCalendar() {
   const { data: events, isLoading, isError } = useEconomicCalendar()
 
   const title = (
-    <h2 className="text-sm font-black uppercase tracking-[0.15em] text-slate-400">
-      Economic Calendar <span className="text-slate-600">&gt;</span>
+    <h2 className="text-sm font-black uppercase tracking-[0.15em] text-text-muted">
+      Economic Calendar <span className="text-text-muted">{'>'}</span>
     </h2>
   )
 
@@ -119,7 +119,7 @@ export default function EconomicCalendar() {
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="h-20 animate-pulse rounded-xl border border-slate-900/60 bg-slate-900/20"
+              className="h-20 animate-pulse gnex-card"
             />
           ))}
         </div>
@@ -131,7 +131,7 @@ export default function EconomicCalendar() {
     return (
       <div>
         {title}
-        <p className="mt-3 font-mono text-xs text-slate-500">
+        <p className="mt-3 font-mono text-caption text-text-muted">
           No economic events available right now.
         </p>
       </div>
@@ -141,7 +141,7 @@ export default function EconomicCalendar() {
   return (
     <div>
       {title}
-      <div className="mt-2 divide-y divide-slate-900/60 rounded-xl border border-slate-900/60 bg-slate-900/20 px-4 py-1">
+      <div className="mt-2 gnex-card p-1">
         {events.map((event) => (
           <EventRow key={event.id} event={event} />
         ))}

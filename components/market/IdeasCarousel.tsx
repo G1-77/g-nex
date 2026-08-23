@@ -163,6 +163,12 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
     return [prev * 0.995, prev * 1.005, prev * 0.99, price * 0.997, price]
   }
 
+  function signalColor(signal: SignalType | null | undefined): string {
+    if (signal === 'Bullish') return UP_COLOR
+    if (signal === 'Bearish') return DOWN_COLOR
+    return NEUTRAL_COLOR
+  }
+
   function handleLike(post: FeedPost) {
     if (!user?.id) return
     const postAuthorId = post.profiles?.id || ''
@@ -181,8 +187,8 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
   }
 
   const title = (
-    <h2 className="text-sm font-black uppercase tracking-[0.15em] text-slate-400">
-      Ideas <span className="text-slate-600">&gt;</span>
+    <h2 className="text-sm font-black uppercase tracking-[0.15em] text-text-muted">
+      Ideas <span className="text-text-muted">{'>'}</span>
     </h2>
   )
 
@@ -199,10 +205,10 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
               key={m.id}
               type="button"
               onClick={() => setMode(m.id)}
-              className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all duration-150 active:scale-95 ${
+              className={`cursor-pointer rounded-full px-3.5 py-1.5 text-caption font-bold transition-all duration-150 active:scale-95 gnex-interactive gnex-touch-target ${
                 active
-                  ? 'border-amber-500/30 bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/10'
-                  : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ? 'bg-brand text-text-inverse shadow-sm shadow-brand/10'
+                  : 'bg-surface/40 text-text-muted hover:bg-surface-hover hover:text-text-primary'
               }`}
             >
               {m.label}
@@ -217,12 +223,12 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-56 w-64 shrink-0 animate-pulse rounded-2xl border border-slate-900/60 bg-slate-900/20"
+                className="h-56 w-64 shrink-0 animate-pulse gnex-card"
               />
             ))}
           </div>
         ) : !posts || posts.length === 0 ? (
-          <p className="rounded-xl border border-slate-900/60 bg-slate-900/20 p-6 text-center font-mono text-xs text-slate-500">
+          <p className="gnex-card p-6 text-center font-mono text-caption text-text-muted">
             No ideas yet — be the first to publish a setup.
           </p>
         ) : (
@@ -253,10 +259,10 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
                 <article
                   key={post.id}
                   onClick={() => router.push(`/user/${cleanUsername}`)}
-                  className="w-64 shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-slate-900/60 bg-slate-900/20 transition-all duration-200 hover:border-slate-700/60"
+                  className="w-64 shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl gnex-card transition-all duration-200 hover:shadow-card"
                 >
                   {/* 16:9 chart preview with overlapping asset badge */}
-                  <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
+                  <div className="relative aspect-video w-full overflow-hidden bg-surface">
                     <SparklineArea
                       data={sparkline}
                       color={color}
@@ -265,7 +271,7 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
                     />
 
                     {assetSymbol && (
-                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md border border-slate-800 bg-slate-950/90 px-1.5 py-0.5 backdrop-blur-sm">
+                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-surface/90 px-1.5 py-0.5 backdrop-blur-sm">
                         <Image
                           src={`/icons/${assetSymbol.toLowerCase()}.svg`}
                           alt=""
@@ -273,7 +279,7 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
                           height={12}
                           className="h-3 w-3"
                         />
-                        <span className="font-mono text-[10px] font-black text-slate-200">
+                        <span className="font-mono text-[10px] font-black text-text-primary">
                           {assetSymbol}
                         </span>
                       </span>
@@ -281,10 +287,9 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
 
                     {signal && (
                       <span
-                        className="absolute right-2 top-2 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-black uppercase backdrop-blur-sm"
+                        className="absolute right-2 top-2 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-black uppercase backdrop-blur-sm"
                         style={{
                           color,
-                          borderColor: `${color}44`,
                           backgroundColor: `${color}14`,
                         }}
                       >
@@ -296,7 +301,7 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
                   {/* Card body */}
                   <div className="space-y-2 p-3">
                     <div className="flex items-center gap-2">
-                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-800 bg-slate-950">
+                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
                         {profile?.avatar_url ? (
                           <Image
                             src={profile.avatar_url}
@@ -306,23 +311,23 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
                             className="rounded-full object-cover"
                           />
                         ) : (
-                          <span className="font-mono text-[8px] font-black text-slate-400">
+                          <span className="font-mono text-[8px] font-black text-text-muted">
                             {initials}
                           </span>
                         )}
                       </span>
-                      <span className="min-w-0 truncate text-xs font-bold text-slate-100">
+                      <span className="min-w-0 truncate text-xs font-bold text-text-primary">
                         @{profile?.username || 'anonymous'}
                       </span>
                       {profile?.is_verified && (
-                        <BadgeCheck className="h-3.5 w-3.5 shrink-0 fill-yellow-600 stroke-slate-950" />
+                        <BadgeCheck className="h-3.5 w-3.5 shrink-0 fill-brand stroke-background" />
                       )}
-                      <span className={`ml-auto shrink-0 font-mono text-[10px] font-black ${formatRoi(profile?.monthly_roi).color}`}>
+                      <span className={`ml-auto shrink-0 font-mono text-caption font-black ${formatRoi(profile?.monthly_roi).color}`}>
                         {formatRoi(profile?.monthly_roi).text}
                       </span>
                     </div>
 
-                    <p className="line-clamp-2 text-xs font-bold leading-snug text-slate-100">
+                    <p className="line-clamp-2 text-xs font-bold leading-snug text-text-primary">
                       {post.content}
                     </p>
 
@@ -334,17 +339,17 @@ export default function IdeasCarousel({ tickers }: IdeasCarouselProps) {
                           e.stopPropagation()
                           handleLike(post)
                         }}
-                        className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-black transition-all duration-150 active:scale-90 ${
+                        className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-black transition-all duration-150 active:scale-90 gnex-interactive gnex-touch-target ${
                           liked
                             ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                            : 'border-slate-800 bg-slate-950/60 text-slate-500 hover:border-slate-700 hover:text-slate-300'
+                            : 'border-border bg-surface/40 text-text-muted hover:bg-surface-hover hover:text-text-primary'
                         }`}
                       >
                         <Rocket className={`h-3 w-3 ${liked ? 'fill-amber-400' : ''}`} />
                         <span className="font-mono tabular-nums">{likesCount}</span>
                       </button>
 
-                      <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-500">
+                      <span className="flex items-center gap-1.5 text-caption font-black text-text-muted">
                         <MessageCircle className="h-3 w-3" />
                         <span className="font-mono tabular-nums">
                           {post.comments_count}

@@ -41,7 +41,7 @@ export default function MarketTradeBar() {
       <button
         type="button"
         onClick={() => router.push(`/markets/${focused.toLowerCase()}`)}
-        className="flex min-w-0 cursor-pointer items-center gap-2.5 text-left gnex-touch-target"
+        className="flex min-w-0 cursor-pointer items-center gap-2.5 text-left gnex-interactive gnex-touch-target"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand font-mono text-caption font-black text-text-inverse">
           {focused}
@@ -63,7 +63,7 @@ export default function MarketTradeBar() {
           type="button"
           onClick={handleToggleWatch}
           aria-label="Toggle watchlist"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-surface-hover gnex-touch-target"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-surface-hover gnex-touch-target gnex-interactive"
         >
           <Star
             className={`h-4 w-4 ${isWatching ? 'fill-amber-500 text-amber-500' : 'text-text-muted'}`}
@@ -73,14 +73,14 @@ export default function MarketTradeBar() {
         <button
           type="button"
           onClick={() => handleTrade('BUY')}
-          className="cursor-pointer rounded-lg border border-success-border bg-success-bg px-4 py-2 font-mono text-caption font-black uppercase tracking-wider text-success transition-all hover:bg-success-bg/20 active:scale-95 gnex-touch-target"
+          className="gnex-btn gnex-btn-success gnex-interactive px-4 py-2 font-mono text-caption font-black uppercase tracking-wider"
         >
           Buy
         </button>
         <button
           type="button"
           onClick={() => handleTrade('SELL')}
-          className="cursor-pointer rounded-lg border border-danger-border bg-danger-bg px-4 py-2 font-mono text-caption font-black uppercase tracking-wider text-danger transition-all hover:bg-danger-bg/20 active:scale-95 gnex-touch-target"
+          className="gnex-btn gnex-btn-danger gnex-interactive px-4 py-2 font-mono text-caption font-black uppercase tracking-wider"
         >
           Sell
         </button>

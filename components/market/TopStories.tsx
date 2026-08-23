@@ -5,8 +5,8 @@ import { useNews } from '@/lib/react-query/market/queries.news'
 import type { NewsArticle, NewsCategory } from '@/lib/market/news'
 
 const CATEGORY_STYLE: Record<NewsCategory, string> = {
-  crypto: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
-  gold: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
+  crypto: 'bg-emerald-500/10 text-emerald-400',
+  gold: 'bg-amber-500/10 text-amber-400',
 }
 
 function relativeTime(publishedAt: string | null): string {
@@ -27,23 +27,21 @@ function StoryRow({ article }: { article: NewsArticle }) {
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+      className="group flex items-start gap-3 py-3 first:pt-0 last:pb-0 gnex-interactive"
     >
-      <span
-        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${CATEGORY_STYLE[article.category]}`}
-      >
+      <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${CATEGORY_STYLE[article.category]}`}>
         <Newspaper className="h-3.5 w-3.5" />
       </span>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-1.5 font-mono text-[10px] text-slate-500">
-          <span className="font-bold uppercase tracking-wider text-slate-400">
+        <div className="flex flex-wrap items-center gap-x-1.5 font-mono text-caption text-text-muted">
+          <span className="font-bold uppercase tracking-wider text-text-secondary">
             {article.source}
           </span>
           <span>·</span>
           <span>{relativeTime(article.publishedAt)}</span>
         </div>
-        <p className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-slate-100 transition-colors group-hover:text-slate-50">
+        <p className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-text-primary transition-colors group-hover:text-brand">
           {article.title}
         </p>
       </div>
@@ -55,8 +53,8 @@ export default function TopStories() {
   const { data: articles, isLoading, isError } = useNews()
 
   const title = (
-    <h2 className="text-sm font-black uppercase tracking-[0.15em] text-slate-400">
-      Top Stories <span className="text-slate-600">&gt;</span>
+    <h2 className="text-sm font-black uppercase tracking-[0.15em] text-text-muted">
+      Top Stories <span className="text-text-muted">{'>'}</span>
     </h2>
   )
 
@@ -68,7 +66,7 @@ export default function TopStories() {
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-14 animate-pulse rounded-xl border border-slate-900/60 bg-slate-900/20"
+              className="h-14 animate-pulse gnex-card"
             />
           ))}
         </div>
@@ -80,7 +78,7 @@ export default function TopStories() {
     return (
       <div>
         {title}
-        <p className="mt-3 font-mono text-xs text-slate-500">
+        <p className="mt-3 font-mono text-caption text-text-muted">
           No market stories available right now.
         </p>
       </div>
@@ -90,7 +88,7 @@ export default function TopStories() {
   return (
     <div>
       {title}
-      <div className="mt-2 divide-y divide-slate-900/60 rounded-xl border border-slate-900/60 bg-slate-900/20 px-4 py-1">
+      <div className="mt-2 gnex-card p-1">
         {articles.slice(0, 3).map((article) => (
           <StoryRow key={article.id} article={article} />
         ))}

@@ -8,7 +8,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useBinanceRealtime } from '@/lib/market/binance-realtime'
+import { useBinanceRealtime, usePriceHistory } from '@/lib/market/binance-realtime'
 import { MARKET_ASSETS } from '@/lib/constants/market-assets'
 import type { MarketTicker } from '@/lib/supabase/market.types'
 import type { MarketPriceSnapshot } from '@/types/market'
@@ -19,9 +19,8 @@ function toTickers(snapshot: MarketPriceSnapshot, watchlist: AssetSymbol[], rece
     const asset = MARKET_ASSETS[quote.symbol as AssetSymbol]
     const change = quote.change24h
 
-    // Sparkline: honest linear path between the 24h-ago close implied by the
-    // real change% and the current real price. Endpoints are market data;
-    // only the intermediate shape is interpolated.
+    // Use a simple linear sparkline as baseline — will be replaced with real
+    // price history from the Binance WS overlay when available.
     const prevPrice = change === -100 ? quote.priceUsd : quote.priceUsd / (1 + change / 100)
     const sparkline = Array.from({ length: 6 }, (_, i) =>
       prevPrice + ((quote.priceUsd - prevPrice) * i) / 5
@@ -52,6 +51,7 @@ function toTickers(snapshot: MarketPriceSnapshot, watchlist: AssetSymbol[], rece
 
 export function useMarketPrices(watchlist: AssetSymbol[] = []) {
   const liveTickers = useBinanceRealtime()
+  const priceHistory = usePriceHistory
 
   const { data, ...queryResult } = useQuery({
     queryKey: ['market-prices'],
@@ -71,12 +71,17 @@ export function useMarketPrices(watchlist: AssetSymbol[] = []) {
   // Overlay live Binance prices over the polling baseline. The overlay keeps
   // the baseline's provenance fields but stamps its own receipt time so
   // staleness guards evaluate the freshest honest signal.
+  // Also replace the fake linear sparkline with real price history from the
+  // Binance WS when available (up to 40 points of actual observations).
   const liveData = useMemo(() => {
     if (!data) return data
     return data.map((ticker) => {
       const live = liveTickers.get(ticker.symbol)
       if (!live) return ticker
-      const sparkline = [...ticker.sparkline.slice(0, -1), live.priceUsd]
+      // Prefer real price history from the Binance WS (up to 40 points)
+      // over the fake linear interpolation from the server snapshot.
+      const history = priceHistory(live.symbol)
+      const sparkline = history.length >= 2 ? Array.from(history) : [...ticker.sparkline.slice(0, -1), live.priceUsd]
       return {
         ...ticker,
         priceUsd: live.priceUsd,
@@ -89,7 +94,7 @@ export function useMarketPrices(watchlist: AssetSymbol[] = []) {
         provider: 'binance' as const,
       }
     })
-  }, [data, liveTickers])
+  }, [data, liveTickers, priceHistory])
 
   const withWatchlist = useMemo(() => {
     if (!liveData) return liveData
