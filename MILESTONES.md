@@ -451,5 +451,26 @@
 
 ---
 
-**Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
 ---
+
+## Phase 14 — GNEX 2.0 Kickoff: Proxy Convention Repair + Deep Audit
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Proxy convention restored**: discarded broken working-tree move of root `proxy.ts` → `app/middleware.ts` (Next build only detects proxy/middleware at root/`src`; the move would have silently disabled auth redirect, maintenance gate and admin route filter). Root `proxy.ts` (Next 16 convention) retained.
+- **Stale design docs removed**: `tradingviewimages/*.odt|.html` housekeeping.
+- **Design brief versioned**: `docs/design/UIUX-Prompt.md` (verbatim extraction of `UI/UIUX Prompt.odt`, 55-point GNEX 2.0 structural shift).
+- **Deep audit delivered**: `docs/design/gnex2-audit.md` — §51 inspection inventory mapped to every shell/nav/social/trading/wallet/data-layer area with file:line references; per-item classification (preserve/refactor/build/risk); execution mapping for Phases B–H; §53 financial regression register.
+- **Audit findings of record**: notifications GET unscoped + RLS select `using(true)` cross-user leak; `types/Notifications.ts` diverges from real columns; social tables (`posts/comments/likes/follows/trade_tags/profiles`) have no tracked RLS SQL; realtime channels on posts/likes/notifications lack tracked publication membership; no `/feed` route (homepage = full feed); no search/sentiment-backend/activity-feed/save/report infrastructure; ~49 native `alert()/confirm()/prompt()` sites across 21 files.
+
+### Key Files
+`proxy.ts`, `docs/design/UIUX-Prompt.md`, `docs/design/gnex2-audit.md`
+
+### Verification
+- `npx tsc --noEmit` ✅ Clean
+- `eslint proxy.ts` ✅ 0 errors
+
+---
+
+**Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
