@@ -389,5 +389,37 @@
 
 ---
 
+## Phase 12 — UI Consistency + Responsive Refinement
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **AssetSparklineCard overflow fix**: Responsive typography (`text-mono-lg sm:text-mono-xl`), `flex-shrink`, `min-w-0`, `shrink-0` on price elements — cards no longer overflow on 375px–430px viewports
+- **Yellow-600 active state restoration**: TopNav (bottom border) and BottomNav (top border) now show subtle `bg-brand` indicator on active route
+- **Mobile pressed states**: Added `:active` transform scale (0.98) via `.gnex-pressable` and `.gnex-interactive` utilities; disabled hover on touch devices via `@media (hover: none)`
+- **Desktop hover states**: `.gnex-hover-lift` (translateY), `.gnex-hover-bg` (surface tint), `.gnex-hover-shadow` (elevation), `.gnex-interactive` (combined)
+- **Cursor-pointer audit**: Added `.gnex-cursor-pointer` to all genuinely interactive elements (cards, buttons, links, tabs, dropdown items); removed from disabled/decorative elements
+- **Border reduction strategy**: Removed borders from 100+ components (AssetSparklineCard, MarketDataGrid, Asset Detail header, QuickTrade side toggles, SpotTerminal pair selector/tabs, TopNav header, CreatePostModal internals); kept borders only on form inputs (`gnex-input`), selected states, accessibility-critical boundaries
+- **Asset Detail page**: Header border removed, chart in `gnex-card-elevated`, surface-based Buy/Sell buttons, removed desktop panel border
+- **Quick Trade**: Asset selector uses `gnex-interactive`, side toggles borderless with `bg-success-bg`/`bg-danger-bg`, fraction buttons use `gnex-interactive`, removed borders from quote preview
+- **Spot Terminal**: Pair selector borderless with `bg-brand-bg` active state, side toggles borderless, tabs borderless with surface-based active state, cancel button uses `gnex-interactive`
+- **CreatePostModal**: Hardcoded `slate-*` colors replaced with semantic tokens (`bg-background`, `bg-surface`, `text-text-primary`, `border-border`), signal/asset buttons use `gnex-interactive`, close button uses `gnex-interactive`
+- **Interaction state utilities** (globals.css): `.gnex-pressable`, `.gnex-pressable-bg`, `.gnex-hover-lift`, `.gnex-hover-bg`, `.gnex-hover-shadow`, `.gnex-interactive`, `.gnex-cursor-pointer`, `.gnex-focus-visible`, reduced-motion support
+- **Price source audit**: All 15 components consuming prices use single authoritative `useMarketPrices()` hook → `/api/market/prices` → `getMarketPriceSnapshot()` → CoinGecko (crypto) + xaus (gold) + exchangerate-api (FX); Binance WS overlay via `useBinanceRealtime()` for real-time ticks (BTC/ETH/SOL/XRP); no hardcoded/mock prices found
+
+### Key Files
+`app/globals.css` (interaction utilities, surface hierarchy), `components/market/AssetSparklineCard.tsx`, `components/market/MarketDataGrid.tsx`, `app/(main)/markets/[symbol]/page.tsx`, `components/trade/QuickTradePanel.tsx`, `components/trade/SpotTerminal.tsx`, `components/feed/CreatePostModal.tsx`, `components/layout/{Topnav,Bottomnav}.tsx`
+
+### Verification
+- `tsc --noEmit` ✅ Clean
+- `eslint . --ext .ts,.tsx` ✅ 0 errors (14 pre-existing warnings only)
+- `next build` ✅ Compiled successfully in 2.5min, 48 static pages
+- Manual verification at 375px, 390px, 412px, 430px: Feed, Markets, Asset Detail, Quick Trade, Spot, Wallet, Profile, Navigation all functional with no horizontal overflow
+- Financial/trading/wallet/auth logic unchanged
+- SOL/XRP/USD/XAU real pricing untouched
+- Single authoritative price source confirmed across all 15 components
+
+---
+
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
 ---
