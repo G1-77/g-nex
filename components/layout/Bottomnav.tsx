@@ -6,9 +6,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  Briefcase,
   BarChart2,
+  Briefcase,
   Home,
+  Newspaper,
   Zap
 } from 'lucide-react'
 
@@ -16,7 +17,7 @@ import MarketTradeBar from '@/components/layout/MarketTradeBar'
 
 const navItems = [
   {
-    label: 'Feed',
+    label: 'Home',
     href: '/',
     icon: Home
   },
@@ -28,7 +29,13 @@ const navItems = [
   {
     label: 'Trade',
     href: '/trade',
-    icon: Zap
+    icon: Zap,
+    emphasized: true
+  },
+  {
+    label: 'Feed',
+    href: '/feed',
+    icon: Newspaper
   },
   {
     label: 'Wallet',
@@ -42,13 +49,11 @@ export default function Bottomnav() {
   const isTradeMode = pathname === '/markets'
 
   const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
     if (href === '/markets') {
-      return pathname === '/markets' || pathname.startsWith('/markets/')
+      return pathname.startsWith('/markets')
     }
-    if (href === '/trade') {
-      return pathname === '/trade' || pathname.startsWith('/trade/')
-    }
-    return pathname === href
+    return pathname === href || pathname.startsWith(`${href}/`)
   }
 
   return (
@@ -66,9 +71,11 @@ export default function Bottomnav() {
         </motion.div>
       )}
 
-      {/* Persistent bottom navigation — always visible on mobile */}
+      {/* Persistent bottom navigation — always visible on mobile.
+          Five core-loop destinations; Trade carries stronger visual emphasis
+          because execution is the primary financial action (brief §9). */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 w-full bg-background/95 backdrop-blur-xl md:hidden" role="navigation" aria-label="Main navigation">
-        <div className="grid h-[64px] grid-cols-4">
+        <div className="grid h-[64px] grid-cols-5">
           {navItems.map((item) => {
             const active = isActive(item.href)
             const Icon = item.icon
@@ -78,18 +85,26 @@ export default function Bottomnav() {
                 key={item.label}
                 href={item.href}
                 className={`relative flex flex-col items-center justify-center gap-1.5 transition-colors gnex-touch-target-lg ${
-                  active
-                    ? 'text-brand'
-                    : 'text-muted hover:text-secondary'
+                  active ? 'text-brand' : 'text-muted hover:text-secondary'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
-                <Icon className="h-6 w-6" aria-hidden="true" />
+                {item.emphasized ? (
+                  <span
+                    className={`flex items-center justify-center rounded-full px-3.5 py-1 transition-colors ${
+                      active ? 'bg-brand text-background' : 'bg-brand-bg text-brand'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                ) : (
+                  <Icon className="h-6 w-6" aria-hidden="true" />
+                )}
 
                 <span className="text-caption font-medium tracking-wide">
                   {item.label}
                 </span>
-                {active && (
+                {active && !item.emphasized && (
                   <span className="absolute top-0 left-0 right-0 h-0.5 bg-brand" />
                 )}
               </Link>

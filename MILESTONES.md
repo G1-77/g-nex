@@ -473,4 +473,28 @@
 
 ---
 
+---
+
+## Phase 15 — GNEX 2.0 Structural Shell (Brief §52 Phase 1)
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Desktop left sidebar** (`components/layout/Sidebar.tsx`, new): permanent lg+ navigation grouped Core / Community / Personal / Utility per brief §7; shared nav model `lib/navigation.ts` (`NAV_GROUPS`); not-yet-built routes render disabled with a "Soon" chip instead of dead links; Profile resolves dynamically from the authed user's username.
+- **Shell layout** (`app/(main)/layout.tsx`): sidebar column + primary workspace row at max-w-[1400px]; center column keeps strongest hierarchy.
+- **Bottom navigation**: now Home | Markets | Trade | Feed | Wallet (5 core-loop items); Trade emphasized via brand-tinted icon badge per brief §9; active-state logic updated for `/feed`.
+- **Top navigation**: center links updated to Home / Markets / Trade / Feed — structure otherwise preserved (recognizable per brief §54).
+- **Mobile hamburger drawer** (`MobileMenuDrawer.tsx`): mirrors sidebar NAV_GROUPS exactly (brief §8 pattern kept: overlay, Escape/backdrop close, context preserved); market widgets retained below nav section; dead "Saved Strategies"/"GNEX Academy" links replaced by Soon-chip entries.
+- **Dedicated Feed page** (`app/(main)/feed/page.tsx`): full chronological feed lives at `/feed` with TickerStrip + page header (brief §24).
+- **Homepage de-duplicated**: internal Explore aside removed (navigation now owns that role); layout simplified to workspace + right intelligence column (TopTraders, TopMovers, Watchlist, TopStories). Full discovery hierarchy lands next phase.
+
+### Key Files
+`lib/navigation.ts`, `components/layout/Sidebar.tsx`, `components/layout/Bottomnav.tsx`, `components/layout/MobileMenuDrawer.tsx`, `components/layout/Topnav.tsx`, `app/(main)/layout.tsx`, `app/(main)/page.tsx`, `app/(main)/feed/page.tsx`
+
+### Verification
+- `npx tsc --noEmit` ✅ Clean
+- ESLint on touched paths ✅ 0 errors
+- `next build` ✅ compiled; `/feed` route present; Proxy (Middleware) detected
+
+---
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5

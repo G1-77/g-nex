@@ -18,7 +18,7 @@ import { formatKes } from '@/lib/market/wallet-utils'
 
 const navItems = [
   {
-    label: 'Feed',
+    label: 'Home',
     href: '/'
   },
   {
@@ -28,6 +28,10 @@ const navItems = [
   {
     label: 'Trade',
     href: '/trade'
+  },
+  {
+    label: 'Feed',
+    href: '/feed'
   }
 ]
 
