@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { buildWavyCurve } from '@/lib/market/sparkline-curve'
 
 export interface PerformancePoint {
   timestamp: string
@@ -10,68 +11,38 @@ export interface PerformancePoint {
 interface PerformanceAreaProps {
   endValue: number
   data?: PerformancePoint[]
-  seed?: string
-  points?: number
-}
-
-function mulberry32(seed: number) {
-  return () => {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-function buildFallback(seed: string, endValue: number, points: number) {
-  const rand = mulberry32(
-    Array.from(seed).reduce((acc, c) => acc + c.charCodeAt(0), 7)
-  )
-  const start = Math.max(1, endValue * (0.9 + rand() * 0.06))
-  const values: number[] = []
-  for (let i = 0; i < points; i++) {
-    const progress = i / (points - 1)
-    const target = start + (endValue - start) * progress
-    const noise = (rand() - 0.5) * endValue * 0.012
-    values.push(Math.max(0, target + noise))
-  }
-  values[values.length - 1] = endValue
-  return values
 }
 
 export default function PerformanceArea({
-  endValue,
+  endValue: _endValue,
   data,
-  seed = 'gnex',
-  points = 30,
 }: PerformanceAreaProps) {
+  void _endValue
   const values = useMemo(() => {
     if (data && data.length >= 2) {
       return data.map((d) => Math.max(0, d.valueKes))
     }
-    return buildFallback(seed, Math.max(1, endValue), points)
-  }, [data, endValue, seed, points])
+    return null
+  }, [data])
 
-  const chart = useMemo(() => {
-    const width = 320
-    const height = 96
-    const padY = 6
-    const min = Math.min(...values)
-    const max = Math.max(...values)
-    const span = Math.max(1, max - min)
+  const curve = useMemo(() => {
+    if (!values || values.length < 2) return null
 
-    const coords = values.map((v, i) => {
-      const x = (i / (values.length - 1)) * width
-      const y = padY + (1 - (v - min) / span) * (height - padY * 2)
-      return [x, y] as const
+    return buildWavyCurve(values, {
+      width: 320,
+      height: 96,
+      padX: 0,
+      padY: 6,
+      ripple: (96 - 12) * 0.06,
+      samples: 5,
     })
-
-    const line = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
-    const area = `0,${height} ${line} ${width},${height}`
-    const mid = coords[Math.floor(coords.length / 2)]
-
-    return { line, area, midX: mid[0], midY: mid[1] }
   }, [values])
+
+  if (!curve) {
+    return null
+  }
+
+  const areaPath = `M 0 96 ${curve.path} L 320 96 Z`
 
   return (
     <svg
@@ -87,9 +58,9 @@ export default function PerformanceArea({
           <stop offset="100%" stopColor="#8DFF45" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <polygon points={chart.area} fill="url(#perfFill)" />
-      <polyline
-        points={chart.line}
+      <path d={areaPath} fill="url(#perfFill)" />
+      <path
+        d={curve.path}
         fill="none"
         stroke="#8DFF45"
         strokeWidth="2"
@@ -98,8 +69,8 @@ export default function PerformanceArea({
         vectorEffect="non-scaling-stroke"
       />
       <circle
-        cx={chart.midX}
-        cy={chart.midY}
+        cx={curve.headX}
+        cy={curve.headY}
         r="3"
         fill="#8DFF45"
         vectorEffect="non-scaling-stroke"

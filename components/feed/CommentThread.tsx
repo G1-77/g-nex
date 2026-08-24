@@ -156,7 +156,7 @@ function CommentComposer({ postId, onSubmit, replyingTo, onCancelReply }: { post
 
     if (!user) {
         return (
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-surface">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-surface">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-bg text-brand text-xs font-black">
                     {initials}
                 </div>

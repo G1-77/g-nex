@@ -3,6 +3,7 @@
 import { Star } from 'lucide-react'
 import type { AssetSymbol } from '@/lib/supabase/types'
 import { MarketFilterType, MarketTicker } from '@/lib/supabase/market.types'
+import TickerSparkline from '@/components/market/TickerSparkline'
 
 interface MarketDataGridProps {
   tickers: MarketTicker[]
@@ -53,10 +54,6 @@ export default function MarketDataGrid({
       <div className="space-y-2 w-full">
         {filteredTickers.map((ticker) => {
           const isPositive = ticker.change24h >= 0
-          const points = ticker.sparkline && ticker.sparkline.length > 0 ? ticker.sparkline : [10, 10, 10, 10, 10, 10]
-          const minPoint = Math.min(...points)
-          const maxPoint = Math.max(...points)
-          const range = maxPoint - minPoint === 0 ? 1 : maxPoint - minPoint
 
           return (
             <div
@@ -74,23 +71,13 @@ export default function MarketDataGrid({
                 </div>
               </div>
 
-              {/* High-Performance Isolated Numerical Sparkline */}
-              <div className="hidden md:flex items-center w-24 h-6 opacity-40 group-hover:opacity-70 transition-opacity">
-                <div className="flex items-end gap-0.5 w-full h-full">
-                  {points.map((val, idx) => {
-                    const heightPct = ((val - minPoint) / range) * 100
-                    return (
-                      <div
-                        key={idx}
-                        className="flex-1 rounded-t-sm"
-                        style={{
-                          height: `${Math.max(heightPct, 15)}%`,
-                          backgroundColor: isPositive ? UP_COLOR : DOWN_COLOR
-                        }}
-                      />
-                    )
-                  })}
-                </div>
+              {/* Standard GNEX ticker sparkline — real movement only */}
+              <div className="hidden md:flex items-center opacity-40 group-hover:opacity-70 transition-opacity">
+                <TickerSparkline
+                  ticker={ticker}
+                  positive={isPositive}
+                  className="h-6 w-24 shrink-0"
+                />
               </div>
 
               {/* Price Values Action Block */}
@@ -99,7 +86,7 @@ export default function MarketDataGrid({
                   <span className="text-mono-lg text-text-primary font-black">
                     {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ticker.priceUsd)}
                   </span>
-                  <span className="text-caption mt-0.5 font-bold" style={{ color: isPositive ? UP_COLOR : DOWN_COLOR }}>
+                  <span className="text-caption mt-0.5 font-bold" style={{ color: isPositive ? '#8DFF45' : '#FF5A5A' }}>
                     {isPositive ? '+' : ''}{ticker.change24h.toFixed(2)}%
                   </span>
                 </div>
@@ -139,5 +126,3 @@ export default function MarketDataGrid({
   )
 }
 
-const UP_COLOR = '#8DFF45'
-const DOWN_COLOR = '#FF5A5A'

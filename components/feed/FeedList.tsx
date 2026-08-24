@@ -41,7 +41,7 @@ export default function FeedList() {
     return (
       <section className="space-y-6 w-full">
         <CreatePostCard />
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-surface p-10 text-center text-caption font-bold uppercase tracking-widest text-text-muted">
+        <div className="flex items-center justify-center gap-2 rounded-2xl bg-surface p-10 text-center text-caption font-bold uppercase tracking-widest text-text-muted">
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="h-4 w-4 text-brand animate-spin" />
             <span>Loading your feed...</span>

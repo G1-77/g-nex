@@ -14,15 +14,10 @@ import { useRouter } from 'next/navigation'
 import { setFocusedAsset } from '@/lib/store/focused-asset'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
 import { useUsdKesRate } from '@/lib/react-query/market/queries.market'
-import { useOHLCcloses } from '@/lib/react-query/market/queries.history'
+import TickerSparkline from '@/components/market/TickerSparkline'
 import { formatKes } from '@/lib/market/wallet-utils'
-import SparklineArea from '@/components/market/SparklineArea'
-import type { MarketTicker } from '@/lib/supabase/market.types'
 import type { MarketFilterType } from '@/lib/supabase/market.types'
 import type { AssetSymbol } from '@/lib/supabase/types'
-
-const SUCCESS_COLOR = '#8DFF45'
-const DANGER_COLOR = '#FF5A5A'
 
 const TABS: { id: MarketFilterType; label: string }[] = [
   { id: 'All', label: 'All' },
@@ -43,46 +38,6 @@ function formatKesPrice(kes: number): string {
   if (kes >= 1000) return `KES ${formatKes(Math.round(kes))}`
   if (kes >= 1) return `KES ${kes.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   return `KES ${kes.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`
-}
-
-/**
- * Real-movement row sparkline. Prefers the Binance WS observation history
- * already attached to the ticker (>6 points = genuine observations; the
- * server baseline is a 6-point ramp and is NEVER drawn). Symbols without a
- * WS pair (e.g. gold) fall back to real candles from the authoritative OHLC
- * route — hourly for crypto, daily for gold. If neither exists the cell stays
- * empty rather than rendering a fabricated line.
- */
-function RowSparkline({ ticker, positive }: { ticker: MarketTicker; positive: boolean }) {
-  const wsHistory =
-    Array.isArray(ticker.sparkline) && ticker.sparkline.length > 6 ? ticker.sparkline : null
-
-  const { data: closes } = useOHLCcloses(
-    wsHistory
-      ? null
-      : {
-          symbols: [ticker.symbol],
-          timeframe: ticker.symbol === 'XAU' ? '1D' : '1H',
-          points: 32,
-        }
-  )
-
-  const series = wsHistory ?? closes?.[ticker.symbol]?.map((p) => p.close) ?? null
-
-  return (
-    <div className="h-7 w-12 shrink-0 sm:h-8 sm:w-16" aria-hidden="true">
-      {series && series.length >= 2 ? (
-        <SparklineArea
-          data={series}
-          color={positive ? SUCCESS_COLOR : DANGER_COLOR}
-          height={32}
-          className="h-full w-full"
-        />
-      ) : (
-        <div className="h-full w-full animate-pulse rounded bg-surface-hover/60" />
-      )}
-    </div>
-  )
 }
 
 export default function HomeMarketSnapshot() {
@@ -189,7 +144,7 @@ export default function HomeMarketSnapshot() {
                     <p className="truncate font-mono text-caption uppercase text-text-muted">{ticker.symbol}</p>
                   </div>
 
-                  <RowSparkline ticker={ticker} positive={positive} />
+                  <TickerSparkline ticker={ticker} positive={positive} />
 
                   <div className="min-w-[72px] shrink-0 text-right sm:min-w-[84px]">
                     <p className="truncate font-mono text-body-sm font-bold tabular-nums text-text-primary">

@@ -230,7 +230,7 @@ export default function WalletBalanceCard({
           </p>
         </div>
         <div className="mt-3">
-          <PerformanceArea endValue={Math.max(1, totalKes)} data={performanceSeries} seed="gnex-wallet" />
+          <PerformanceArea endValue={Math.max(1, totalKes)} data={performanceSeries} />
         </div>
       </div>
 

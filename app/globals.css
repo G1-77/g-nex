@@ -39,12 +39,14 @@
      borders and financial colors. Components MUST use these, not raw slate-*.
      =========================================================================== */
 
-  /* ---- SURFACES (Level 0-3 elevation) ---- */
-  --surface: var(--slate-900);           /* Level 1: Standard content cards */
-  --surface-elevated: var(--slate-800);  /* Level 2: Important panels, modals */
-  --surface-hover: var(--slate-800);     /* Hover state for interactive cards */
-  --surface-overlay: var(--slate-950);   /* Level 3: Dropdowns, popovers, drawers */
-  --surface-active: var(--slate-700);    /* Active/pressed state */
+  /* ---- SURFACES (Level 0-3 elevation) ----
+     Original GNEX card treatment: translucent slate glass floating over the
+     slate-950 page, not opaque panels. Overlay stays solid for menu legibility. */
+  --surface: rgba(15, 23, 42, 0.32);           /* Level 1: Standard content cards (slate-900/32) */
+  --surface-elevated: rgba(15, 23, 42, 0.5);   /* Level 2: Important panels, modals */
+  --surface-hover: rgba(30, 41, 59, 0.55);     /* Hover state for interactive cards */
+  --surface-overlay: var(--slate-950);         /* Level 3: Dropdowns, popovers, drawers */
+  --surface-active: rgba(51, 65, 85, 0.6);     /* Active/pressed state */
 
   /* ---- BORDERS ---- */
   --border: var(--slate-800);            /* Standard card borders (subtle) */
@@ -77,11 +79,13 @@
   --brand-bg: rgba(202, 138, 4, 0.1);
   --brand-border: rgba(202, 138, 4, 0.3);
 
-  /* ---- SHADOWS ---- */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(148, 163, 184, 0.04);
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(148, 163, 184, 0.05);
-  --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(148, 163, 184, 0.06);
-  --shadow-overlay: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.08);
+  /* ---- SHADOWS ----
+     Soft elevation only — the 1px ring treatment is gone; separation comes
+     from translucent surface contrast, not outlines. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.22);
+  --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.32);
+  --shadow-overlay: 0 24px 48px rgba(0, 0, 0, 0.5);
 
   /* ---- SPACING ---- */
   --space-page: 1rem;          /* 16px page horizontal padding */
@@ -140,10 +144,10 @@ html.light {
   --text-inverse: #ffffff;               /* Text on colored surfaces */
 
   /* ---- SHADOWS (light mode) ---- */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
-  --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.05);
-  --shadow-elevated: 0 12px 32px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(15, 23, 42, 0.05);
-  --shadow-overlay: 0 24px 48px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-elevated: 0 12px 32px rgba(15, 23, 42, 0.1);
+  --shadow-overlay: 0 24px 48px rgba(15, 23, 42, 0.12);
 
   color-scheme: light;
 }
@@ -222,6 +226,8 @@ body {
     background: var(--surface);
     border-radius: 1rem;
     box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
   .gnex-card-hover {
     transition: background 0.15s ease, box-shadow 0.15s ease;
@@ -237,6 +243,8 @@ body {
     border: 1px solid var(--border);
     border-radius: 1rem;
     box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
   .gnex-card-bordered:hover {
     border-color: var(--border-strong);
@@ -249,6 +257,8 @@ body {
     background: var(--surface-elevated);
     border-radius: 1rem;
     box-shadow: var(--shadow-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
   .gnex-card-elevated:hover {
     box-shadow: var(--shadow-elevated);

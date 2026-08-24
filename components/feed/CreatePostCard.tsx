@@ -51,7 +51,7 @@ export default function CreatePostCard() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse rounded-2xl border border-border bg-surface p-4">
+      <div className="animate-pulse rounded-2xl bg-surface p-4">
         <div className="h-12 w-full rounded-xl bg-surface/40" />
       </div>
     )
@@ -79,7 +79,7 @@ export default function CreatePostCard() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group flex w-full items-center gap-3 rounded-2xl cursor-pointer border border-border bg-surface p-4 transition-all duration-200 hover:bg-surface-hover"
+        className="group flex w-full items-center gap-3 rounded-2xl cursor-pointer bg-surface p-4 transition-all duration-200 hover:bg-surface-hover"
       >
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
           {profile?.avatar_url ? (

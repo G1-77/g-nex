@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BadgeCheck, Bookmark, Flag, MessagesSquare, Pencil, Share2, ThumbsUp, Trash2 } from 'lucide-react'
 
-import Sparkline from '@/components/market/Sparkline'
+import SparklineArea from '@/components/market/SparklineArea'
 import { useToggleLikeMutation, useSharePostMutation, useEditPostMutation, useDeletePostMutation } from '@/lib/react-query/mutations/feed.mutations'
 import { useToggleSaveMutation } from '@/lib/react-query/mutations/social.mutations'
 import { useReportMutation } from '@/lib/react-query/mutations/social.mutations'
@@ -299,7 +299,9 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
                   <span className={`text-sm font-bold ${isLiveChangePositive ? 'text-success' : 'text-danger'}`}>{displayChangeLabel}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-3">
-                  <Sparkline data={sparkData} color={assetPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} width={110} height={26} />
+                  <div className="w-[110px] h-[26px] shrink-0" aria-hidden="true">
+                    <SparklineArea data={sparkData} color={assetPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} height={26} className="h-full w-full" />
+                  </div>
                   <Link href={`/markets/${assetMeta.symbol.toLowerCase()}`} className="shrink-0 rounded-lg border border-brand-border bg-brand-bg px-2.5 py-1.5 text-caption font-black text-brand transition-colors hover:bg-brand-bg/20">View Market</Link>
                 </div>
               </div>
@@ -314,7 +316,9 @@ export default function FeedPostCard({ post, variant = 'feed' }: FeedPostCardPro
               </div>
               {deltaLabel && <span className={`mt-0.5 font-mono text-caption font-bold ${deltaLabel.positive ? 'text-success' : 'text-danger'}`}>{deltaLabel.text}</span>}
             </div>
-            <Sparkline data={sparkData} color={assetPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} width={64} height={20} />
+            <div className="w-[64px] h-[20px] shrink-0" aria-hidden="true">
+            <SparklineArea data={sparkData} color={assetPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} height={20} className="h-full w-full" />
+          </div>
           </div>
 
           <div className="mt-4 flex gap-2">

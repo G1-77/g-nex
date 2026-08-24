@@ -28,7 +28,7 @@ import type { AssetSymbol } from '@/lib/supabase/types'
 import type { MarketTicker } from '@/lib/supabase/market.types'
 import type { BinanceTicker } from '@/lib/market/binance-realtime'
 import { cn, safeRandomUUID } from '@/lib/utils'
-import Sparkline from '@/components/market/Sparkline'
+import SparklineArea from '@/components/market/SparklineArea'
 
 const SIDE_CAPS = [0.25, 0.5, 0.75, 1] as const
 
@@ -291,12 +291,7 @@ export default function QuickTradePanel() {
               className="mt-3 overflow-hidden rounded-xl bg-surface/40"
             >
               <div className="relative h-48 p-3">
-                <Sparkline
-                  data={sparklineData}
-                  color={sparklineColor}
-                  width={sparklineData.length}
-                  height={180}
-                />
+                <SparklineArea data={sparklineData} color={sparklineColor} height={180} className="h-full w-full" />
                 {isMobile && (
                   <button
                     type="button"

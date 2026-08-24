@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
-import Sparkline from '@/components/market/Sparkline'
+import SparklineArea from '@/components/market/SparklineArea'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
 import { usePriceHistory } from '@/lib/market/binance-realtime'
 import { setFocusedAsset } from '@/lib/store/focused-asset'
@@ -52,7 +52,9 @@ function TickerItem({ ticker, onOpen }: TickerItemProps) {
         {isPositive ? '+' : ''}
         {ticker.change24h.toFixed(2)}%
       </span>
-      <Sparkline data={sparkData} color={isPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} width={40} height={14} />
+      <div className="w-10 h-3.5 shrink-0" aria-hidden="true">
+        <SparklineArea data={sparkData} color={isPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} height={14} className="h-full w-full" />
+      </div>
     </button>
   )
 }

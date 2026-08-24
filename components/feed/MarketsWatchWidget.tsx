@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
-import Sparkline from '@/components/market/Sparkline'
+import SparklineArea from '@/components/market/SparklineArea'
 import { useMarketPrices } from '@/lib/react-query/market/queries.prices'
 import { usePriceHistory } from '@/lib/market/binance-realtime'
 import { setFocusedAsset } from '@/lib/store/focused-asset'
@@ -46,7 +46,9 @@ function WatchRow({ ticker, onOpen }: { ticker: MarketTicker; onOpen: (symbol: M
       </div>
 
       <div className="flex min-w-0 items-center gap-2">
-        <Sparkline data={sparkData} color={isPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} width={40} height={14} className="shrink-0" />
+        <div className="w-10 h-3.5 shrink-0" aria-hidden="true">
+        <SparklineArea data={sparkData} color={isPositive ? CHANGE_POSITIVE : CHANGE_NEGATIVE} height={14} className="h-full w-full" />
+      </div>
         <div className="min-w-0 text-right">
           <p className="truncate font-mono text-xs font-semibold text-slate-200">
             {priceFormatter.format(ticker.priceUsd)}
