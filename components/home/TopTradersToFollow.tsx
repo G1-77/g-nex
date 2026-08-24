@@ -1,10 +1,11 @@
 'use client'
 
 // components/home/TopTradersToFollow.tsx
-// Trader-discovery rail directly after the wallet snapshot. Horizontal scroll,
-// touch-friendly, deterministic ranking from the authoritative monthly_roi
-// pipeline (30d realized P&L / confirmed deposits). Follow state comes from the
-// existing follows table — never a Home-local follow system.
+// "Traders You May Know" — compact feed-style discovery module directly after
+// the wallet snapshot. Horizontal scroll, touch-friendly, deterministic
+// ranking from the authoritative monthly_roi pipeline (30d realized P&L /
+// confirmed deposits). Follow state comes from the existing follows table —
+// never a Home-local follow system.
 
 import { useMemo } from 'react'
 import Image from 'next/image'
@@ -142,8 +143,8 @@ export default function TopTradersToFollow() {
   // Loading → reserved-height skeleton row (no layout jump)
   if (isLoading) {
     return (
-      <section aria-label="Top traders to follow" className="space-y-3">
-        <h2 className="gnex-h2 text-text-primary">Top Traders to Follow</h2>
+      <section aria-label="Traders you may know" className="space-y-2">
+        <h2 className="text-body-sm font-bold text-text-primary">Traders You May Know</h2>
         <div className="flex snap-x gap-3 overflow-x-auto pb-1 no-scrollbar">
           {[...Array(3)].map((_, i) => (
             <TraderCardSkeleton key={i} />
@@ -157,11 +158,9 @@ export default function TopTradersToFollow() {
   if (isError || suggestions.length === 0) return null
 
   return (
-    <section aria-label="Top traders to follow" className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="gnex-h2 text-text-primary">Top Traders to Follow</h2>
-        <span className="text-caption text-text-muted">Discover who&apos;s performing</span>
-      </div>
+    <section aria-label="Traders you may know" className="space-y-2">
+      {/* Compact discovery-module header — deliberately NOT a promo banner */}
+      <h2 className="text-body-sm font-bold text-text-primary">Traders You May Know</h2>
 
       <div className="-mx-page flex snap-x snap-mandatory gap-3 overflow-x-auto px-page pb-1 no-scrollbar">
         {suggestions.map((trader) => (

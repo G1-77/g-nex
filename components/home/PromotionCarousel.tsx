@@ -33,28 +33,28 @@ function PromotionCard({ promotion }: { promotion: PromotionPayload }) {
   const interactive = isExternal || Boolean(route)
 
   const body = (
-    <div className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-surface-elevated p-5 shadow-[var(--shadow-card)]">
+    <div className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-surface-elevated p-4 shadow-[var(--shadow-card)]">
       {/* Tonal brand wash — tonal hierarchy instead of border outlines */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand/15 via-transparent to-transparent" />
 
       {promotion.imageUrl ? (
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl">
-          <Image src={promotion.imageUrl} alt="" fill sizes="80px" className="object-cover" />
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+          <Image src={promotion.imageUrl} alt="" fill sizes="64px" className="object-cover" />
         </div>
       ) : (
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-bg">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-bg">
           {promotion.iconUrl ? (
-            <Image src={promotion.iconUrl} alt="" width={28} height={28} className="h-7 w-7" />
+            <Image src={promotion.iconUrl} alt="" width={24} height={24} className="h-6 w-6" />
           ) : (
-            <Sparkles className="h-6 w-6 text-brand" />
+            <Sparkles className="h-5 w-5 text-brand" />
           )}
         </div>
       )}
 
       <div className="min-w-0 flex-1">
-        <h3 className="gnex-h2 truncate text-text-primary">{promotion.title}</h3>
+        <h3 className="truncate text-base font-bold text-text-primary">{promotion.title}</h3>
         {promotion.description && (
-          <p className="mt-1 line-clamp-2 text-body-sm text-text-secondary">{promotion.description}</p>
+          <p className="mt-0.5 line-clamp-2 text-body-sm text-text-secondary">{promotion.description}</p>
         )}
 
         {/* CTA — navigable when a destination resolves; honest static state otherwise */}
@@ -64,18 +64,18 @@ function PromotionCard({ promotion }: { promotion: PromotionPayload }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="mt-3 inline-flex cursor-pointer items-center gap-1 rounded-lg bg-brand px-3 py-2 text-caption font-bold text-text-inverse transition-colors hover:bg-brand/90 active:scale-[0.98]"
+            className="mt-2 inline-flex cursor-pointer items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-caption font-bold text-text-inverse transition-colors hover:bg-brand/90 active:scale-[0.98]"
           >
             {promotion.ctaText}
             <ChevronRight className="h-3.5 w-3.5" />
           </a>
         ) : route ? (
-          <span className="mt-3 inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-2 text-caption font-bold text-text-inverse transition-colors group-hover:bg-brand/90 group-active:scale-[0.98]">
+          <span className="mt-2 inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-caption font-bold text-text-inverse transition-colors group-hover:bg-brand/90 group-active:scale-[0.98]">
             {promotion.ctaText}
             <ChevronRight className="h-3.5 w-3.5" />
           </span>
         ) : (
-          <span className="mt-3 inline-flex items-center gap-1 rounded-lg bg-surface px-3 py-2 text-caption font-bold text-text-muted">
+          <span className="mt-2 inline-flex items-center gap-1 rounded-lg bg-surface px-3 py-1.5 text-caption font-bold text-text-muted">
             {promotion.ctaText} · Coming soon
           </span>
         )}

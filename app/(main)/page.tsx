@@ -2,8 +2,9 @@
 
 // app/(main)/page.tsx — GNEX HOME
 // Trading-first social exchange homepage (mobile-first IA):
-//   Search → Wallet snapshot → Top Traders to Follow → Promotion carousel →
-//   Quick actions (Deposit / Favourite asset) → Market snapshot → Discover.
+//   Search → Wallet snapshot (24h PNL + real-movement sparkline) →
+//   Traders You May Know → Promotion card → Market snapshot → silent
+//   auto-continuation into Discover.
 // Every data surface reuses the existing authoritative pipelines; nothing on
 // this page computes its own financial values.
 
@@ -17,9 +18,8 @@ import Search from '@/components/layout/Search'
 import HomeWalletSnapshot from '@/components/home/HomeWalletSnapshot'
 import TopTradersToFollow from '@/components/home/TopTradersToFollow'
 import PromotionCarousel from '@/components/home/PromotionCarousel'
-import QuickActionCards from '@/components/home/QuickActionCards'
 import HomeMarketSnapshot from '@/components/home/HomeMarketSnapshot'
-import DiscoverTransition from '@/components/home/DiscoverTransition'
+import AutoDiscoverTransition from '@/components/home/AutoDiscoverTransition'
 
 import { useActivePromotions } from '@/lib/react-query/promotions.queries'
 
@@ -57,14 +57,11 @@ export default function HomePage() {
                         {/* 3. WHAT TO TRY — admin-managed promotion carousel */}
                         <PromotionSection />
 
-                        {/* 4. QUICK ACTIONS */}
-                        <QuickActionCards />
-
-                        {/* 5. WHAT IS MOVING */}
+                        {/* 4. WHAT IS MOVING */}
                         <HomeMarketSnapshot />
 
-                        {/* 6. DISCOVER */}
-                        <DiscoverTransition />
+                        {/* 5. DISCOVER — silent bottom-dwell continuation, no UI */}
+                        <AutoDiscoverTransition />
                     </main>
 
                     {/* RIGHT SIDEBAR — contextual intelligence (desktop) */}

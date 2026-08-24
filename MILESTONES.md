@@ -557,7 +557,7 @@
 
 ## Phase 18 — GNEX Home Experience (Mobile-First Redesign + Promotions)
 
-**Status:** 🟡 Built + migration deployed to remote database — production build verification outstanding (host memory constrained)
+**Status:** ✅ Complete + verified (build confirmed; promotions verified against live DB)
 
 ### Delivered
 - **Home restructured (trading-first IA)** (`app/(main)/page.tsx`): Search → Wallet Snapshot → Top Traders to Follow → Promotion Carousel → Quick Actions → Market Snapshot → Discover transition. Desktop aside keeps TopTraders/TopMovers/MarketsWatch/TopStories widgets.
@@ -591,8 +591,64 @@
 - `tsc --noEmit` ✅ Clean (project-wide)
 - ESLint on all touched paths ✅ 0 errors 0 warnings (3 issues found and fixed during verify)
 - Migration push ✅ Applied to remote database via `supabase db push`
-- `next build` ⚠️ First attempts OOM-killed by host memory pressure; final attempt still compiling at session end — **next agent must confirm build passes** (see `HANDOVER_PHASE18.md`)
-- Browser smoke test of new Home ⬜ Not yet performed
+- `next build` ✅ Compiled successfully (51 routes) — confirmed 2026-08-24 on new dev host
+- Promotions live-data ✅ Service-role eligibility query against remote DB returns the
+  Prediction seed campaign ("Play & Predict", product_id=prediction, open window)
+- Browser smoke test of new Home ⬜ Superseded by Phase 19 rebuild of the same surfaces
+
+---
+
+## Phase 19 — Homepage Polish (Trading-Platform Refinement)
+
+**Status:** ✅ Complete + verified — refinement of the Phase 18 homepage, not a redesign
+
+### Delivered
+- **Homepage order finalized**: Search → Wallet Snapshot → Traders You May Know →
+  Promotion Card → Market Snapshot → silent auto-transition into Discover.
+  QuickActionCards removed from the flow (Deposit CTA already lives in the wallet card;
+  favourite-asset rotation duplicated the market snapshot).
+- **Wallet snapshot → financial dashboard** (`HomeWalletSnapshot.tsx`, rebuilt):
+  Estimated Total Value headline (KES mono + ≈USD), 24h PNL strip with signed KES value,
+  24h PNL %, direction coloring, and a compact sparkline of REAL portfolio value movement.
+- **New data hooks (authoritative inputs only, zero fabrication)**:
+  - `queries.portfolio-history.ts` — `usePortfolioPnl24h`: Σ units × (priceNow − priceNow/(1+chg24h/100))
+    over holdings using provider-supplied 24h change from the shared ticker cache; KES cash excluded
+    (flat by definition). `usePortfolioValueSeries`: hourly portfolio value = cash + Σ units × real
+    Binance 1H closes × FX, carry-forward on sparse timestamps. XAU excluded from the series
+    (no honest intraday bars upstream) but still counted in PNL. No series-capable holdings → null,
+    chart hidden — never a fake line.
+  - `queries.history.ts` — shared `useOHLCcloses` wrapper around the existing server-proxied
+    `/api/market/ohlc` route (per-symbol failure tolerance via allSettled). No new price source.
+- **Traders You May Know** (`TopTradersToFollow.tsx`): renamed from "Top Traders to Follow";
+  heading reduced from 20px `gnex-h2` promo style to compact 14px bold feed-style header;
+  side caption removed; section spacing tightened (space-y-3 → space-y-2). Cards unchanged
+  (avatar, verified badge, authoritative 30D ROI, follow toggle, horizontal scroll).
+- **Promotion card compaction** (`PromotionCarousel.tsx`): padding p-5→p-4, image tile 80→64px,
+  icon tile 56→48px, title 20px→16px bold, CTA tightened. Architecture untouched — still fully
+  admin-managed and data-driven (promotions table + `/api/promotions` + PRODUCT_ROUTES registry);
+  no product-specific branching in the component.
+- **Market snapshot rows gained real sparklines** (`HomeMarketSnapshot.tsx`): each row shows a
+  genuine wavy sparkline — Binance WS observation history when present (>6 pts discriminator;
+  the 6-point synthetic baseline is never drawn), else real candles via `useOHLCcloses`
+  (1H crypto / 1D gold). Missing data renders an empty cell, not a fake line. Price column given
+  min-width so rows cannot collapse/overflow at 320–375px. See More → `/markets` unchanged.
+- **Silent Home→Discover transition** (`AutoDiscoverTransition.tsx`, replaces textual
+  `DiscoverTransition.tsx`): invisible sentinel + IntersectionObserver bottom threshold;
+  5s dwell timer; fires once per armed state; sessionStorage timestamp suppresses re-arm for 30s
+  (Back-press loop guard); scroll-up cancels; hidden-tab safe; `prefers-reduced-motion` users are
+  never auto-navigated. Zero instructional UI.
+- **Cleanup**: deleted orphaned `lib/react-query/home.queries.ts` (grep-verified no importers);
+  deleted superseded `QuickActionCards.tsx` + `DiscoverTransition.tsx`. Phase 17 sentiment/
+  opportunity RPCs remain in DB unused — candidate for a later drop migration.
+
+### Key Files
+`app/(main)/page.tsx`, `components/home/{HomeWalletSnapshot,TopTradersToFollow,PromotionCarousel,HomeMarketSnapshot,AutoDiscoverTransition}.tsx`,
+`lib/react-query/market/{queries.history,queries.portfolio-history}.ts`
+
+### Verification
+- `tsc --noEmit` ✅ Clean (project-wide)
+- ESLint on all touched paths ✅ 0 errors, 0 warnings
+- `next build` ✅ Compiled successfully in 70s, 51/51 static pages
 
 ---
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
