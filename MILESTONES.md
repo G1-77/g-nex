@@ -651,4 +651,32 @@
 - `next build` ✅ Compiled successfully in 70s, 51/51 static pages
 
 ---
+
+## Phase 20 — GNEX UI Correction (Original Glass Cards + Sparkline Standardization)
+
+**Status:** ✅ Complete + verified
+
+### Delivered
+- **Original translucent glass cards restored (token level)**:
+  - Dark surfaces: `--surface: rgba(15,23,42,0.32)` (slate-900/32), `--surface-elevated: rgba(15,23,42,0.5)`, `--surface-hover: rgba(30,41,59,0.55)`, `--surface-active: rgba(51,65,85,0.6)`, `--surface-overlay` solid slate-950 kept
+  - 1px outline rings removed from all shadow tokens (`--shadow-*`)
+  - `backdrop-filter: blur(12px)` added to `.gnex-card`, `.gnex-card-bordered`, `.gnex-card-elevated` — matches pre-Phase-10 glass treatment
+  - Light mode untouched (white cards = original intent)
+- **Card-level border cleanup** (solid `border border-border` removed from card roots):
+  - FeedList empty state, CreatePostCard composer/skeleton, CommentThread comment card
+  - Avatars, dropdown overlays, form inputs, toggle pills, buttons kept (chrome affordances)
+- **Sparkline unification — one shared implementation everywhere**:
+  - New `components/market/TickerSparkline.tsx`: data-aware — WS history >6pts = genuine (server 6-point baseline never drawn); else real candles via `useOHLCcloses` (1H crypto / 1D gold); else skeleton — never a fabricated flat line
+  - HomeMarketSnapshot: local `RowSparkline` replaced with `TickerSparkline`
+  - MarketDataGrid: bar-histogram + `[10,10,10,10,10,10]` fake fallback replaced with `TickerSparkline`
+  - TickerStrip, MarketsWatchWidget, FeedPostCard (2×), QuickTradePanel: legacy `Sparkline` (line-only) → `SparklineArea` (wavy area gradient + trail + draw-in sweep)
+  - Deleted orphaned `components/market/Sparkline.tsx`
+- **PerformanceArea corrected**: removed `mulberry32` seeded random-walk fake generator; now uses `buildWavyCurve` standard curve; renders `null` when no real ledger data (WalletBalanceCard passes real transaction-derived series)
+- **Verification**: `tsc --noEmit` ✅ Clean · ESLint on touched paths ✅ 0 errors · Production build ✅ 51 routes
+
+### Key Files
+`app/globals.css` (surface tokens, shadows, card classes), `components/market/TickerSparkline.tsx`, `components/home/HomeMarketSnapshot.tsx`, `components/market/MarketDataGrid.tsx`, `components/feed/{TickerStrip,MarketsWatchWidget,FeedPostCard,CreatePostCard}.tsx`, `components/trade/QuickTradePanel.tsx`, `components/feed/CommentThread.tsx`, `components/feed/FeedList.tsx`, `components/wallet/{PerformanceArea,WalletBalanceCard}.tsx`, deleted `components/market/Sparkline.tsx`
+
+---
+
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
