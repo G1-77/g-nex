@@ -1,57 +1,74 @@
-import FeedList from '@/components/feed/FeedList'
+'use client'
+
+// app/(main)/page.tsx — GNEX HOME
+// Trading-first social exchange homepage (mobile-first IA):
+//   Search → Wallet snapshot → Top Traders to Follow → Promotion carousel →
+//   Quick actions (Deposit / Favourite asset) → Market snapshot → Discover.
+// Every data surface reuses the existing authoritative pipelines; nothing on
+// this page computes its own financial values.
+
 import TickerStrip from '@/components/feed/TickerStrip'
 import MarketsWatchWidget from '@/components/feed/MarketsWatchWidget'
 import TopMoversWidget from '@/components/feed/TopMoversWidget'
 import TopStories from '@/components/market/TopStories'
 import TopTradersWidget from '@/components/feed/TopTradersWidget'
 
-import HomeComposer from '@/components/home/HomeComposer'
-import TraderDiscoverySection from '@/components/home/TraderDiscoverySection'
-import TradingActivityFeed from '@/components/home/TradingActivityFeed'
-import MarketOpportunities from '@/components/home/MarketOpportunities'
-import SentimentOverview from '@/components/home/SentimentOverview'
-import PortfolioAccessCard from '@/components/home/PortfolioAccessCard'
-import FeedTransition from '@/components/home/FeedTransition'
+import Search from '@/components/layout/Search'
+import HomeWalletSnapshot from '@/components/home/HomeWalletSnapshot'
+import TopTradersToFollow from '@/components/home/TopTradersToFollow'
+import PromotionCarousel from '@/components/home/PromotionCarousel'
+import QuickActionCards from '@/components/home/QuickActionCards'
+import HomeMarketSnapshot from '@/components/home/HomeMarketSnapshot'
+import DiscoverTransition from '@/components/home/DiscoverTransition'
+
+import { useActivePromotions } from '@/lib/react-query/promotions.queries'
+
+function PromotionSection() {
+  const { data: promotions = [], isError } = useActivePromotions()
+
+  // Promotions are non-critical: query failure renders nothing and never
+  // blocks wallet, markets or social content.
+  if (isError) return null
+
+  return <PromotionCarousel promotions={promotions} />
+}
 
 export default function HomePage() {
     return (
         <div className="min-h-screen bg-background text-foreground antialiased selection:bg-brand/20 md:pb-0">
+            {/* Live ticker — market awareness above the fold, desktop + mobile */}
             <TickerStrip />
 
-            <div className="mx-auto max-w-5xl px-page py-8">
-                <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-3">
-                    {/* CENTER — primary workspace (navigation lives in the shell sidebar) */}
-                    <main className="col-span-1 grid gap-6 md:col-span-2">
-                        {/* 1. Create Post — first interaction (brief §11) */}
-                        <HomeComposer />
-
-                        {/* 2. Trader Discovery (brief §13) */}
-                        <TraderDiscoverySection />
-
-                        {/* 3. Trading Activity (brief §14) */}
-                        <TradingActivityFeed />
-
-                        {/* 4. Market Opportunities (brief §15) */}
-                        <MarketOpportunities />
-
-                        {/* 5. Market Sentiment (brief §16) */}
-                        <SentimentOverview />
-
-                        {/* 6. Quick Trade / FTT — Phase E will add chart preview; for now embed panel */}
-                        <div className="gnex-card p-3">
-                            <p className="text-sm font-medium text-text-primary mb-2">Quick Trade / FTT</p>
-                            <p className="text-body-sm text-text-muted">Chart preview + compact execution coming in next phase.</p>
+            <div className="mx-auto max-w-5xl px-page pb-28 pt-4 md:pb-8">
+                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+                    {/* PRIMARY COLUMN — the trading-first vertical flow */}
+                    <main className="col-span-1 flex flex-col gap-6 lg:col-span-2">
+                        {/* Wide search surface directly under the nav (sm+ shows it in Topnav) */}
+                        <div className="sm:hidden">
+                            <Search placeholder="Search assets, traders, trends" />
                         </div>
 
-                        {/* 7. Low-priority Portfolio Access (brief §11, §43) */}
-                        <PortfolioAccessCard />
+                        {/* 1. MY MONEY */}
+                        <HomeWalletSnapshot />
 
-                        {/* 8. Feed Transition (brief §26, §49, §50) */}
-                        <FeedTransition />
+                        {/* 2. WHO TO FOLLOW */}
+                        <TopTradersToFollow />
+
+                        {/* 3. WHAT TO TRY — admin-managed promotion carousel */}
+                        <PromotionSection />
+
+                        {/* 4. QUICK ACTIONS */}
+                        <QuickActionCards />
+
+                        {/* 5. WHAT IS MOVING */}
+                        <HomeMarketSnapshot />
+
+                        {/* 6. DISCOVER */}
+                        <DiscoverTransition />
                     </main>
 
-                    {/* RIGHT SIDEBAR — contextual intelligence */}
-                    <aside className="col-span-1 hidden flex-col gap-6 sticky top-24 h-fit md:flex">
+                    {/* RIGHT SIDEBAR — contextual intelligence (desktop) */}
+                    <aside className="col-span-1 sticky top-24 hidden h-fit flex-col gap-6 lg:flex">
                         <TopTradersWidget />
 
                         <TopMoversWidget />

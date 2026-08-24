@@ -1,7 +1,7 @@
 # GNEX Milestones — Phase Progress Tracker
 
 > Living document tracking every GNEX phase from kickoff to production.
-> **Last updated:** 2026-08-23
+> **Last updated:** 2026-08-24
 
 ---
 
@@ -552,6 +552,44 @@
 - `npx tsc --noEmit` ✅ Clean
 - ESLint on touched paths ✅ 0 errors
 - `next build` ✅ compiled; `/feed` route present; Proxy (Middleware) detected
+
+---
+
+## Phase 18 — GNEX Home Experience (Mobile-First Redesign + Promotions)
+
+**Status:** 🟡 Built, typecheck + lint clean — migration pending deploy; production build blocked by host memory limits
+
+### Delivered
+- **Home restructured (trading-first IA)** (`app/(main)/page.tsx`): Search → Wallet Snapshot → Top Traders to Follow → Promotion Carousel → Quick Actions → Market Snapshot → Discover transition. Desktop aside keeps TopTraders/TopMovers/MarketsWatch/TopStories widgets.
+- **Wallet snapshot** (`HomeWalletSnapshot.tsx`): KES total + ≈USD + holdings growth from authoritative `usePortfolioSummary`; Add Funds CTA; signed-out sign-in card.
+- **Top Traders to Follow** (`TopTradersToFollow.tsx`): real top traders via `useTopTraders(10)` with ROI emphasis, follow-state awareness via new `useFollowingIdsQuery`, optimistic follow buttons, graceful empty/error states.
+- **Promotion carousel** (`PromotionCarousel.tsx`): admin-managed campaigns; 0→null / 1→static / multi→5s autoplay with swipe, keyboard, dots, pause-on-interaction, reduced-motion support. Data fetched once per mount (`useActivePromotions`), rotation is local-only.
+- **Quick actions** (`QuickActionCards.tsx`): Deposit card + Favourite Asset card rotating watchlist tickers with sparklines (BTC fallback); tap-through to asset pages.
+- **Market snapshot** (`HomeMarketSnapshot.tsx`): All/Crypto/Gold/Watchlist tabs (reuses `MarketFilterType`), 5 rows with USD + KES prices (via `useUsdKesRate`) and 24h change; See More → `/markets`.
+- **Discover transition** (`DiscoverTransition.tsx`): explicit "Continue to Discover" CTA into `/feed` — no forced scroll hijacking.
+- **Prediction teaser destination**: honest placeholder at `/prediction` (product not live yet).
+- **Shell rename**: Feed → Discover in `Bottomnav`, `Topnav`, `lib/navigation.ts` (href unchanged).
+- **Asset universe expansion (+DOGE, TRUMP, USDC, ACE)** through the central architecture: `lib/supabase/types.ts` ASSET_SYMBOLS, `lib/constants/market-assets.ts`, execution RPC symbol map, Binance realtime streams (DOGE/TRUMP/ACE), OHLC maps, allocation colors, SVG icons, admin settings validator + chips.
+- **Follow-cache fix**: follow mutations now invalidate `followerKeys.all` too (was feed-only — follower counts went stale).
+- **Cleanup**: removed 7 superseded home components (HomeComposer, TradingActivityFeed, MarketOpportunities, SentimentOverview, PortfolioAccessCard, FeedTransition, TraderDiscoverySection). `home.queries.ts` intentionally left for other consumers.
+
+### Backend (migration `20260824120000_home_experience_promotions_assets.sql`)
+- `promotions` table (content, destination_type route|url|product|none, scheduling window, display_order) + updated_at trigger + order index. RLS on, service-role only by design.
+- Public eligibility resolved server-side in `GET /api/promotions` (enabled + time window).
+- Admin CRUD at `/api/admin/promotions` guarded by `content.manage` + audit logging.
+- Assets seed (10 symbols incl. gold/stablecoins, `on conflict do nothing`) + `user_holdings.asset_symbol` CHECK widened.
+- Admin Centre page `/admin/community/promotions` with editor cards, operator preview, nav entry.
+
+### Key Files
+`app/(main)/page.tsx`, `components/home/*.tsx` (6 files), `app/api/promotions/route.ts`, `app/api/admin/promotions/route.ts`,
+`lib/react-query/promotions.queries.ts`, `supabase/migrations/20260824120000_home_experience_promotions_assets.sql`,
+`app/admin/community/promotions/page.tsx`, `lib/constants/market-assets.ts`, `lib/market/*`
+
+### Verification
+- `tsc --noEmit` ✅ Clean (project-wide)
+- ESLint on all touched paths ✅ 0 errors 0 warnings
+- `next build` ⚠️ Could not complete in this environment (host OOM/swap thrashing under desktop load); stalled ~20 min in compile phase. Re-run when memory is available.
+- Migration not yet pushed to live database (`npm run db:push` pending credentials/window).
 
 ---
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5

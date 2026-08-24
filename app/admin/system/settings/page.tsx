@@ -28,7 +28,7 @@ const SETTING_LABELS: Record<string, string> = {
 }
 
 const PROVIDERS = ["mpesa", "airtel"]
-const ASSETS = ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"]
+const ASSETS = ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU", "DOGE", "TRUMP", "USDC", "ACE"]
 
 export default function AdminSettingsPage() {
   const { isSuperAdmin, can } = useAuth()

@@ -27,7 +27,11 @@ const symbolToCoinGeckoId: Record<string, string> = {
   ETH: 'ethereum',
   SOL: 'solana',
   XRP: 'ripple',
-  USDT: 'tether'
+  USDT: 'tether',
+  DOGE: 'dogecoin',
+  TRUMP: 'official-trump',
+  USDC: 'usd-coin',
+  ACE: 'fusionist'
 }
 
 // Real intraday candles come from Binance klines (same provider as the live
@@ -36,7 +40,10 @@ const symbolToBinancePair: Record<string, string> = {
   BTC: 'BTCUSDT',
   ETH: 'ETHUSDT',
   SOL: 'SOLUSDT',
-  XRP: 'XRPUSDT'
+  XRP: 'XRPUSDT',
+  DOGE: 'DOGEUSDT',
+  TRUMP: 'TRUMPUSDT',
+  ACE: 'ACEUSDT'
 }
 
 const timeframeToBinanceInterval: Record<Timeframe, string> = {

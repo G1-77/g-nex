@@ -7,6 +7,7 @@ import type { Profile } from '@/lib/supabase/types'
 export const followerKeys = {
   all: ['followers'] as const,
   byUser: (userId: string) => [...followerKeys.all, userId] as const,
+  following: (userId: string) => [...followerKeys.all, 'following', userId] as const,
 }
 
 // Two-step fetch: resolve follower ids from the follows table, then pull
@@ -44,6 +45,33 @@ export function useGetFollowersQuery(userId: string) {
   return useQuery({
     queryKey: followerKeys.byUser(userId),
     queryFn: () => fetchFollowers(userId),
+    enabled: Boolean(userId),
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: false,
+  })
+}
+
+// The set of profiles the given user follows. Source of truth for follow
+// buttons so an already-followed trader never renders as "Follow" again.
+async function fetchFollowingIds(userId: string): Promise<string[]> {
+  if (!userId) return []
+
+  const { data, error } = await supabase
+    .from('follows')
+    .select('following_id')
+    .eq('follower_id', userId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return (data ?? []).map((row) => row.following_id).filter(Boolean)
+}
+
+export function useFollowingIdsQuery(userId: string | null) {
+  return useQuery({
+    queryKey: followerKeys.following(userId ?? ''),
+    queryFn: () => fetchFollowingIds(userId ?? ''),
     enabled: Boolean(userId),
     staleTime: 1000 * 30,
     refetchOnWindowFocus: false,

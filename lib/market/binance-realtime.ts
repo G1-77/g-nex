@@ -25,6 +25,9 @@ const PAIR_MAP: Partial<Record<AssetSymbol, string>> = {
   ETH: 'ethusdt',
   SOL: 'solusdt',
   XRP: 'xrpusdt',
+  DOGE: 'dogeusdt',
+  TRUMP: 'trumpusdt',
+  ACE: 'aceusdt',
 }
 
 const STREAM_SYMBOL_MAP: Record<string, AssetSymbol> = {
@@ -32,6 +35,9 @@ const STREAM_SYMBOL_MAP: Record<string, AssetSymbol> = {
   ethusdt: 'ETH',
   solusdt: 'SOL',
   xrpusdt: 'XRP',
+  dogeusdt: 'DOGE',
+  trumpusdt: 'TRUMP',
+  aceusdt: 'ACE',
 }
 
 const LIVE_SYMBOLS = Object.keys(PAIR_MAP) as AssetSymbol[]

@@ -32,7 +32,7 @@ const navItems = [
     href: '/trade'
   },
   {
-    label: 'Feed',
+    label: 'Discover',
     href: '/feed'
   }
 ]

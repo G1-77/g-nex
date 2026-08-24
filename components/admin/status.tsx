@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
-import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, BookOpenText, Boxes, Flag, Star, ShieldCheck, Settings, ScrollText, ClipboardCheck } from "lucide-react"
+import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, BookOpenText, Boxes, Flag, Star, ShieldCheck, Settings, ScrollText, ClipboardCheck, Megaphone } from "lucide-react"
 
 export type StatusTone = "green" | "amber" | "red" | "gray" | "blue" | "violet"
 
@@ -62,6 +62,7 @@ export const NAV_SECTIONS: {
     items: [
       { href: "/admin/community/reports", label: "Reports", icon: <Flag className="h-4 w-4" />, permission: "community.report_review" },
       { href: "/admin/community/editorial", label: "Editorial", icon: <Star className="h-4 w-4" />, permission: "content.manage" },
+      { href: "/admin/community/promotions", label: "Promotions", icon: <Megaphone className="h-4 w-4" />, permission: "content.manage" },
     ],
   },
   {

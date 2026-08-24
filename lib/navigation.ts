@@ -46,7 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: 'Community',
     items: [
-      { label: 'Feed', href: '/feed', icon: Newspaper },
+      { label: 'Discover', href: '/feed', icon: Newspaper },
       { label: 'Traders', href: null, icon: Users, soon: true },
       { label: 'Leaderboard', href: '/leaderboard', icon: Trophy }
     ]

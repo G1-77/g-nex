@@ -1,5 +1,5 @@
 /** Asset symbols */
-export const ASSET_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"] as const
+export const ASSET_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU", "DOGE", "TRUMP", "USDC", "ACE"] as const
 export type AssetSymbol = (typeof ASSET_SYMBOLS)[number]
 
 /** signal types */

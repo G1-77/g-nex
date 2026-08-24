@@ -21,9 +21,13 @@ export const SYMBOL_COINGECKO_ID: Record<string, string> = {
   SOL: 'solana',
   XRP: 'ripple',
   USDT: 'tether',
+  DOGE: 'dogecoin',
+  TRUMP: 'official-trump',
+  USDC: 'usd-coin',
+  ACE: 'fusionist',
 }
 
-export const TRADABLE_SYMBOLS = ['BTC', 'ETH', 'SOL', 'XRP', 'USDT', 'XAU'] as const
+export const TRADABLE_SYMBOLS = ['BTC', 'ETH', 'SOL', 'XRP', 'USDT', 'XAU', 'DOGE', 'TRUMP', 'USDC', 'ACE'] as const
 
 /** Authoritative USD price for a tradable symbol (server-side, CoinGecko + XAU feed). */
 export async function getSymbolPriceUsd(symbol: string): Promise<number> {

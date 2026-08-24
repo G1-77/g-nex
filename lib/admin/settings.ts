@@ -47,7 +47,7 @@ export const SETTING_DEFAULTS: Record<SettingKey, unknown> = {
   deposit_max_kes: 500_000,
   maintenance_mode: false,
   payment_providers: ["mpesa", "airtel"],
-  supported_assets: ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"],
+  supported_assets: ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU", "DOGE", "TRUMP", "USDC", "ACE"],
   trading_enabled: true,
   quick_trade_enabled: true,
   spot_enabled: true,

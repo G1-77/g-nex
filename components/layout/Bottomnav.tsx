@@ -33,7 +33,7 @@ const navItems = [
     emphasized: true
   },
   {
-    label: 'Feed',
+    label: 'Discover',
     href: '/feed',
     icon: Newspaper
   },

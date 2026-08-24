@@ -68,6 +68,10 @@ export const ALLOCATION_COLORS: Record<string, string> = {
   XRP: '#00AAE4',
   USDT: '#26A17B',
   XAU: '#C9A84C',
+  DOGE: '#C2A633',
+  TRUMP: '#E4573D',
+  USDC: '#2775CA',
+  ACE: '#7C5CFF',
 }
 
 export function allocationColor(symbol: AssetSymbol): string {

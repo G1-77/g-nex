@@ -24,7 +24,7 @@ const VALIDATORS: Record<SettingKey, (value: unknown) => boolean> = {
     (v as string[]).every((p) => ["mpesa", "airtel"].includes(p)),
   supported_assets: (v) =>
     Array.isArray(v) && v.every((a) => typeof a === "string") &&
-    (v as string[]).every((a) => ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU"].includes(a)),
+    (v as string[]).every((a) => ["BTC", "ETH", "SOL", "XRP", "USDT", "XAU", "DOGE", "TRUMP", "USDC", "ACE"].includes(a)),
   trading_enabled: (v) => typeof v === "boolean",
   quick_trade_enabled: (v) => typeof v === "boolean",
   spot_enabled: (v) => typeof v === "boolean",

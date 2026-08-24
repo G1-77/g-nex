@@ -9,6 +9,10 @@ export const MARKET_ASSETS: Record<AssetSymbol, MarketAsset> = {
   XRP: { symbol: 'XRP' as AssetSymbol, name: 'Ripple', logo: '/icons/xrp.svg', assetType: 'crypto' },
   USDT: { symbol: 'USDT' as AssetSymbol, name: 'Tether', logo: '/icons/usdt.svg', assetType: 'stable' },
   XAU: { symbol: 'XAU' as AssetSymbol, name: 'Spot Gold', logo: '/icons/xau.svg', assetType: 'gold' },
+  DOGE: { symbol: 'DOGE' as AssetSymbol, name: 'Dogecoin', logo: '/icons/doge.svg', assetType: 'crypto' },
+  TRUMP: { symbol: 'TRUMP' as AssetSymbol, name: 'OFFICIAL TRUMP', logo: '/icons/trump.svg', assetType: 'crypto' },
+  USDC: { symbol: 'USDC' as AssetSymbol, name: 'USD Coin', logo: '/icons/usdc.svg', assetType: 'stable' },
+  ACE: { symbol: 'ACE' as AssetSymbol, name: 'Fusionist', logo: '/icons/ace.svg', assetType: 'crypto' },
 } as const
 
 export const MARKET_ASSETS_LIST: MarketAsset[] = Object.values(MARKET_ASSETS)

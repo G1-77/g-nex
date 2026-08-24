@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { feedKeys } from '../keys'
+import { followerKeys } from '../queries/followers.queries'
 
 export interface ToggleFollowPayload {
   followerId: string
@@ -63,6 +64,13 @@ export function useToggleFollowMutation() {
       // Forceful background cache invalidation sweeps to keep follow metrics perfectly in sync
       queryClient.invalidateQueries({
         queryKey: feedKeys.all,
+        exact: false,
+        refetchType: 'all'
+      })
+      // Follower/following caches must refresh too — otherwise follow buttons
+      // and follower lists across the app read stale relationship state.
+      queryClient.invalidateQueries({
+        queryKey: followerKeys.all,
         exact: false,
         refetchType: 'all'
       })
