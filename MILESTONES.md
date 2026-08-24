@@ -557,7 +557,7 @@
 
 ## Phase 18 — GNEX Home Experience (Mobile-First Redesign + Promotions)
 
-**Status:** 🟡 Built, typecheck + lint clean — migration pending deploy; production build blocked by host memory limits
+**Status:** 🟡 Built + migration deployed to remote database — production build verification outstanding (host memory constrained)
 
 ### Delivered
 - **Home restructured (trading-first IA)** (`app/(main)/page.tsx`): Search → Wallet Snapshot → Top Traders to Follow → Promotion Carousel → Quick Actions → Market Snapshot → Discover transition. Desktop aside keeps TopTraders/TopMovers/MarketsWatch/TopStories widgets.
@@ -571,13 +571,15 @@
 - **Shell rename**: Feed → Discover in `Bottomnav`, `Topnav`, `lib/navigation.ts` (href unchanged).
 - **Asset universe expansion (+DOGE, TRUMP, USDC, ACE)** through the central architecture: `lib/supabase/types.ts` ASSET_SYMBOLS, `lib/constants/market-assets.ts`, execution RPC symbol map, Binance realtime streams (DOGE/TRUMP/ACE), OHLC maps, allocation colors, SVG icons, admin settings validator + chips.
 - **Follow-cache fix**: follow mutations now invalidate `followerKeys.all` too (was feed-only — follower counts went stale).
-- **Cleanup**: removed 7 superseded home components (HomeComposer, TradingActivityFeed, MarketOpportunities, SentimentOverview, PortfolioAccessCard, FeedTransition, TraderDiscoverySection). `home.queries.ts` intentionally left for other consumers.
+- **Cleanup**: removed 7 superseded home components (HomeComposer, TradingActivityFeed, MarketOpportunities, SentimentOverview, PortfolioAccessCard, FeedTransition, TraderDiscoverySection).
 
-### Backend (migration `20260824120000_home_experience_promotions_assets.sql`)
+### Backend (migration `20260824120000_home_experience_promotions_assets.sql`) — ✅ DEPLOYED to remote DB
 - `promotions` table (content, destination_type route|url|product|none, scheduling window, display_order) + updated_at trigger + order index. RLS on, service-role only by design.
 - Public eligibility resolved server-side in `GET /api/promotions` (enabled + time window).
 - Admin CRUD at `/api/admin/promotions` guarded by `content.manage` + audit logging.
 - Assets seed (10 symbols incl. gold/stablecoins, `on conflict do nothing`) + `user_holdings.asset_symbol` CHECK widened.
+- Seed campaign: Prediction teaser (`product_id='prediction'`, resolves to `/prediction` via `PRODUCT_ROUTES`).
+- Same push also applied the two previously-pending Phase 17 migrations (`20260823000000_gnex2_home_intelligence.sql`, `20260823000001_gnex2_social_interaction.sql`).
 - Admin Centre page `/admin/community/promotions` with editor cards, operator preview, nav entry.
 
 ### Key Files
@@ -587,9 +589,10 @@
 
 ### Verification
 - `tsc --noEmit` ✅ Clean (project-wide)
-- ESLint on all touched paths ✅ 0 errors 0 warnings
-- `next build` ⚠️ Could not complete in this environment (host OOM/swap thrashing under desktop load); stalled ~20 min in compile phase. Re-run when memory is available.
-- Migration not yet pushed to live database (`npm run db:push` pending credentials/window).
+- ESLint on all touched paths ✅ 0 errors 0 warnings (3 issues found and fixed during verify)
+- Migration push ✅ Applied to remote database via `supabase db push`
+- `next build` ⚠️ First attempts OOM-killed by host memory pressure; final attempt still compiling at session end — **next agent must confirm build passes** (see `HANDOVER_PHASE18.md`)
+- Browser smoke test of new Home ⬜ Not yet performed
 
 ---
 **Built with:** Next.js 16, React 19, TypeScript 5, Tailwind 4, Supabase, React Query 5
